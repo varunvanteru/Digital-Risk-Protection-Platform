@@ -128,3 +128,39 @@ def test_logo_similarity_on_pixels(tmp_path, monkeypatch):
     assert mirror.score >= 0.9 and mirror.kind == "mirror"
     assert other.score < 0.5
     images._cached.cache_clear()
+
+
+# Real Indian brands that are commonly impersonated; found in manual testing.
+REAL_BRANDS = {
+    "PhonePe": ["PhonePe", "Phone Pe"],
+    "Paytm": ["Paytm"],
+    "Flipkart": ["Flipkart"],
+    "Swiggy": ["Swiggy"],
+    "Zomato": ["Zomato"],
+    "IRCTC": ["IRCTC", "IRCTC Rail Connect"],
+    "SBI": ["SBI", "YONO", "YONO SBI", "State Bank of India"],
+}
+
+
+@pytest.mark.parametrize(
+    "brand, name",
+    [
+        ("PhonePe", "ph0nepe"), ("PhonePe", "phonepe_support_india"), ("PhonePe", "phonpe"),
+        ("Paytm", "paytrn"), ("Paytm", "pay.tm"), ("Paytm", "paytym"),
+        ("Flipkart", "fl1pkart"), ("Flipkart", "flipkart.offers"), ("Flipkart", "filpkart"),
+        ("Swiggy", "swigy"), ("Zomato", "zomato_refunds"), ("Zomato", "z0mato"),
+        ("IRCTC", "irctc_helpline"), ("IRCTC", "irtc"),
+        ("SBI", "yono_sbi_kyc"), ("SBI", "sbi.customer.care"), ("SBI", "statebankofindia_help"),
+    ],
+)
+def test_real_brand_lookalikes_are_caught(brand, name):
+    assert analyse_name(name, REAL_BRANDS[brand]).verdict == "match"
+
+
+@pytest.mark.parametrize(
+    "brand, name",
+    [("PhonePe", "phone"), ("PhonePe", "iphone"), ("Zomato", "tomato"), ("Swiggy", "swing"),
+     ("Flipkart", "flipboard"), ("Paytm", "paytime"), ("SBI", "yoga"), ("IRCTC", "ircon")],
+)
+def test_ordinary_words_are_not_flagged_for_real_brands(brand, name):
+    assert analyse_name(name, REAL_BRANDS[brand]).verdict == "no_match"

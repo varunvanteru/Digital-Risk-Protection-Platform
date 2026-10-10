@@ -11,6 +11,8 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import asdict, dataclass, field
+from functools import lru_cache
+from pathlib import Path
 
 HOMOGLYPHS = {
     "0": "o",
@@ -40,10 +42,29 @@ MULTI_GLYPHS = [("rn", "m"), ("vv", "w"), ("cl", "d")]
 FILLER_WORDS = [
     "official", "real", "support", "care", "help", "helpline", "team", "india", "app", "pay",
     "wallet", "customer", "service", "verified", "original", "hq", "global",
+    # Words scammers bolt onto a brand name
+    "offer", "offers", "refund", "refunds", "kyc", "cashback", "reward", "rewards", "helpdesk", "desk",
+    "loan", "loans", "career", "careers", "jobs", "update", "updates", "alert", "alerts", "bonus",
+    "gift", "gifts", "deals", "services", "apps", "pvt", "ltd",
 ]
 
-# Real words and names that sit one edit away from common brand names.
+# Names one edit away from the demo brand that are not in the English list.
 COMMON_WORDS = {"zen", "sentra", "centra", "central", "contra", "zebra", "sentry", "zentro", "centro"}
+
+
+@lru_cache(maxsize=1)
+def english_words() -> frozenset[str]:
+    """~38k common English words (data/common_words.txt). An ordinary word is never a look-alike on its own."""
+    path = Path(__file__).resolve().parents[2] / "data" / "common_words.txt"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return frozenset()
+    return frozenset(w for w in lines if w and not w.startswith("#"))
+
+
+def is_ordinary_word(core: str) -> bool:
+    return core in COMMON_WORDS or core in english_words()
 
 SEPARATORS = re.compile(r"[\s._\-]+")
 
@@ -188,7 +209,7 @@ def jaro_winkler(a: str, b: str) -> float:
     return jaro + prefix * 0.1 * (1 - jaro)
 
 
-def _normalise(raw: str, brand_tokens: set[str], one_as: str, multi: bool) -> _Candidate:
+def _normalise(raw: str, brand_tokens: set[str], one_as: str, multi: bool, strip: bool = True) -> _Candidate:
     steps: list[Step] = []
     variations: list[str] = []
 
@@ -229,7 +250,7 @@ def _normalise(raw: str, brand_tokens: set[str], one_as: str, multi: bool) -> _C
     if joined != s2:
         variations.append("Spacing / separators")
 
-    kept, removed = _strip_fillers(tokens, brand_tokens)
+    kept, removed = _strip_fillers(tokens, brand_tokens) if strip else (tokens, [])
     core = "".join(kept)
     steps.append(Step("Strip filler words", core, bool(removed), f"Removed: {', '.join(removed)}" if removed else None))
     if removed:
@@ -259,11 +280,11 @@ def _match(raw: str, cand: _Candidate, alias: str) -> LookalikeResult:
             method = "Contains brand name plus other text"
             score = 0.6
             guards.append(f'Extra text "{rest}" is not a known filler word, so this is only a partial match')
-        elif long_enough and dist == 1:
+        elif len(alias) >= 5 and dist == 1:
             swap = _is_adjacent_swap(core, alias)
             method = "Character swap (edit distance 1)" if swap else "One letter changed, missing or doubled"
             variations.append("Character swap" if swap else "Missing / doubled letter")
-            score = 0.9 if swap else 0.88
+            score = (0.9 if swap else 0.88) if long_enough else 0.85
         elif long_enough and jw >= 0.92:
             method = f"Jaro-Winkler {jw:.2f}"
             variations.append("Close spelling")
@@ -271,11 +292,11 @@ def _match(raw: str, cand: _Candidate, alias: str) -> LookalikeResult:
         else:
             method = f"Jaro-Winkler {jw:.2f}, edit distance {dist}"
             score = max(0.0, min(0.55, ((jw - 0.7) / 0.3) * 0.55))
-        if not long_enough and dist > 0:
-            guards.append(f'"{alias}" is shorter than 6 letters, so only an exact match counts')
+        if len(alias) < 5 and dist > 0:
+            guards.append(f'"{alias}" is shorter than 5 letters, so only an exact match counts')
             score = min(score, 0.3)
 
-    if core in COMMON_WORDS and core != alias:
+    if core != alias and is_ordinary_word(core):
         guards.append(f'"{core}" is an ordinary word or name, so name similarity alone stays Low')
         score = min(score, 0.3)
 
@@ -314,6 +335,8 @@ def analyse_name(raw: str, aliases: list[str]) -> LookalikeResult:
         _normalise(raw, brand_tokens, "l", False),
         _normalise(raw, brand_tokens, "i", False),
         _normalise(raw, brand_tokens, "l", True),
+        # Fillers kept: "pay.tm" must still read as "paytm" even though "pay" is a filler word.
+        _normalise(raw, brand_tokens, "l", False, strip=False),
     ]
 
     best: LookalikeResult | None = None
