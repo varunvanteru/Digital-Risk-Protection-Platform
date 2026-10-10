@@ -42,10 +42,22 @@ CONNECTORS = {
     "src_x": SocialDataset("src_x", "x"),
     "src_fb": SocialDataset("src_fb", "facebook"),
     "src_tg": SocialDataset("src_tg", "telegram"),
+    "src_wa": SocialDataset("src_wa", "whatsapp"),
+    "src_threads": SocialDataset("src_threads", "threads"),
+    "src_li": SocialDataset("src_li", "linkedin"),
+    "src_snap": SocialDataset("src_snap", "snapchat"),
+    "src_yt": SocialDataset("src_yt", "youtube"),
+    "src_sc": SocialDataset("src_sc", "sharechat"),
+    "src_moj": SocialDataset("src_moj", "moj"),
+    "src_josh": SocialDataset("src_josh", "josh"),
+    "src_pin": SocialDataset("src_pin", "pinterest"),
+    "src_reddit": SocialDataset("src_reddit", "reddit"),
+    "src_quora": SocialDataset("src_quora", "quora"),
+    "src_discord": SocialDataset("src_discord", "discord"),
 }
 
 _scan_lock = threading.Lock()
-_pool = ThreadPoolExecutor(max_workers=8, thread_name_prefix="source")
+_pool = ThreadPoolExecutor(max_workers=24, thread_name_prefix="source")
 
 
 def utcnow() -> datetime:

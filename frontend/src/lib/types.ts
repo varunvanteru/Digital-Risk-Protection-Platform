@@ -1,13 +1,26 @@
 export type Channel = "social" | "app";
 
-export type Platform =
+export type SocialPlatform =
   | "instagram"
-  | "x"
   | "facebook"
+  | "whatsapp"
+  | "x"
+  | "threads"
+  | "linkedin"
   | "telegram"
-  | "google_play"
-  | "app_store"
-  | "apk_site";
+  | "snapchat"
+  | "youtube"
+  | "sharechat"
+  | "moj"
+  | "josh"
+  | "pinterest"
+  | "reddit"
+  | "quora"
+  | "discord";
+
+export type AppPlatform = "google_play" | "app_store" | "apk_site";
+
+export type Platform = SocialPlatform | AppPlatform;
 
 export type DetectionClass =
   | "impersonation"

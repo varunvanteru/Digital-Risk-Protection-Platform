@@ -16,11 +16,43 @@ def test_parse_query_handles_names_and_urls():
     assert (q.platform, q.identifier) == ("app_store", "id1234567890")
 
 
+def test_parse_query_handles_indian_platform_urls():
+    cases = {
+        "https://www.youtube.com/@zentrapay": ("youtube", "zentrapay"),
+        "https://www.linkedin.com/company/zentrapay/": ("linkedin", "zentrapay"),
+        "https://whatsapp.com/channel/0029VaZentraPay01": ("whatsapp", "0029vazentrapay01"),
+        "https://www.threads.net/@zentrapay": ("threads", "zentrapay"),
+        "https://sharechat.com/profile/zentrapay_sahayata": ("sharechat", "zentrapay_sahayata"),
+        "https://mojapp.in/@zentrapay.cashback": ("moj", "zentrapay.cashback"),
+        "https://share.myjosh.in/profile/zentra_pay_rewards": ("josh", "zentra_pay_rewards"),
+        "https://in.pinterest.com/zentrapayindia/": ("pinterest", "zentrapayindia"),
+        "https://www.reddit.com/user/ZentraPay_Support_Team": ("reddit", "zentrapay_support_team"),
+        "https://www.quora.com/profile/ZentraPay-Customer-Care-Number": ("quora", "zentrapay-customer-care-number"),
+        "https://discord.gg/zentrapay-rewards": ("discord", "zentrapay-rewards"),
+        "https://www.snapchat.com/add/zentrapay_snap": ("snapchat", "zentrapay_snap"),
+    }
+    for url, expected in cases.items():
+        q = parse_query(url)
+        assert (q.platform, q.identifier) == expected, url
+
+
+def test_search_finds_scams_on_indian_platforms(client):
+    body = client.post("/api/search", json={"query": "zentrapay", "platforms": ["sharechat", "linkedin", "whatsapp", "youtube"]}).json()
+    found = {(x["platform"], x["handle"]) for x in body["results"]}
+    assert ("sharechat", "zentrapay_sahayata") in found
+    assert ("linkedin", "zentrapay-careers-india") in found
+    assert ("whatsapp", "0029VbZpSupport24") in found
+    # Official channels on the same platforms are skipped, never results
+    skipped = {(o["platform"], o["handle"]) for o in body["officialSkipped"]}
+    assert {("youtube", "zentrapay"), ("linkedin", "zentrapay"), ("whatsapp", "0029VaZentraPay01")} <= skipped
+    assert not found & skipped
+
+
 def test_search_all_platforms(client):
     r = client.post("/api/search", json={"query": "zentrapay", "platforms": ["all"]})
     assert r.status_code == 200
     body = r.json()
-    assert {p["platform"] for p in body["platforms"]} == {"instagram", "x", "facebook", "telegram", "google_play", "app_store", "apk_site"}
+    assert len(body["platforms"]) == 19
     assert body["reference"] == {"type": "brand", "name": "ZentraPay"}
     handles = {x["handle"] for x in body["results"]}
     assert "zentrapay_care_india" in handles and "com.zentrapay.wallet.upi" in handles

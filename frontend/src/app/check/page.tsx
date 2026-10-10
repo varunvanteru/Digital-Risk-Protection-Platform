@@ -10,66 +10,93 @@ import { BrandMark } from "@/components/marks";
 import { PlatformLogo } from "@/components/platform-logo";
 import { Button, Card, CardHeader, EmptyState, Mono, PageHeader, Tag } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/api";
-import { CLASS_LABEL, PLATFORM_LABEL, handleDisplay } from "@/lib/format";
+import { ALL_PLATFORMS, CLASS_LABEL, PLATFORM_GROUPS, PLATFORM_LABEL, handleDisplay } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Platform, SearchResponse } from "@/lib/types";
 
-const PLATFORMS: Platform[] = ["instagram", "x", "facebook", "telegram", "google_play", "app_store", "apk_site"];
+const PLATFORMS = ALL_PLATFORMS;
 
 const EXAMPLES = [
   "zentrapay",
   "instagram.com/zentrapay",
+  "youtube.com/@zentrapay",
   "Zentra Pay",
   "play.google.com/store/apps/details?id=com.zentrapay.app",
   "z3ntra.pay_official",
 ];
 
 function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; onChange: (v: Platform[] | "all") => void }) {
-  const isOn = (p: Platform) => selected === "all" || selected.includes(p);
+  const all = selected === "all";
+  const isOn = (p: Platform) => all || selected.includes(p);
 
   function toggle(p: Platform) {
-    if (selected === "all") return onChange([p]);
+    if (all) return onChange([p]);
     const next = selected.includes(p) ? selected.filter((x) => x !== p) : [...selected, p];
     onChange(next.length === 0 || next.length === PLATFORMS.length ? "all" : next);
   }
 
-  const chip = "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-[13px] font-medium transition-colors";
+  function toggleGroup(ps: Platform[]) {
+    const current = all ? [] : selected;
+    const everyOn = !all && ps.every((p) => current.includes(p));
+    const next = everyOn ? current.filter((p) => !ps.includes(p)) : Array.from(new Set([...current, ...ps]));
+    onChange(next.length === 0 || next.length === PLATFORMS.length ? "all" : next);
+  }
+
   return (
-    <div role="group" aria-label="Platforms to search" className="flex flex-wrap gap-2">
-      <button
-        aria-pressed={selected === "all"}
-        onClick={() => onChange("all")}
-        className={clsx(chip, selected === "all" ? "border-accent bg-accent text-accent-ink" : "border-line-strong bg-surface text-ink-2 hover:text-ink")}
-      >
-        <LayoutGrid className="size-4" />
-        All platforms
-      </button>
-      <span className="mx-1 hidden w-px self-stretch bg-line sm:block" aria-hidden />
-      {PLATFORMS.map((p) => {
-        const on = selected !== "all" && isOn(p);
-        return (
-          <button
-            key={p}
-            aria-pressed={isOn(p)}
-            onClick={() => toggle(p)}
-            className={clsx(
-              chip,
-              on
-                ? "border-accent bg-accent-soft text-ink"
-                : selected === "all"
-                  ? "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink"
-                  : "border-line bg-surface text-ink-3 hover:border-line-strong hover:text-ink",
-            )}
-          >
-            <PlatformLogo platform={p} size={15} />
-            {PLATFORM_LABEL[p]}
-          </button>
-        );
-      })}
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          aria-pressed={all}
+          onClick={() => onChange("all")}
+          className={clsx(
+            "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-[13px] font-medium transition-colors",
+            all ? "border-accent bg-accent text-accent-ink" : "border-line-strong bg-surface text-ink-2 hover:text-ink",
+          )}
+        >
+          <LayoutGrid className="size-4" />
+          All platforms
+        </button>
+        <span className="text-[12.5px] text-ink-3">
+          {all ? `All ${PLATFORMS.length} platforms selected` : `${selected.length} of ${PLATFORMS.length} selected`}
+        </span>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-[repeat(4,auto)] lg:justify-start lg:gap-x-6">
+        {PLATFORM_GROUPS.map((g) => (
+          <div key={g.label} role="group" aria-label={g.label}>
+            <button onClick={() => toggleGroup(g.platforms)} className="mb-1.5 text-[11.5px] font-medium uppercase tracking-wide text-ink-3 hover:text-ink">
+              {g.label}
+            </button>
+            <div className="flex flex-wrap gap-1.5">
+              {g.platforms.map((p) => {
+                const on = !all && isOn(p);
+                return (
+                  <button
+                    key={p}
+                    aria-pressed={isOn(p)}
+                    onClick={() => toggle(p)}
+                    title={PLATFORM_LABEL[p]}
+                    className={clsx(
+                      "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium transition-colors",
+                      on
+                        ? "border-accent bg-accent-soft text-ink"
+                        : all
+                          ? "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink"
+                          : "border-line bg-surface text-ink-3 hover:border-line-strong hover:text-ink",
+                    )}
+                  >
+                    <PlatformLogo platform={p} size={16} className={clsx(!all && !on && "opacity-45 grayscale")} />
+                    {PLATFORM_LABEL[p]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
 function PlatformStatus({ data }: { data: SearchResponse }) {
   return (
     <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-line px-4 py-3">

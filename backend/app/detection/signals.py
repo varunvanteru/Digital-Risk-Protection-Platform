@@ -143,7 +143,7 @@ def evaluate(c: Candidate, ctx: BrandContext, today: date) -> Evaluation:
         cls = "lookalike_app"
     elif sig["behaviour"] >= 0.6:
         cls = "scam"
-    elif c.platform in ("facebook", "telegram"):
+    elif c.platform in ("facebook", "telegram", "whatsapp", "linkedin", "youtube", "pinterest", "discord", "quora"):
         cls = "fake_page"
     else:
         cls = "impersonation"

@@ -16,7 +16,7 @@ from .models import Brand, Detection, DetectionEvent, OfficialAsset, Publisher, 
 from .serializers import brand_out, detection_out, scan_out, source_out
 from .services.scan import brand_context, is_scanning, start_scan, utcnow
 from .services.search import PLATFORMS, run_search
-from .validation import app_id_error, clean_handle, domain_error, handle_error, name_error
+from .validation import SOCIAL_PLATFORMS, app_id_error, clean_handle, domain_error, handle_error, name_error
 
 router = APIRouter(prefix="/api")
 
@@ -275,7 +275,7 @@ def set_status(det_id: str, body: StatusIn, db: Session = Depends(get_db)):
     prev = d.status
     if body.status == "official":
         # Analyst says it is genuinely ours: add to the allowlist (Gate 1 and 2 skip it from now on).
-        if d.channel == "social" and d.platform in ("instagram", "x", "facebook", "telegram"):
+        if d.channel == "social" and d.platform in SOCIAL_PLATFORMS:
             exists = db.scalar(select(OfficialAsset.id).where(OfficialAsset.brand_id == brand.id, OfficialAsset.platform == d.platform, OfficialAsset.identifier == d.identifier))
             if not exists:
                 db.add(OfficialAsset(brand_id=brand.id, kind="social", platform=d.platform, identifier=d.identifier, handle=d.handle,

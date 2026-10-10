@@ -15,6 +15,18 @@ SOCIAL_URL = {
     "x": "https://x.com/{h}",
     "facebook": "https://facebook.com/{h}",
     "telegram": "https://t.me/{h}",
+    "whatsapp": "https://whatsapp.com/channel/{h}",
+    "threads": "https://www.threads.net/@{h}",
+    "linkedin": "https://www.linkedin.com/company/{h}",
+    "snapchat": "https://www.snapchat.com/add/{h}",
+    "youtube": "https://www.youtube.com/@{h}",
+    "sharechat": "https://sharechat.com/profile/{h}",
+    "moj": "https://mojapp.in/@{h}",
+    "josh": "https://share.myjosh.in/profile/{h}",
+    "pinterest": "https://www.pinterest.com/{h}",
+    "reddit": "https://www.reddit.com/user/{h}",
+    "quora": "https://www.quora.com/profile/{h}",
+    "discord": "https://discord.gg/{h}",
 }
 
 STORE_URL = {

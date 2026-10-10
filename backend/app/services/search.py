@@ -23,31 +23,64 @@ from ..detection.signals import BrandContext, evaluate, is_relevant
 from ..models import Brand, Detection, Source
 from .scan import CONNECTORS, _fetch_with_retries, _prefetch_images, brand_context, utcnow
 
-PLATFORMS = ["instagram", "x", "facebook", "telegram", "google_play", "app_store", "apk_site"]
+SOCIAL_SOURCES = {
+    "instagram": "src_ig",
+    "facebook": "src_fb",
+    "whatsapp": "src_wa",
+    "x": "src_x",
+    "threads": "src_threads",
+    "linkedin": "src_li",
+    "telegram": "src_tg",
+    "snapchat": "src_snap",
+    "youtube": "src_yt",
+    "sharechat": "src_sc",
+    "moj": "src_moj",
+    "josh": "src_josh",
+    "pinterest": "src_pin",
+    "reddit": "src_reddit",
+    "quora": "src_quora",
+    "discord": "src_discord",
+}
 
 # Which sources answer for which platform. The demo store snapshot holds both Play and App Store items.
 PLATFORM_SOURCES = {
-    "instagram": ["src_ig"],
-    "x": ["src_x"],
-    "facebook": ["src_fb"],
-    "telegram": ["src_tg"],
+    **{p: [sid] for p, sid in SOCIAL_SOURCES.items()},
     "google_play": ["src_play", "src_store_demo"],
     "app_store": ["src_appstore", "src_store_demo"],
     "apk_site": ["src_apk"],
 }
+PLATFORMS = list(PLATFORM_SOURCES)
 
 HOSTS = {
     "instagram.com": "instagram",
-    "x.com": "x",
-    "twitter.com": "x",
     "facebook.com": "facebook",
     "fb.com": "facebook",
+    "whatsapp.com": "whatsapp",
+    "x.com": "x",
+    "twitter.com": "x",
+    "threads.net": "threads",
+    "threads.com": "threads",
+    "linkedin.com": "linkedin",
     "t.me": "telegram",
     "telegram.me": "telegram",
+    "snapchat.com": "snapchat",
+    "youtube.com": "youtube",
+    "sharechat.com": "sharechat",
+    "mojapp.in": "moj",
+    "myjosh.in": "josh",
+    "share.myjosh.in": "josh",
+    "pinterest.com": "pinterest",
+    "in.pinterest.com": "pinterest",
+    "reddit.com": "reddit",
+    "quora.com": "quora",
+    "discord.gg": "discord",
+    "discord.com": "discord",
     "play.google.com": "google_play",
     "apps.apple.com": "app_store",
 }
 
+# Path words that come before the handle, e.g. linkedin.com/company/<h>, reddit.com/user/<h>
+PATH_PREFIXES = {"company", "in", "add", "profile", "user", "u", "r", "c", "channel", "invite", "user-profile"}
 
 @dataclass
 class ParsedQuery:
@@ -63,6 +96,8 @@ def parse_query(raw: str) -> ParsedQuery:
     if looks_like_url:
         u = urlparse(s if "://" in s else "https://" + s)
         host = (u.hostname or "").lower().removeprefix("www.").removeprefix("m.")
+        if host not in HOSTS and host.count(".") > 1:
+            host = host.split(".", 1)[1]  # e.g. in.pinterest.com, mobile subdomains
         platform = HOSTS.get(host)
         if platform == "google_play":
             pkg = parse_qs(u.query).get("id", [""])[0]
@@ -71,6 +106,8 @@ def parse_query(raw: str) -> ParsedQuery:
                 parts = [p for p in pkg.split(".") if p not in {"com", "in", "app", "android", "org", "net", "co"}]
                 return ParsedQuery(s, parts[0] if parts else pkg, platform, pkg.lower())
         segments = [p for p in u.path.split("/") if p]
+        if platform not in ("app_store", "google_play"):
+            segments = [p for p in segments if p.lower() not in PATH_PREFIXES]
         if platform == "app_store":
             app_id = next((p for p in segments if re.fullmatch(r"id\d+", p)), None)
             name = next((p for p in segments if p not in {"app", app_id} and not re.fullmatch(r"[a-z]{2}", p)), app_id or s)

@@ -2,23 +2,38 @@ import type { DetectionClass, DetectionStatus, Platform } from "./types";
 
 export const PLATFORM_LABEL: Record<Platform, string> = {
   instagram: "Instagram",
-  x: "X",
   facebook: "Facebook",
+  whatsapp: "WhatsApp",
+  x: "X",
+  threads: "Threads",
+  linkedin: "LinkedIn",
   telegram: "Telegram",
+  snapchat: "Snapchat",
+  youtube: "YouTube",
+  sharechat: "ShareChat",
+  moj: "Moj",
+  josh: "Josh",
+  pinterest: "Pinterest",
+  reddit: "Reddit",
+  quora: "Quora",
+  discord: "Discord",
   google_play: "Google Play",
   app_store: "App Store",
   apk_site: "APK site",
 };
 
-export const PLATFORM_SHORT: Record<Platform, string> = {
-  instagram: "IG",
-  x: "X",
-  facebook: "FB",
-  telegram: "TG",
-  google_play: "GP",
-  app_store: "AS",
-  apk_site: "APK",
-};
+/** Grouping used by the platform pickers. */
+export const PLATFORM_GROUPS: { label: string; platforms: Platform[] }[] = [
+  { label: "Social and messaging", platforms: ["instagram", "facebook", "whatsapp", "x", "threads", "linkedin", "telegram", "snapchat"] },
+  { label: "Video and Indian short video", platforms: ["youtube", "sharechat", "moj", "josh"] },
+  { label: "Communities", platforms: ["pinterest", "reddit", "quora", "discord"] },
+  { label: "App stores", platforms: ["google_play", "app_store", "apk_site"] },
+];
+
+export const ALL_PLATFORMS: Platform[] = PLATFORM_GROUPS.flatMap((g) => g.platforms);
+
+/** Platforms whose handles are written with a leading @. */
+const AT_HANDLES = new Set<Platform>(["instagram", "x", "threads", "telegram", "youtube", "sharechat", "moj", "josh"]);
 
 export const CLASS_LABEL: Record<DetectionClass, string> = {
   impersonation: "Impersonation",
@@ -74,7 +89,8 @@ export function ageInDays(iso: string, today = "2026-10-10") {
 }
 
 export function handleDisplay(platform: Platform, handle: string) {
-  if (platform === "google_play" || platform === "app_store" || platform === "apk_site") return handle;
-  if (platform === "facebook") return `/${handle}`;
-  return `@${handle}`;
+  if (AT_HANDLES.has(platform)) return `@${handle}`;
+  if (platform === "facebook" || platform === "linkedin") return `/${handle}`;
+  if (platform === "reddit") return `u/${handle}`;
+  return handle;
 }

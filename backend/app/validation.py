@@ -7,9 +7,26 @@ HANDLE_RULES = {
     "x": (re.compile(r"^[a-z0-9_]{1,15}$", re.I), "Up to 15 letters, numbers or underscores"),
     "facebook": (re.compile(r"^[a-z0-9.]{5,50}$", re.I), "5 to 50 letters, numbers or periods"),
     "telegram": (re.compile(r"^[a-z0-9_]{5,32}$", re.I), "5 to 32 letters, numbers or underscores"),
+    "whatsapp": (re.compile(r"^[a-z0-9]{10,40}$", re.I), "Channel ID from the channel link, 10 to 40 letters or numbers"),
+    "threads": (re.compile(r"^[a-z0-9._]{1,30}$", re.I), "Up to 30 letters, numbers, periods or underscores"),
+    "linkedin": (re.compile(r"^[a-z0-9-]{3,100}$", re.I), "Company page name from the URL: letters, numbers or hyphens"),
+    "snapchat": (re.compile(r"^[a-z][a-z0-9._-]{2,14}$", re.I), "3 to 15 characters, starting with a letter"),
+    "youtube": (re.compile(r"^[a-z0-9._-]{3,30}$", re.I), "3 to 30 letters, numbers, periods, hyphens or underscores"),
+    "sharechat": (re.compile(r"^[a-z0-9._]{3,30}$", re.I), "3 to 30 letters, numbers, periods or underscores"),
+    "moj": (re.compile(r"^[a-z0-9._]{3,30}$", re.I), "3 to 30 letters, numbers, periods or underscores"),
+    "josh": (re.compile(r"^[a-z0-9._]{3,30}$", re.I), "3 to 30 letters, numbers, periods or underscores"),
+    "pinterest": (re.compile(r"^[a-z0-9_]{3,30}$", re.I), "3 to 30 letters, numbers or underscores"),
+    "reddit": (re.compile(r"^[a-z0-9_-]{3,20}$", re.I), "3 to 20 letters, numbers, hyphens or underscores"),
+    "quora": (re.compile(r"^[a-z0-9-]{3,60}$", re.I), "Profile name from the URL: letters, numbers or hyphens"),
+    "discord": (re.compile(r"^[a-z0-9-]{2,32}$", re.I), "Invite code or vanity name, 2 to 32 characters"),
 }
 
-PLATFORM_LABEL = {"instagram": "Instagram", "x": "X", "facebook": "Facebook", "telegram": "Telegram"}
+PLATFORM_LABEL = {
+    "instagram": "Instagram", "x": "X", "facebook": "Facebook", "telegram": "Telegram", "whatsapp": "WhatsApp",
+    "threads": "Threads", "linkedin": "LinkedIn", "snapchat": "Snapchat", "youtube": "YouTube", "sharechat": "ShareChat",
+    "moj": "Moj", "josh": "Josh", "pinterest": "Pinterest", "reddit": "Reddit", "quora": "Quora", "discord": "Discord",
+}
+SOCIAL_PLATFORMS = list(HANDLE_RULES)
 
 DOMAIN = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)(\.[a-z0-9-]{1,63})+$", re.I)
 PACKAGE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$", re.I)

@@ -19,6 +19,18 @@ SOURCES = [
     ("src_x", "X", "x", "social", "dataset"),
     ("src_fb", "Facebook Pages", "facebook", "social", "dataset"),
     ("src_tg", "Telegram", "telegram", "social", "dataset"),
+    ("src_wa", "WhatsApp Channels", "whatsapp", "social", "dataset"),
+    ("src_threads", "Threads", "threads", "social", "dataset"),
+    ("src_li", "LinkedIn", "linkedin", "social", "dataset"),
+    ("src_snap", "Snapchat", "snapchat", "social", "dataset"),
+    ("src_yt", "YouTube", "youtube", "social", "dataset"),
+    ("src_sc", "ShareChat", "sharechat", "social", "dataset"),
+    ("src_moj", "Moj", "moj", "social", "dataset"),
+    ("src_josh", "Josh", "josh", "social", "dataset"),
+    ("src_pin", "Pinterest", "pinterest", "social", "dataset"),
+    ("src_reddit", "Reddit", "reddit", "social", "dataset"),
+    ("src_quora", "Quora", "quora", "social", "dataset"),
+    ("src_discord", "Discord", "discord", "social", "dataset"),
 ]
 
 DEMO_BRAND_ID = "brd_zentrapay"
@@ -51,6 +63,9 @@ def seed(db: Session) -> None:
             ("facebook", "zentrapay", "fb:102938475610", "ZentraPay", "official", True),
             ("telegram", "zentrapay_official", "tg:-1001788234", "ZentraPay Updates", "official", False),
             ("instagram", "zentrapay_partner_mumbai", "ig:59011283377", "ZentraPay Partner, Mumbai", "partner", False),
+            ("youtube", "zentrapay", "yt:UCzentrapay", "ZentraPay", "official", True),
+            ("linkedin", "zentrapay", "li:zentrapay", "ZentraPay", "official", True),
+            ("whatsapp", "0029VaZentraPay01", "wa:0029VaZentraPay01", "ZentraPay", "official", True),
         ]
         apps = [
             ("google_play", "com.zentrapay.app", "ZentraPay: UPI, Bills & Cards", "8174492036215501734"),

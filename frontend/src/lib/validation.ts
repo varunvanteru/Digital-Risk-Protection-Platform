@@ -5,6 +5,18 @@ export const SOCIAL_PLATFORMS: { value: Platform; label: string; pattern: RegExp
   { value: "x", label: "X", pattern: /^[a-z0-9_]{1,15}$/i, rule: "Up to 15 letters, numbers or underscores" },
   { value: "facebook", label: "Facebook", pattern: /^[a-z0-9.]{5,50}$/i, rule: "5 to 50 letters, numbers or periods" },
   { value: "telegram", label: "Telegram", pattern: /^[a-z0-9_]{5,32}$/i, rule: "5 to 32 letters, numbers or underscores" },
+  { value: "whatsapp", label: "WhatsApp", pattern: /^[a-z0-9]{10,40}$/i, rule: "Channel ID from the channel link, 10 to 40 letters or numbers" },
+  { value: "threads", label: "Threads", pattern: /^[a-z0-9._]{1,30}$/i, rule: "Same as the Instagram handle: up to 30 letters, numbers, periods or underscores" },
+  { value: "linkedin", label: "LinkedIn", pattern: /^[a-z0-9-]{3,100}$/i, rule: "Company page name from the URL: letters, numbers or hyphens" },
+  { value: "snapchat", label: "Snapchat", pattern: /^[a-z][a-z0-9._-]{2,14}$/i, rule: "3 to 15 characters, starting with a letter" },
+  { value: "youtube", label: "YouTube", pattern: /^[a-z0-9._-]{3,30}$/i, rule: "3 to 30 letters, numbers, periods, hyphens or underscores" },
+  { value: "sharechat", label: "ShareChat", pattern: /^[a-z0-9._]{3,30}$/i, rule: "3 to 30 letters, numbers, periods or underscores" },
+  { value: "moj", label: "Moj", pattern: /^[a-z0-9._]{3,30}$/i, rule: "3 to 30 letters, numbers, periods or underscores" },
+  { value: "josh", label: "Josh", pattern: /^[a-z0-9._]{3,30}$/i, rule: "3 to 30 letters, numbers, periods or underscores" },
+  { value: "pinterest", label: "Pinterest", pattern: /^[a-z0-9_]{3,30}$/i, rule: "3 to 30 letters, numbers or underscores" },
+  { value: "reddit", label: "Reddit", pattern: /^[a-z0-9_-]{3,20}$/i, rule: "3 to 20 letters, numbers, hyphens or underscores" },
+  { value: "quora", label: "Quora", pattern: /^[a-z0-9-]{3,60}$/i, rule: "Profile name from the URL: letters, numbers or hyphens" },
+  { value: "discord", label: "Discord", pattern: /^[a-z0-9-]{2,32}$/i, rule: "Invite code or vanity name, 2 to 32 characters" },
 ];
 
 export function validateHandle(platform: Platform, raw: string, existing: { platform: Platform; handle: string }[]) {
