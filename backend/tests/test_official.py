@@ -239,3 +239,57 @@ def test_accuracy_panel_official_assets_never_flagged(client):
     assert r["officialRecognised"] == r["officialTested"]
     assert r["mentionsFlagged"] == 0
     assert r["precision"] >= 0.95 and r["recall"] >= 0.85
+
+
+# ---- cross-store twin (L5) and official suggestions for unregistered brands ----
+
+def _twin_ctx(profiles):
+    """Like Swiggy: the official app is verified on Google Play only; no App Store developer is known yet."""
+    from dataclasses import replace
+
+    base = profiles["ZentraPay"]
+    return replace(
+        base,
+        official_titles={"zentrapayupibillscards"},
+        publisher_ids_by_platform={"google_play": base.publisher_ids_by_platform["google_play"]},
+        allowlist={k for k in base.allowlist if k[0] != "app_store"},
+    )
+
+
+def test_cross_store_twin_with_legal_entity_publisher_is_likely_official(profiles):
+    ctx = _twin_ctx(profiles)
+    image = ensure_avatar("copy", "test-twin-icon", "x")
+    c = app("id9990001", "ZentraPay: UPI, Bills & Cards", "Zentra Technologies Holdings", "777", platform="app_store",
+            image=image, audience=2_500_000)
+    ev = evaluate(c, ctx, TODAY)
+    assert ev.status == "LIKELY_OFFICIAL" and ev.official.level == 5
+
+
+def test_twin_without_audience_is_still_scored(profiles):
+    """A copycat with the same title and icon but no established audience is not treated as official."""
+    ctx = _twin_ctx(profiles)
+    image = ensure_avatar("copy", "test-twin-icon", "x")
+    c = app("id9990002", "ZentraPay: UPI, Bills & Cards", "Copycat Apps", "778", platform="app_store", image=image, audience=40)
+    ev = evaluate(c, ctx, TODAY)
+    assert not ev.excluded and flagged(ev)
+
+
+def test_suggest_official_for_unregistered_brand():
+    from app.services.search import suggest_official
+
+    blank = BrandContext(brand_id="adhoc", name="Acme Pay", aliases=["Acme Pay"], domains=[], description="", logo_ref=None,
+                         publisher_ids=set(), publisher_names=set(), allowlist=set())
+    def live(platform, handle, title, publisher, pid, audience):
+        c = app(handle, title, publisher, pid, platform=platform, audience=audience)
+        c.source_id = "src_play" if platform == "google_play" else "src_appstore"
+        return c
+    cands = [
+        live("google_play", "com.acmepay.app", "Acme Pay: UPI", "Acme Pay", "DEV1", 5_000_000),
+        live("google_play", "com.acmepay.merchant", "Acme Pay for Business", "Acme Pay", "DEV1", 200_000),
+        live("google_play", "com.fake.acmepay", "Acme Pay Customer Care", "Help Apps", "DEV9", 50),
+        live("app_store", "id100", "Acme Pay: UPI", "Acme Technologies Pvt Ltd", "AP1", 300_000),
+    ]
+    s = suggest_official("Acme Pay", cands, blank)
+    ids = {a["packageId"] for a in s["apps"]}
+    assert {"com.acmepay.app", "com.acmepay.merchant", "id100"} <= ids  # incl. the App Store twin
+    assert "com.fake.acmepay" not in ids

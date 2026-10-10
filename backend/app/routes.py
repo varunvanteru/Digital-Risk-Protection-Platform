@@ -215,6 +215,45 @@ def create_brand(body: BrandIn, db: Session = Depends(get_db)):
     return brand_out(brand)
 
 
+class QuickRegisterIn(BaseModel):
+    name: str = Field(min_length=2, max_length=60)
+    publishers: list[str] = Field(default_factory=list)
+    apps: list[AppIn] = Field(default_factory=list)
+    description: str | None = None
+
+
+@router.post("/brands/from-search", status_code=201)
+def register_from_search(body: QuickRegisterIn, db: Session = Depends(get_db)):
+    """
+    Register a brand from Quick check suggestions the analyst confirmed. The brand is not made
+    active, so the dashboard stays on the current brand. Its apps are validated on the stores.
+    """
+    if not body.apps:
+        bad_request("apps", "Pick at least one official app")
+    titles = ", ".join(dict.fromkeys(a.name for a in body.apps if a.name))
+    description = (body.description or "").strip()
+    if len(description) < 50:
+        description = f"{body.name.strip()} official apps registered from Quick check: {titles}."[:2000]
+        if len(description) < 50:
+            description = description.ljust(50, ".")
+    publishers = list(dict.fromkeys(p.strip() for p in body.publishers if p.strip()))
+    brand_in = BrandIn(
+        name=body.name.strip(),
+        keywords=[body.name.strip().lower()],
+        description=description,
+        publisher=publishers[0] if publishers else None,
+        publisherAliases=publishers[1:],
+        apps=body.apps,
+    )
+    active = current_brand(db)
+    created = create_brand(brand_in, db)
+    # keep the dashboard on the brand the analyst was working on
+    for b in db.scalars(select(Brand)).all():
+        b.is_active = b.id == active.id
+    db.commit()
+    return created
+
+
 @router.post("/brands/{brand_id}/activate")
 def activate_brand(brand_id: str, db: Session = Depends(get_db)):
     brand = db.get(Brand, brand_id)

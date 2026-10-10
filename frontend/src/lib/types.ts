@@ -103,8 +103,8 @@ export interface EvidenceChecks {
   officialDeveloperMatch?: boolean;
   publisherMatch?: boolean | null;
   nameSimilarity?: number;
-  iconSimilarity?: number;
-  descriptionSimilarity?: number;
+  iconSimilarity?: number | null;
+  descriptionSimilarity?: number | null;
   suspiciousKeywords?: string[];
   contactMismatch?: boolean;
 }
@@ -290,6 +290,16 @@ export interface SearchResponse {
   official: OfficialResult[];
   officialSkipped: { platform: Platform; handle: string; displayName: string; url: string }[];
   nameAnalysis: QuickCheck["result"];
+  /** Unregistered brands only: probable official publisher and apps, to confirm before registering. */
+  suggestedOfficial: SuggestedOfficial | null;
+}
+
+export interface SuggestedOfficial {
+  brandName: string;
+  publishers: { platform: Platform; name: string; id: string | null }[];
+  apps: { platform: Platform; packageId: string; name: string; publisher: string; publisherId: string | null; audience: number; iconUrl: string | null }[];
+  description: string;
+  note: string;
 }
 /** A candidate verified as the brand's own before scoring. Risk is always 0. */
 export interface OfficialResult {
@@ -302,7 +312,7 @@ export interface OfficialResult {
   publisher: string | null;
   publisherId: string | null;
   status: "OFFICIAL" | "LIKELY_OFFICIAL";
-  level: 1 | 2 | 3 | 4;
+  level: 1 | 2 | 3 | 4 | 5;
   confidence: number;
   evidence: string[];
   inProfile: boolean;

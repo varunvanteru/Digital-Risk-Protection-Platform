@@ -194,6 +194,7 @@ const LEVEL_LABEL: Record<number, string> = {
   2: "Matched by official URL",
   3: "Verified developer account",
   4: "Publisher + supporting metadata",
+  5: "Same app on another store",
 };
 
 function OfficialAssets({ data }: { data: SearchResponse }) {
@@ -278,12 +279,91 @@ function OfficialAssets({ data }: { data: SearchResponse }) {
   );
 }
 
-function Results({ data }: { data: SearchResponse }) {
-  const n = data.results.length;
-  const flagged = data.results.filter((r) => r.status === "SUSPICIOUS" || r.status === "LOOKALIKE").length;
+function SuggestedOfficialCard({ data, onRegistered }: { data: SearchResponse; onRegistered: () => void }) {
+  const s = data.suggestedOfficial!;
+  const { refresh } = useStore();
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(s.apps.map((a) => `${a.platform}:${a.packageId}`)));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function register() {
+    setBusy(true);
+    setError(null);
+    try {
+      const apps = s.apps.filter((a) => picked.has(`${a.platform}:${a.packageId}`));
+      await api.registerFromSearch({
+        name: s.brandName,
+        publishers: Array.from(new Set(s.publishers.map((p) => p.name))),
+        apps: apps.map((a) => ({ platform: a.platform, packageId: a.packageId, name: a.name })),
+        description: s.description,
+      });
+      await refresh();
+      onRegistered();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not register the brand");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="mt-4 overflow-hidden">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-surface-2/60 px-4 py-3">
+        <div className="max-w-3xl">
+          <h2 className="text-[13.5px] font-semibold text-ink">
+            Probably {s.brandName}&apos;s own apps · not verified yet
+          </h2>
+          <p className="mt-0.5 text-[12.5px] text-ink-2">
+            {s.brandName} is not a registered brand, so nothing can be verified as official yet. These live store apps come from the developer named like
+            the brand with the most installs ({s.publishers.map((p) => p.name).join(", ")}). Confirm them to register {s.brandName}: each app is then
+            checked on its store, and its developer account is used to recognise every other official app.
+          </p>
+        </div>
+        <Button variant="primary" onClick={register} disabled={busy || picked.size === 0}>
+          {busy ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}
+          Register {s.brandName} and verify
+        </Button>
+      </header>
+      {error && <p className="border-b border-line bg-crit-bg px-4 py-2 text-[12.5px] text-crit">{error}</p>}
+      <ul className="grid sm:grid-cols-2 xl:grid-cols-3 [&>li]:border-b [&>li]:border-r [&>li]:border-line">
+        {s.apps.map((a) => {
+          const key = `${a.platform}:${a.packageId}`;
+          const on = picked.has(key);
+          return (
+            <li key={key}>
+              <label className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-surface-2/60">
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() => setPicked((cur) => { const n = new Set(cur); if (n.has(key)) n.delete(key); else n.add(key); return n; })}
+                  className="size-4 accent-[var(--accent)]"
+                />
+                <BrandMark variant="official" size={28} initials={initialsOf(a.name)} src={mediaUrl(a.iconUrl)} />
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-medium text-ink">{a.name}</span>
+                  <span className="flex items-center gap-1.5 truncate text-[11.5px] text-ink-3">
+                    <PlatformLogo platform={a.platform} size={11} />
+                    <span className="truncate font-mono">{a.packageId}</span>
+                  </span>
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
+function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void }) {
+  const suggested = new Set((data.suggestedOfficial?.apps ?? []).map((a) => `${a.platform}:${a.packageId}`));
+  const shown = data.results.filter((r) => !suggested.has(`${r.platform}:${r.handle}`));
+  const n = shown.length;
+  const flagged = shown.filter((r) => r.status === "SUSPICIOUS" || r.status === "LOOKALIKE").length;
+  const socialSimulatedEmpty = data.platforms.filter((p) => p.sources.every((s) => s.state === "simulated") && p.found === 0 && p.official === 0).length;
   return (
     <>
       <OfficialAssets data={data} />
+      {data.suggestedOfficial && <SuggestedOfficialCard data={data} onRegistered={onRerun} />}
       <Card className="mt-4">
         <CardHeader
           title={
@@ -303,6 +383,12 @@ function Results({ data }: { data: SearchResponse }) {
           }
         />
         <PlatformStatus data={data} />
+        {socialSimulatedEmpty > 0 && (
+          <p className="border-b border-line bg-surface-2/40 px-4 py-2 text-[12px] text-ink-2">
+            {socialSimulatedEmpty} platform{socialSimulatedEmpty === 1 ? "" : "s"} returned nothing: they run on simulated sample data, which only contains
+            the demo brands (ZentraPay, PhonePe). Live results come from Google Play and the App Store.
+          </p>
+        )}
         {n === 0 ? (
           <EmptyState icon={<SearchX />} title="Nothing suspicious found">
             No account or app on the selected platforms resembles &ldquo;{data.searchedFor}&rdquo;.
@@ -320,7 +406,7 @@ function Results({ data }: { data: SearchResponse }) {
                 </tr>
               </thead>
               <tbody>
-                {data.results.map((r) => (
+                {shown.map((r) => (
                   <tr key={`${r.platform}:${r.handle}`} className={clsx("border-b border-line align-top last:border-0", r.status === "MENTION" && "opacity-75")}>
                     <td className="px-4 py-3">
                       <ScoreCell score={r.breakdown.score} severity={r.breakdown.severity} />
@@ -487,7 +573,7 @@ export default function QuickCheckPage() {
           </EmptyState>
         </Card>
       ) : data ? (
-        <Results data={data} />
+        <Results data={data} onRerun={() => run(data.query)} />
       ) : (
         <Card className="mt-4">
           <EmptyState icon={<Search />} title="Search for look-alikes">

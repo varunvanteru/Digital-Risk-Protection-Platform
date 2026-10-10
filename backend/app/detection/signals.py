@@ -46,6 +46,7 @@ class BrandContext:
     publisher_ids_by_platform: dict[str, set[str]] = field(default_factory=dict)
     official_namespaces: set[str] = field(default_factory=set)
     official_icons: list[str] = field(default_factory=list)
+    official_titles: set[str] = field(default_factory=set)  # normalised store titles of verified official apps
 
     @property
     def cores(self) -> list[str]:
@@ -248,8 +249,9 @@ def evaluate(c: Candidate, ctx: BrandContext, today: date) -> Evaluation:
         "officialDeveloperMatch": False,
         "publisherMatch": publisher_match,
         "nameSimilarity": round(sig["name"], 2),
-        "iconSimilarity": round(sig["logo"], 2),
-        "descriptionSimilarity": round(sig["text"], 2),
+        # None = nothing to compare with (no logo or official icon / description on record)
+        "iconSimilarity": round(sig["logo"], 2) if (ctx.logo_ref or ctx.official_icons) else None,
+        "descriptionSimilarity": round(sig["text"], 2) if ctx.description else None,
         "suspiciousKeywords": hits,
         "contactMismatch": bool(re.search(OFF_PLATFORM, contact_text)) or lookalike,
     }

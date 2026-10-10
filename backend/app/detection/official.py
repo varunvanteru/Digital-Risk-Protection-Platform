@@ -11,6 +11,8 @@ Levels, strongest first:
   L3  published by a verified official developer account (store ID)  -> OFFICIAL
   L4  official publisher NAME (normalised) + supporting metadata,
       and no known developer ID on that store contradicts it          -> LIKELY_OFFICIAL
+  L5  cross-store twin: same title as a VERIFIED official app on another
+      store, same icon, established audience, nothing contradicting   -> LIKELY_OFFICIAL
 
 A publisher name that matches while the developer ID is known and different is
 the opposite: a copied identity, handled as a fraud signal in signals.py.
@@ -38,6 +40,15 @@ def normalize_publisher(name: str | None) -> str:
     s = re.sub(r"[^\w\s]", " ", s)
     tokens = [t for t in s.split() if t not in LEGAL_SUFFIXES]
     return " ".join(tokens)
+
+
+def normalize_title(title: str | None) -> str:
+    """Store titles compared across stores: case, punctuation and spacing ignored."""
+    return re.sub(r"[^\w]+", "", unicodedata.normalize("NFKC", title or "").lower())
+
+
+# An established audience (installs or ratings) that impersonation apps do not reach before removal.
+ESTABLISHED_AUDIENCE = 100_000
 
 
 def package_namespace(package_id: str | None) -> str | None:
@@ -126,4 +137,24 @@ def verify_official(
                 [f"Publisher “{c.publisher}” matches the official publisher", *support,
                  "Excluded before risk scoring; confirm and add to the profile"],
             )
+
+    # L5: the same app on another store under the company's legal entity (a different publisher name)
+    if (
+        not scam_indicators
+        and not (known_ids and c.publisher_id and c.publisher_id not in known_ids)
+        and c.audience >= ESTABLISHED_AUDIENCE
+        and icon_score is not None
+        and icon_score >= 0.9
+        and normalize_title(c.display_name) in ctx.official_titles
+    ):
+        return OfficialMatch(
+            "LIKELY_OFFICIAL", 5, 0.8,
+            [
+                f"Same title as a verified official app on another store (“{c.display_name}”)",
+                f"Icon matches the official icon ({round(icon_score * 100)}%)",
+                f"Established audience ({c.audience:,} installs or ratings)",
+                f"Publisher “{c.publisher}” is not on record yet: confirm and add to the profile",
+                "Excluded before risk scoring",
+            ],
+        )
     return None

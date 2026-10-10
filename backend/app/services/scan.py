@@ -32,7 +32,7 @@ from ..connectors.stores import AppStoreLive, GooglePlayLive
 from ..db import SessionLocal
 from ..detection.images import _cached, official_logo_ref
 from ..detection.lookalike import name_similarity
-from ..detection.official import normalize_publisher, package_namespace
+from ..detection.official import normalize_publisher, normalize_title, package_namespace
 from ..detection.scoring import score_detection
 from ..detection.signals import BrandContext, Evaluation, evaluate, is_relevant
 from ..models import Brand, Detection, DetectionEvent, OfficialAsset, Scan, Source, SourceCache
@@ -100,6 +100,11 @@ def brand_context(db: Session, brand: Brand) -> BrandContext:
         publisher_ids_by_platform=by_platform,
         official_namespaces={ns for a in assets if a.platform == "google_play" and (ns := package_namespace(a.identifier))},
         official_icons=[a.icon_url for a in assets if a.kind == "app" and a.icon_url],
+        official_titles={
+            normalize_title(a.store_title)
+            for a in assets
+            if a.kind == "app" and a.store_title and a.validation_status == "verified"
+        },
     )
 
 

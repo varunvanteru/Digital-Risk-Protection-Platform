@@ -34,8 +34,8 @@ function Flag({ label, value }: { label: string; value: boolean | null | undefin
   );
 }
 
-function Pct({ label, value }: { label: string; value?: number }) {
-  if (value === undefined) return null;
+function Pct({ label, value }: { label: string; value?: number | null }) {
+  if (value === undefined || value === null) return null;
   return (
     <span className="whitespace-nowrap">
       <span className="text-ink-3">{label} </span>
@@ -53,7 +53,7 @@ export function EvidenceStrip({ checks, app }: { checks: EvidenceChecks; app: bo
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px]">
       <Pct label="Name" value={checks.nameSimilarity} />
       <Pct label={app ? "Icon" : "Picture"} value={checks.iconSimilarity} />
-      {checks.descriptionSimilarity !== undefined && checks.descriptionSimilarity >= 0.3 && (
+      {checks.descriptionSimilarity != null && checks.descriptionSimilarity >= 0.3 && (
         <Pct label="Text" value={checks.descriptionSimilarity} />
       )}
       <Flag label={app ? "Official ID" : "Official handle"} value={checks.officialIdMatch ?? false} />
@@ -80,7 +80,7 @@ export function EvidenceTable({ checks, app }: { checks: EvidenceChecks; app: bo
         {v ? "Yes" : "No"}
       </span>
     );
-  const pctCell = (v?: number) => (v === undefined ? <span className="text-ink-3">–</span> : <span className="tabular font-medium text-ink">{Math.round(v * 100)}%</span>);
+  const pctCell = (v?: number | null) => (v === undefined || v === null ? <span className="text-ink-3">Not compared</span> : <span className="tabular font-medium text-ink">{Math.round(v * 100)}%</span>);
   const rows: [string, React.ReactNode][] = [
     [app ? "Official app ID" : "Official handle", yesNo(checks.officialIdMatch ?? false, true)],
     ...(app ? ([["Official developer account", yesNo(checks.officialDeveloperMatch ?? false, true)], ["Publisher matches official", yesNo(checks.publisherMatch, true)]] as [string, React.ReactNode][]) : []),

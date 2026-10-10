@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
 
 import httpx
@@ -35,11 +36,36 @@ class GooglePlayLive:
         self.country = country
         self.hits = hits
 
+    def _page_ids(self, keyword: str) -> list[str]:
+        """App IDs in the order the Play search page links them (the featured result comes first)."""
+        r = httpx.get(
+            "https://play.google.com/store/search",
+            params={"q": keyword, "c": "apps", "hl": "en", "gl": self.country},
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=settings.source_timeout_s,
+            verify=tls_context(),
+            follow_redirects=True,
+        )
+        r.raise_for_status()
+        return list(dict.fromkeys(re.findall(r"/store/apps/details\?id=([A-Za-z0-9_.]+)", r.text)))
+
     def fetch(self, keywords: list[str]) -> list[Candidate]:
         seen: dict[str, dict] = {}
         try:
             for kw in keywords:
-                for r in play_search(kw, lang="en", country=self.country, n_hits=self.hits):
+                results = play_search(kw, lang="en", country=self.country, n_hits=self.hits)
+                missing = [r for r in results if not r.get("appId")]
+                if missing:
+                    # The scraper drops the ID of the featured top result, usually the brand's main app.
+                    # Recover it from the page's own links; enrich() later confirms the title matches.
+                    try:
+                        known = {r["appId"] for r in results if r.get("appId")}
+                        spare = [i for i in self._page_ids(kw) if i not in known and i not in seen]
+                        for r, app_id in zip(missing, spare):
+                            r["appId"], r["_recovered"] = app_id, True
+                    except Exception:
+                        pass  # keep the rest of the results
+                for r in results:
                     if r.get("appId"):
                         seen.setdefault(r["appId"], r)
         except Exception as e:  # network, parsing or rate limiting
@@ -67,6 +93,10 @@ class GooglePlayLive:
             d = play_app(c.handle, lang="en", country=self.country)
         except Exception:
             return  # search fields are enough to score
+        if d.get("title") and c.display_name and d["title"].strip().lower() != c.display_name.strip().lower():
+            # A recovered ID that points at a different app: trust the store's own record for this ID.
+            c.display_name = d["title"]
+            c.image = d.get("icon") or c.image
         c.bio = (d.get("description") or c.bio)[:2000]
         c.audience = int(d.get("realInstalls") or d.get("minInstalls") or 0)
         c.created_on = _parse_play_date(d.get("released"))

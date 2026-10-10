@@ -79,6 +79,77 @@ def _reference(db: Session, q: ParsedQuery) -> tuple[BrandContext, Brand | None]
     )
 
 
+LIVE_STORE_SOURCES = {"src_play", "src_appstore"}
+
+
+def suggest_official(query: str, candidates: list[Candidate], ctx: BrandContext) -> dict | None:
+    """
+    For a brand that is not registered: propose its probable official publisher and apps,
+    for the analyst to confirm. Never trusted automatically.
+
+    Per store, among live results that carry the brand name, group apps by developer and
+    keep the developer whose normalised name contains the brand name with the largest
+    audience. Simulated data is never used for suggestions.
+    """
+    from ..detection.official import normalize_publisher
+
+    q = normalize_publisher(query)
+    if not q:
+        return None
+    q_tokens = q.split()
+    picked: list[dict] = []
+    publishers: list[dict] = []
+    for platform in ("google_play", "app_store"):
+        groups: dict[str, list[Candidate]] = {}
+        for c in candidates:
+            if c.platform != platform or c.source_id not in LIVE_STORE_SOURCES or not c.publisher:
+                continue
+            pub_tokens = normalize_publisher(c.publisher).split()
+            # brand name as whole words in the publisher name, e.g. "hdfc bank" in "hdfc bank"
+            if not any(pub_tokens[i : i + len(q_tokens)] == q_tokens for i in range(len(pub_tokens))):
+                continue
+            if name_similarity([c.display_name, c.handle], ctx.aliases)[0] < 0.6:
+                continue
+            groups.setdefault(c.publisher_id or normalize_publisher(c.publisher), []).append(c)
+        if not groups:
+            continue
+        best = max(groups.values(), key=lambda apps: sum(a.audience for a in apps))
+        best.sort(key=lambda a: a.audience, reverse=True)
+        publishers.append({"platform": platform, "name": best[0].publisher, "id": best[0].publisher_id})
+        picked.extend(
+            {"platform": a.platform, "packageId": a.handle, "name": a.display_name, "publisher": a.publisher,
+             "publisherId": a.publisher_id, "audience": a.audience, "iconUrl": a.image}
+            for a in best[:6]
+        )
+    # The same app on the other store often has the legal entity as publisher (not containing the
+    # brand name). Offer exact-title twins of the picked apps too; the analyst confirms them.
+    from ..detection.official import normalize_title
+
+    titles = {(a["platform"], normalize_title(a["name"])) for a in picked}
+    have = {(a["platform"], a["packageId"]) for a in picked}
+    for c in candidates:
+        if c.source_id not in LIVE_STORE_SOURCES or (c.platform, c.handle) in have:
+            continue
+        other = "app_store" if c.platform == "google_play" else "google_play"
+        if (other, normalize_title(c.display_name)) in titles:
+            have.add((c.platform, c.handle))
+            picked.append({"platform": c.platform, "packageId": c.handle, "name": c.display_name, "publisher": c.publisher,
+                           "publisherId": c.publisher_id, "audience": c.audience, "iconUrl": c.image})
+            if c.publisher and not any(p["platform"] == c.platform and p["name"] == c.publisher for p in publishers):
+                publishers.append({"platform": c.platform, "name": c.publisher, "id": c.publisher_id})
+    if not picked:
+        return None
+    top = max(picked, key=lambda a: a["audience"])
+    desc = next((c.bio for c in candidates if c.handle == top["packageId"] and c.bio), "")
+    return {
+        "brandName": query.strip(),
+        "publishers": publishers,
+        "apps": picked,
+        "description": desc[:600],
+        "note": "Suggested from live store results: the developer named like the brand with the most installs. Confirm before registering.",
+    }
+
+
 def run_search(db: Session, raw: str, platforms: list[str]) -> dict:
     q = parse_query(raw)
     wanted = PLATFORMS if not platforms or "all" in platforms else [p for p in PLATFORMS if p in platforms]
@@ -187,4 +258,6 @@ def run_search(db: Session, raw: str, platforms: list[str]) -> dict:
         # Kept for older clients: same entries, short form.
         "officialSkipped": [{"platform": o["platform"], "handle": o["handle"], "displayName": o["displayName"], "url": o["url"]} for o in official],
         "nameAnalysis": analyse_name(q.name, ctx.aliases).to_dict(),
+        # Only for brands that are not registered yet.
+        "suggestedOfficial": suggest_official(q.name, candidates, ctx) if brand is None else None,
     }

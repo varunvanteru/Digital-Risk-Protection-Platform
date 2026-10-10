@@ -74,6 +74,8 @@ export const api = {
   saveBrand: (body: BrandInput) => request<BrandProfile>("/api/brand", json("PUT", body)),
   brands: () => request<BrandSummary[]>("/api/brands"),
   createBrand: (body: BrandInput) => request<BrandProfile>("/api/brands", json("POST", body)),
+  registerFromSearch: (body: { name: string; publishers: string[]; apps: { platform: Platform; packageId: string; name: string }[]; description?: string }) =>
+    request<BrandProfile>("/api/brands/from-search", json("POST", body)),
   activateBrand: (id: string) => request<BrandProfile>(`/api/brands/${id}/activate`, { method: "POST" }),
   deleteBrand: (id: string) => request<BrandSummary[]>(`/api/brands/${id}`, { method: "DELETE" }),
   validateBrand: () =>
