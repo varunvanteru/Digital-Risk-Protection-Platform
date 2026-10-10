@@ -13,7 +13,12 @@ class Base(DeclarativeBase):
 
 
 def ensure_database() -> None:
-    """Create the schema if it does not exist. Safe to call on every start."""
+    """
+    Create the schema if it does not exist. Safe to call on every start.
+
+    On shared hosting (e.g. Hostinger) the database is created in the control panel
+    and the user may not create databases; if it already exists, that is fine.
+    """
     conn = pymysql.connect(
         host=settings.mysql_host,
         port=settings.mysql_port,
@@ -22,10 +27,12 @@ def ensure_database() -> None:
     )
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                f"CREATE DATABASE IF NOT EXISTS `{settings.mysql_db}` "
-                "CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
-            )
+            cur.execute("SELECT 1 FROM information_schema.schemata WHERE schema_name = %s", (settings.mysql_db,))
+            if cur.fetchone() is None:
+                # utf8mb4_unicode_ci exists on both MySQL and MariaDB.
+                cur.execute(
+                    f"CREATE DATABASE `{settings.mysql_db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                )
     finally:
         conn.close()
 

@@ -12,6 +12,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from .config import settings
+from .media_store import save_image
 
 BRAND_FILL = (15, 92, 86)
 RECOLOR_FILL = (61, 138, 128)
@@ -79,9 +80,8 @@ def _variant(kind: str, label: str) -> Image.Image:
 
 def ensure_brand_logo(brand_id: str) -> str:
     path = settings.media_dir / "brand" / f"{brand_id}.png"
-    path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
-        draw_logo().save(path)
+        save_image(f"brand/{brand_id}.png", draw_logo())
     return f"/media/brand/{brand_id}.png"
 
 
@@ -89,9 +89,8 @@ def ensure_avatar(kind: str, key: str, label: str) -> str:
     """Generate (once) and return the media path for a dataset avatar or icon."""
     name = f"{slug(key)}.png"
     path = settings.media_dir / "dataset" / name
-    path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
-        _variant(kind, label).save(path)
+        save_image(f"dataset/{name}", _variant(kind, label))
     return f"/media/dataset/{name}"
 
 
@@ -107,7 +106,6 @@ def ensure_avatar_from_base(kind: str, key: str, base_path: Path, label: str) ->
     name = f"{slug(key)}-{stamp}.png"
     path = settings.media_dir / "dataset" / name
     if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
         img = Image.open(base_path).convert("RGBA").resize((SIZE, SIZE))
         if kind == "copy":
             img = img.resize((180, 180)).resize((SIZE, SIZE)).filter(ImageFilter.GaussianBlur(0.8))
@@ -123,5 +121,5 @@ def ensure_avatar_from_base(kind: str, key: str, base_path: Path, label: str) ->
             d = ImageDraw.Draw(img)
             d.rectangle([0, int(SIZE * 0.75), SIZE, SIZE], fill=(124, 45, 18))
             d.text((SIZE / 2, SIZE * 0.875), "SUPPORT", fill="white", font=_font(34), anchor="mm")
-        img.save(path)
+        save_image(f"dataset/{name}", img)
     return f"/media/dataset/{name}"

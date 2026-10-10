@@ -60,7 +60,11 @@ npm install
 npm run dev                       # http://localhost:3000, API defaults to http://localhost:8100
 ```
 
-Set `NEXT_PUBLIC_API_URL` if the API runs elsewhere.
+Production builds use `frontend/.env.production` (`https://api.impostr.live`). For local runs, create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:8100`; it overrides the production value and is not committed.
+
+## Deploy
+
+Live at **https://impostr.live**: website on Hostinger (Node.js), API on Render, MySQL on Hostinger. Step-by-step in [DEPLOY.md](DEPLOY.md).
 
 ## Tests
 
@@ -69,7 +73,7 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
-97 tests: allowlist-first regression tests, engine unit tests, connector parsing on recorded store responses, and end-to-end API tests against MySQL. The API tests use a separate `brandshield_test` schema, dropped afterwards.
+101 tests: allowlist-first regression tests, engine unit tests, connector parsing on recorded store responses, and end-to-end API tests against MySQL. The API tests use a separate `brandshield_test` schema, dropped afterwards.
 
 ## Networks that inspect HTTPS
 

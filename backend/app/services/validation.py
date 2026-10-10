@@ -104,12 +104,10 @@ def validate_brand_assets(db: Session, brand: Brand, force: bool = False) -> dic
         icon = next((a.icon_url for a in brand.assets if a.kind == "app" and a.icon_url and a.validation_status == "verified"), None)
         if icon:
             from ..detection.images import load_image
+            from ..media_store import save_image
 
             img = load_image(icon)
             if img is not None:
-                path = settings.media_dir / "brand" / f"{brand.id}.png"
-                path.parent.mkdir(parents=True, exist_ok=True)
-                img.save(path)
-                brand.logo_path = f"/media/brand/{brand.id}.png"
+                brand.logo_path = save_image(f"brand/{brand.id}.png", img)
     db.commit()
     return summary

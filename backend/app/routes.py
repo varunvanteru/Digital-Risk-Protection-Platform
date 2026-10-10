@@ -312,10 +312,9 @@ async def upload_logo(file: UploadFile = File(...), db: Session = Depends(get_db
     if img.width < 64 or img.height < 64:
         bad_request("logo", f"Image is {img.width}×{img.height} px. Use at least 64×64 px.")
     brand = current_brand(db)
-    path = settings.media_dir / "brand" / f"{brand.id}.png"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    img.convert("RGBA").save(path)
-    brand.logo_path = f"/media/brand/{brand.id}.png"
+    from .media_store import save_image
+
+    brand.logo_path = save_image(f"brand/{brand.id}.png", img.convert("RGBA"))
     brand.updated_at = utcnow()
     db.commit()
     from .detection.images import _cached

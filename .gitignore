@@ -1,2 +1,5 @@
 # Real brand logos used for manual testing (trademarks; not part of the project)
 manual-test/
+
+# Deploy packages (built by scripts/package_frontend.py)
+dist/

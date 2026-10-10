@@ -153,7 +153,7 @@ function ScanStatus() {
   );
 }
 
-function LoadingFrame({ error, onRetry }: { error?: string; onRetry: () => void }) {
+function LoadingFrame({ error, waking, onRetry }: { error?: string; waking?: boolean; onRetry: () => void }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex h-[52px] items-center gap-2.5 border-b border-line px-4 sm:px-6">
@@ -177,7 +177,7 @@ function LoadingFrame({ error, onRetry }: { error?: string; onRetry: () => void 
         ) : (
           <div className="flex items-center gap-2 text-[13px] text-ink-3" role="status">
             <LoaderCircle className="size-4 animate-spin" />
-            Loading
+            {waking ? "Starting the server. This can take up to a minute after a quiet period." : "Loading"}
           </div>
         )}
       </main>
@@ -187,7 +187,14 @@ function LoadingFrame({ error, onRetry }: { error?: string; onRetry: () => void 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { load, retry } = useLoadState();
-  if (load.kind !== "ready") return <LoadingFrame error={load.kind === "error" ? load.message : undefined} onRetry={retry} />;
+  if (load.kind !== "ready")
+    return (
+      <LoadingFrame
+        error={load.kind === "error" ? load.message : undefined}
+        waking={load.kind === "loading" && load.waking}
+        onRetry={retry}
+      />
+    );
   return <ReadyShell>{children}</ReadyShell>;
 }
 

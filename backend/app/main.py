@@ -9,6 +9,7 @@ from sqlalchemy import select, update
 from .config import settings
 from .db import Base, SessionLocal, engine, ensure_database
 from .db_migrate import add_missing_columns
+from .media_store import restore_media
 from .models import Scan
 from .routes import router
 from .seed import seed
@@ -25,6 +26,9 @@ async def lifespan(_: FastAPI):
     Base.metadata.create_all(engine)
     add_missing_columns(engine)
     settings.media_dir.mkdir(parents=True, exist_ok=True)
+    restored = restore_media()
+    if restored:
+        logging.getLogger(__name__).info("Restored %d media files from the database", restored)
     with SessionLocal() as db:
         seed(db)
         # A scan interrupted by a restart can never finish; close it out.

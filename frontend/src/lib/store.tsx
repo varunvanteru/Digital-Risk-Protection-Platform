@@ -19,7 +19,11 @@ interface Store {
   setOutage: (id: string, on: boolean) => Promise<void>;
 }
 
-type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready" };
+type LoadState = { kind: "loading"; waking?: boolean } | { kind: "error"; message: string } | { kind: "ready" };
+
+// A hosted backend on a free tier sleeps when idle and takes up to a minute to start.
+const WAKE_RETRY_MS = 3000;
+const WAKE_TIMEOUT_MS = 90_000;
 
 const Ctx = createContext<(Store & { load: LoadState; retry: () => void }) | null>(null);
 
@@ -46,9 +50,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const initial = useCallback(() => {
     setLoad({ kind: "loading" });
-    refresh()
-      .then(() => setLoad({ kind: "ready" }))
-      .catch((e: unknown) => setLoad({ kind: "error", message: e instanceof Error ? e.message : "Something went wrong" }));
+    const started = Date.now();
+    const attempt = () =>
+      refresh()
+        .then(() => setLoad({ kind: "ready" }))
+        .catch((e: unknown) => {
+          // Unreachable or 502/503 while the server boots: keep trying for a while.
+          const booting = e instanceof ApiError && (e.status === 0 || e.status === 502 || e.status === 503);
+          if (booting && Date.now() - started < WAKE_TIMEOUT_MS) {
+            setLoad({ kind: "loading", waking: true });
+            window.setTimeout(attempt, WAKE_RETRY_MS);
+          } else {
+            setLoad({ kind: "error", message: e instanceof Error ? e.message : "Something went wrong" });
+          }
+        });
+    attempt();
   }, [refresh]);
 
   useEffect(initial, [initial]);

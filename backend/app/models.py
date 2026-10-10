@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Double, Float, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -160,3 +160,14 @@ class SourceCache(Base):
     query_key: Mapped[str] = mapped_column(String(255))
     fetched_at: Mapped[datetime] = mapped_column(DateTime)
     payload: Mapped[list] = mapped_column(JSON, default=list)
+
+
+class MediaFile(Base):
+    """Copy of an image under media/, so it survives hosts whose disk is wiped on restart."""
+
+    __tablename__ = "media_files"
+
+    path: Mapped[str] = mapped_column(String(255), primary_key=True)  # relative to media/
+    data: Mapped[bytes] = mapped_column(LargeBinary(16_000_000))  # MEDIUMBLOB on MySQL
+    # Demo avatar names derive from the base image's mtime; DOUBLE keeps it exact (FLOAT rounds it).
+    mtime: Mapped[float] = mapped_column(Double)
