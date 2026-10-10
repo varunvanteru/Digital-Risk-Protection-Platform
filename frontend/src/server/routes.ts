@@ -5,6 +5,8 @@
  */
 
 import { createHash, timingSafeEqual } from "node:crypto";
+import { ensureWorkspace } from "./init";
+import { currentWorkspace, inWorkspace } from "./workspace";
 import sharp from "sharp";
 import { settings } from "./config";
 import { exec, js, one, q } from "./db";
@@ -14,7 +16,7 @@ import { scoreDetection } from "./detection/scoring";
 import { runEvaluation } from "./evaluation";
 import { appIdError, cleanHandle, domainError, handleError, nameError, SOCIAL_PLATFORMS } from "./inputRules";
 import { saveMedia } from "./media";
-import { allBrands, currentBrand, getBrand, type Brand } from "./repo";
+import { allBrands, currentBrand, getBrand, ownBrand, type Brand } from "./repo";
 import { brandContext, isScanning, startScan } from "./services/scan";
 import { PLATFORMS, runSearch } from "./services/search";
 import { validateBrandAssets } from "./services/validation";
@@ -223,15 +225,15 @@ async function listBrands() {
 /** Register another brand and make it the active one. */
 async function createBrand(body: BrandIn) {
   checkBrandBody(body);
-  if (await one("SELECT id FROM brands WHERE LOWER(name) = ?", [body.name.trim().toLowerCase()])) {
+  if (await one("SELECT id FROM brands WHERE LOWER(name) = ? AND workspace_id <=> ?", [body.name.trim().toLowerCase(), currentWorkspace()])) {
     badRequest("name", "A brand with this name already exists. Switch to it instead.");
   }
   const slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 20) || "brand";
-  const id = `brd_${slug}_${hexId(4)}`;
-  await exec("UPDATE brands SET is_active = 0");
+  const id = `brd_${slug}_${hexId(12)}`; // long enough not to be guessed
+  await exec("UPDATE brands SET is_active = 0 WHERE workspace_id <=> ?", [currentWorkspace()]);
   await exec(
-    "INSERT INTO brands (id, name, aliases, keywords, domains, description, logo_path, legal_name, is_active, updated_at) VALUES (?, ?, '[]', '[]', '[]', '', NULL, NULL, 1, ?)",
-    [id, body.name.trim(), utcnow()],
+    "INSERT INTO brands (id, name, aliases, keywords, domains, description, logo_path, legal_name, is_active, updated_at, workspace_id) VALUES (?, ?, '[]', '[]', '[]', '', NULL, NULL, 1, ?, ?)",
+    [id, body.name.trim(), utcnow(), currentWorkspace()],
   );
   await applyBrand((await getBrand(id))!, body);
   await validateQuietly(id);
@@ -261,21 +263,26 @@ async function registerFromSearch(raw: Body) {
   const active = await currentBrand();
   const created = await createBrand(body);
   // keep the dashboard on the brand the analyst was working on
-  await exec("UPDATE brands SET is_active = (id = ?)", [active.id]);
+  await setActive(active.id);
   return created;
 }
 
+/** Make one brand of the current workspace active (one at a time). */
+async function setActive(id: string) {
+  await exec("UPDATE brands SET is_active = (id = ?) WHERE workspace_id <=> ?", [id, currentWorkspace()]);
+}
+
 async function activateBrand(id: string) {
-  if (!(await getBrand(id))) throw new HttpError(404, "Brand not found");
-  await exec("UPDATE brands SET is_active = (id = ?)", [id]);
+  if (!(await ownBrand(id))) throw new HttpError(404, "Brand not found");
+  await setActive(id);
   return reload(id);
 }
 
 /** Remove a brand with its profile, detections and scans. Another brand becomes active if needed. */
 async function deleteBrand(id: string) {
-  const brand = await getBrand(id);
+  const brand = await ownBrand(id);
   if (!brand) throw new HttpError(404, "Brand not found");
-  const count = Number((await one<{ n: number }>("SELECT COUNT(*) AS n FROM brands"))!.n);
+  const count = Number((await one<{ n: number }>("SELECT COUNT(*) AS n FROM brands WHERE workspace_id <=> ?", [currentWorkspace()]))!.n);
   if (count <= 1) badRequest("brand", "Keep at least one brand");
   await exec("DELETE FROM detections WHERE brand_id = ?", [id]);
   await exec("DELETE FROM scans WHERE brand_id = ?", [id]);
@@ -283,7 +290,7 @@ async function deleteBrand(id: string) {
   await exec("DELETE FROM publishers WHERE brand_id = ?", [id]);
   await exec("DELETE FROM brands WHERE id = ?", [id]);
   if (brand.isActive) {
-    const next = await one<{ id: string }>("SELECT id FROM brands ORDER BY updated_at DESC LIMIT 1");
+    const next = await one<{ id: string }>("SELECT id FROM brands WHERE workspace_id <=> ? ORDER BY updated_at DESC LIMIT 1", [currentWorkspace()]);
     if (next) await exec("UPDATE brands SET is_active = 1 WHERE id = ?", [next.id]);
   }
   return listBrands();
@@ -485,8 +492,8 @@ async function patchSource(id: string, raw: Body) {
 }
 
 async function createScan() {
-  if (isScanning()) throw new HttpError(409, "A scan is already running");
   const brand = await currentBrand();
+  if (isScanning(brand.id)) throw new HttpError(409, "A scan is already running");
   const id = await startScan(brand.id);
   return scanOut(await one("SELECT * FROM scans WHERE id = ?", [id]));
 }
@@ -496,11 +503,15 @@ async function latestScan() {
   const running = await one("SELECT * FROM scans WHERE brand_id = ? AND status = 'running' ORDER BY started_at DESC LIMIT 1", [brand.id]);
   const done = await one("SELECT * FROM scans WHERE brand_id = ? AND status <> 'running' ORDER BY started_at DESC LIMIT 1", [brand.id]);
   const total = Number((await one<{ n: number }>("SELECT COUNT(*) AS n FROM scans WHERE brand_id = ?", [brand.id]))!.n);
-  return { running: running && isScanning() ? scanOut(running) : null, last: scanOut(done), total };
+  return { running: running && isScanning(brand.id) ? scanOut(running) : null, last: scanOut(done), total };
 }
 
 async function getScan(id: string) {
-  const s = await one("SELECT * FROM scans WHERE id = ?", [id]);
+  // Only scans of the current workspace's brands.
+  const s = await one(
+    "SELECT s.* FROM scans s JOIN brands b ON b.id = s.brand_id WHERE s.id = ? AND b.workspace_id <=> ?",
+    [id, currentWorkspace()],
+  );
   if (!s) throw new HttpError(404, "Scan not found");
   return scanOut(s);
 }
@@ -571,8 +582,27 @@ function authorised(method: string, path: string, req: Request): boolean {
 
 const LOCKED = { detail: { field: "auth", message: "This action needs the admin password." } };
 
-/** Dispatch one /api request. `path` is the part after /api/. */
-export async function handle(method: string, path: string, req: Request): Promise<{ status: number; body: unknown }> {
+/** Routes that read or write no workspace data. */
+const SHARED = new Set(["health", "auth", "accuracy"]);
+
+/**
+ * Dispatch one /api request in the caller's workspace. `path` is the part after /api/.
+ * Without `ws` (scripts) only data that belongs to no workspace is visible.
+ */
+export async function handle(method: string, path: string, req: Request, ws?: string): Promise<{ status: number; body: unknown }> {
+  if (!ws || SHARED.has(path)) return dispatch(method, path, req);
+  return inWorkspace(ws, async () => {
+    try {
+      await ensureWorkspace(ws);
+    } catch (e) {
+      console.error("workspace setup failed", e);
+      return { status: 503, body: { detail: "Could not prepare your workspace. Try again." } };
+    }
+    return dispatch(method, path, req);
+  });
+}
+
+async function dispatch(method: string, path: string, req: Request): Promise<{ status: number; body: unknown }> {
   if (path === "auth") {
     if (method === "GET") return { status: 200, body: { required: !!settings.adminPassword } };
     if (method === "POST") {

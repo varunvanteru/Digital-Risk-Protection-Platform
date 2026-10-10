@@ -97,7 +97,9 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[12.5px] font-medium">Security analyst</span>
-            <span className="block truncate text-[11.5px] text-ink-3">Trust &amp; Safety</span>
+            <span className="block truncate text-[11.5px] text-ink-3" title="Brands, scans and results you add are visible only in this browser">
+              Private workspace · this browser
+            </span>
           </span>
         </div>
       </div>

@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { settings } from "../config";
 import { one } from "../db";
+import { currentWorkspace } from "../workspace";
 import { ensureAvatar, ensureAvatarFromBase } from "../demoAssets";
 import { nameSimilarity } from "../detection/lookalike";
 import { candidate, type Candidate, type Connector } from "./base";
@@ -44,7 +45,11 @@ export function loadDataset(name: string): Row[] {
 
 /** Media path of a registered brand's reference image, used to derive simulated impersonator icons. */
 async function brandLogo(name: string): Promise<string | null> {
-  const row = await one<{ logo_path: string | null }>("SELECT logo_path FROM brands WHERE LOWER(name) = ? LIMIT 1", [name.toLowerCase()]);
+  // Only this workspace's brands: another visitor's uploaded logo must never appear here.
+  const row = await one<{ logo_path: string | null }>(
+    "SELECT logo_path FROM brands WHERE LOWER(name) = ? AND workspace_id <=> ? LIMIT 1",
+    [name.toLowerCase(), currentWorkspace()],
+  );
   return row?.logo_path ? row.logo_path.replace(/^\/media\//, "") : null;
 }
 

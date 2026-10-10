@@ -37,6 +37,8 @@ flowchart TD
     DB --> API
 ```
 
+**Private workspaces.** There are no accounts: each browser gets a random workspace ID in an HTTP-only cookie on its first visit, starts with its own copy of the demo brands, and everything it registers, scans or marks is visible only to that browser (`src/server/workspace.ts`). Every API request runs inside its workspace, so no query can skip the filter. Shared across visitors: the source registry and health, cached public store results, and the accuracy test set.
+
 One Next.js app serves the website, the API and the images:
 
 | Part | Where | Stack |

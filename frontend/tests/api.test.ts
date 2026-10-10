@@ -13,15 +13,19 @@ import { handle } from "@/server/routes";
 import { CONNECTORS, fetchWithRetries, sourceState, type SourceRow } from "@/server/services/scan";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-async function call(method: string, path: string, body?: unknown): Promise<{ status: number; body: any }> {
+const WS = "11111111-1111-4111-8111-111111111111"; // this file's private workspace
+const OTHER = "22222222-2222-4222-8222-222222222222"; // another visitor
+
+async function callAs(ws: string, method: string, path: string, body?: unknown): Promise<{ status: number; body: any }> {
   const init: RequestInit = { method };
   if (body instanceof FormData) init.body = body;
   else if (body !== undefined) {
     init.body = JSON.stringify(body);
     init.headers = { "Content-Type": "application/json" };
   }
-  return handle(method, path, new Request(`http://test/api/${path}`, init));
+  return handle(method, path, new Request(`http://test/api/${path}`, init), ws);
 }
+const call = (method: string, path: string, body?: unknown) => callAs(WS, method, path, body);
 const get = async (path: string) => (await call("GET", path)).body;
 
 async function waitForScan(id: string, timeoutMs = 180_000): Promise<any> {
@@ -348,6 +352,35 @@ describe("brands", () => {
       settings.adminPassword = "";
     }
     expect((await get("auth")).required).toBe(false);
+  });
+
+  it("one visitor's brands, scans and detections are invisible to another", async () => {
+    // Visitor 1 registers a brand of their own.
+    const mine = await call("POST", "brands/from-search", {
+      name: "Private Brand Co",
+      publishers: ["Private Brand Co"],
+      apps: [{ platform: "google_play", packageId: "com.privatebrandco.app", name: "Private Brand Co" }],
+    });
+    expect(mine.status).toBe(201);
+    const myDet = (await get("detections"))[0];
+    const myScan = (await get("scans/latest")).last;
+
+    // Visitor 2 starts with only the demo brands and never sees visitor 1's brand.
+    const theirBrands = (await callAs(OTHER, "GET", "brands")).body.map((b: any) => b.name);
+    expect(theirBrands.sort()).toEqual(["PhonePe", "ZentraPay"]);
+    expect((await callAs(OTHER, "GET", `detections/${myDet.id}`)).status).toBe(404);
+    expect((await callAs(OTHER, "GET", `scans/${myScan.id}`)).status).toBe(404);
+    expect((await callAs(OTHER, "POST", `brands/${mine.body.id}/activate`)).status).toBe(404);
+    expect((await callAs(OTHER, "DELETE", `brands/${mine.body.id}`)).status).toBe(404);
+    // Quick check in visitor 2's workspace does not compare against visitor 1's brand.
+    const search = (await callAs(OTHER, "POST", "search", { query: "Private Brand Co", platforms: ["instagram"] })).body;
+    expect(search.reference.type).toBe("query");
+    // Visitor 2's own changes stay theirs: switching brand there leaves visitor 1 untouched.
+    const theirPhonePe = (await callAs(OTHER, "GET", "brands")).body.find((b: any) => b.name === "PhonePe");
+    await callAs(OTHER, "POST", `brands/${theirPhonePe.id}/activate`);
+    expect((await get("brand")).name).toBe("ZentraPay");
+
+    await call("DELETE", `brands/${mine.body.id}`);
   });
 
   it("unknown routes", async () => {

@@ -2,6 +2,7 @@
 
 import { bool, js, one, q } from "./db";
 import { HttpError } from "./util";
+import { currentWorkspace } from "./workspace";
 
 export interface Publisher {
   id: number;
@@ -43,6 +44,7 @@ export interface Brand {
   legalName: string | null;
   isActive: boolean;
   updatedAt: string;
+  workspaceId: string | null;
   publishers: Publisher[];
   assets: Asset[];
 }
@@ -83,25 +85,34 @@ async function hydrate(r: any): Promise<Brand> {
     legalName: r.legal_name,
     isActive: bool(r.is_active),
     updatedAt: r.updated_at,
+    workspaceId: r.workspace_id ?? null,
     publishers: pubs.map((p) => ({ id: Number(p.id), brandId: p.brand_id, name: p.name, publisherId: p.publisher_id ?? "", aliases: js(p.aliases, []) })),
     assets: assets.map(toAsset),
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+/** Any brand by ID, regardless of workspace. Internal use (scans); routes use ownBrand. */
 export async function getBrand(id: string): Promise<Brand | null> {
   const r = await one("SELECT * FROM brands WHERE id = ?", [id]);
   return r ? hydrate(r) : null;
 }
 
+/** A brand of the current workspace, or null (also when it belongs to someone else). */
+export async function ownBrand(id: string): Promise<Brand | null> {
+  const r = await one("SELECT * FROM brands WHERE id = ? AND workspace_id <=> ?", [id, currentWorkspace()]);
+  return r ? hydrate(r) : null;
+}
+
+/** Brands of the current workspace. */
 export async function allBrands(order = "is_active DESC, updated_at DESC"): Promise<Brand[]> {
-  const rows = await q(`SELECT * FROM brands ORDER BY ${order}`);
+  const rows = await q(`SELECT * FROM brands WHERE workspace_id <=> ? ORDER BY ${order}`, [currentWorkspace()]);
   return Promise.all(rows.map(hydrate));
 }
 
-/** The active brand (one at a time); falls back to the most recently updated. */
+/** The workspace's active brand (one at a time); falls back to the most recently updated. */
 export async function currentBrand(): Promise<Brand> {
-  const r = await one("SELECT * FROM brands ORDER BY is_active DESC, updated_at DESC LIMIT 1");
+  const r = await one("SELECT * FROM brands WHERE workspace_id <=> ? ORDER BY is_active DESC, updated_at DESC LIMIT 1", [currentWorkspace()]);
   if (!r) throw new HttpError(404, "No brand profile yet. Complete the setup wizard.");
   return hydrate(r);
 }

@@ -144,6 +144,8 @@ const ADDED_COLUMNS: [string, string, string][] = [
   ["official_assets", "validation_note", "VARCHAR(255)"],
   ["sources", "state", "VARCHAR(12)"],
   ["detections", "checks", "JSON"],
+  // Private workspace (one per browser); brands without one predate workspaces and are not shown.
+  ["brands", "workspace_id", "VARCHAR(40)"],
 ];
 
 export const TABLE_NAMES = TABLES.map(([name]) => name);

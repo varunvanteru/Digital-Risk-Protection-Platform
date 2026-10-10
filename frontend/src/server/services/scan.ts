@@ -24,6 +24,7 @@ import { scoreDetection } from "../detection/scoring";
 import { evaluate, excluded, isRelevant, type Evaluation } from "../detection/signals";
 import { mediaExists } from "../media";
 import { getBrand, type Brand } from "../repo";
+import { inWorkspace } from "../workspace";
 import { hexId, iso, mapLimit, pyRound, sleep, SourceTimeout, todayUtc, unique, utcnow, withTimeout } from "../util";
 
 export const CONNECTORS: Record<string, Connector> = {
@@ -202,17 +203,42 @@ const fmtCached = (t: string) => `${t.slice(8, 10)} ${MON[Number(t.slice(5, 7)) 
 
 // ---------- scan ----------
 
-// Scans run one at a time, in order (the scan lock in the Python engine).
-const g = globalThis as unknown as { __bsScanChain?: Promise<void>; __bsScans?: number };
-export const isScanning = () => (g.__bsScans ?? 0) > 0;
+// Each workspace scans its own brand; a few scans run at once and the rest wait their turn,
+// so many visitors do not hammer the stores together.
+const MAX_PARALLEL_SCANS = 3;
+const g = globalThis as unknown as { __bsPending?: Map<string, number>; __bsRunning?: number; __bsQueue?: (() => void)[] };
+const pending = () => (g.__bsPending ??= new Map());
 
-export function runScan(scanId: string, brandId: string): Promise<void> {
-  g.__bsScans = (g.__bsScans ?? 0) + 1;
-  const p = (g.__bsScanChain ?? Promise.resolve()).then(() => runOne(scanId, brandId)).finally(() => {
-    g.__bsScans = (g.__bsScans ?? 1) - 1;
-  });
-  g.__bsScanChain = p.catch(() => undefined);
-  return p;
+/** A scan for this brand is queued or running in this process. */
+export const isScanning = (brandId: string) => (pending().get(brandId) ?? 0) > 0;
+
+async function slot(): Promise<void> {
+  g.__bsRunning ??= 0;
+  if (g.__bsRunning < MAX_PARALLEL_SCANS) {
+    g.__bsRunning++;
+    return;
+  }
+  await new Promise<void>((resolve) => (g.__bsQueue ??= []).push(resolve));
+}
+
+function release() {
+  const next = g.__bsQueue?.shift();
+  if (next) next(); // hand the slot straight to the next scan
+  else g.__bsRunning = Math.max(0, (g.__bsRunning ?? 1) - 1);
+}
+
+export async function runScan(scanId: string, brandId: string): Promise<void> {
+  const p = pending();
+  p.set(brandId, (p.get(brandId) ?? 0) + 1);
+  await slot();
+  try {
+    await runOne(scanId, brandId);
+  } finally {
+    release();
+    const n = (p.get(brandId) ?? 1) - 1;
+    if (n > 0) p.set(brandId, n);
+    else p.delete(brandId);
+  }
 }
 
 async function runOne(scanId: string, brandId: string): Promise<void> {
@@ -221,7 +247,9 @@ async function runOne(scanId: string, brandId: string): Promise<void> {
   if (!scan || !brand) return;
   let status = "done";
   try {
-    await run(scanId, brand);
+    // Run in the brand's workspace, so workspace-scoped lookups (demo avatars) see its brands.
+    if (brand.workspaceId) await inWorkspace(brand.workspaceId, () => run(scanId, brand));
+    else await run(scanId, brand);
   } catch (e) {
     console.error(`scan ${scanId} failed`, e);
     status = "failed";
