@@ -35,7 +35,8 @@ export default function SourcesPage() {
   return (
     <>
       <PageHeader
-        title="Sources"
+        eyebrow="Where data comes from"
+        title="Data sources"
         description="Where candidates come from. Each source runs on its own with a 10-second timeout and 2 retries, so one failing source never stops a scan."
       />
 

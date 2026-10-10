@@ -72,7 +72,8 @@ export default function DetectionsPage() {
   return (
     <>
       <PageHeader
-        title="Detections"
+        eyebrow="Threat queue"
+        title="All detections"
         description="Accounts and apps that resemble your brand, scored 0 to 100. Official assets are excluded before scoring."
       />
 

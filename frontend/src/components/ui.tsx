@@ -6,7 +6,7 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
 const buttonVariant: Record<ButtonVariant, string> = {
   primary: "bg-accent text-accent-ink hover:bg-accent/85",
@@ -16,8 +16,8 @@ const buttonVariant: Record<ButtonVariant, string> = {
 };
 
 const buttonSize: Record<ButtonSize, string> = {
-  sm: "h-7 px-2.5 text-[12.5px]",
-  md: "h-8 px-3 text-[13px]",
+  sm: "h-7 px-3 text-[12.5px]",
+  md: "h-9 px-4 text-[13px]",
 };
 
 export function buttonClass(variant: ButtonVariant = "secondary", size: ButtonSize = "md", className?: string) {
@@ -44,7 +44,7 @@ export function ButtonLink({
 
 export function Card({ className, ...props }: ComponentProps<"section">) {
   // min-w-0: inside a grid, a wide table scrolls within the card instead of widening the page.
-  return <section className={clsx("min-w-0 rounded-lg border border-line bg-surface", className)} {...props} />;
+  return <section className={clsx("card-surface min-w-0 rounded-lg border bg-surface", className)} {...props} />;
 }
 
 export function CardHeader({
@@ -61,11 +61,24 @@ export function CardHeader({
   return (
     <header className={clsx("flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3", className)}>
       <div className="min-w-0 flex-1 basis-56">
-        <h2 className="text-[13.5px] font-semibold text-ink">{title}</h2>
+        <h2 className="card-title text-[13.5px] font-semibold text-ink">{title}</h2>
         {description && <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{description}</p>}
       </div>
       {actions && <div className="ml-auto flex max-w-full shrink-0 items-center gap-2">{actions}</div>}
     </header>
+  );
+}
+
+/** "Brand profile" -> "Brand <em>profile</em>": the last word takes the theme's brand colour. */
+function accentLast(title: ReactNode): ReactNode {
+  if (typeof title !== "string") return title;
+  const i = title.trim().lastIndexOf(" ");
+  if (i < 0) return title;
+  return (
+    <>
+      {title.slice(0, i + 1)}
+      <em>{title.slice(i + 1)}</em>
+    </>
   );
 }
 
@@ -83,8 +96,8 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
       <div className="min-w-0 flex-1 basis-72">
-        {eyebrow && <div className="mb-2 text-[12.5px] text-ink-3">{eyebrow}</div>}
-        <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-ink">{title}</h1>
+        {eyebrow && <div className="eyebrow mb-2 text-[12.5px]">{eyebrow}</div>}
+        <h1 className="page-title text-ink">{accentLast(title)}</h1>
         {description && <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-ink-2">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2 sm:pt-0.5">{actions}</div>}
@@ -157,7 +170,7 @@ export function Segmented<T extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className="inline-flex h-8 max-w-full items-center overflow-x-auto rounded-md border border-line-strong bg-surface-2 p-0.5 [scrollbar-width:none]"
+      className="inline-flex h-9 max-w-full items-center overflow-x-auto rounded-[var(--radius-control)] border border-line-strong bg-surface-2 p-0.5 [scrollbar-width:none]"
     >
       {options.map((o) => (
         <button
@@ -166,7 +179,7 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
-            "flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[5px] px-2.5 text-[12.5px] font-medium transition-colors",
+            "flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] px-3 text-[12.5px] font-medium transition-colors",
             value === o.value ? "bg-surface text-ink shadow-[0_0_0_1px_var(--border)]" : "text-ink-2 hover:text-ink",
           )}
         >
@@ -182,7 +195,7 @@ export function Tag({ children, className }: { children: ReactNode; className?: 
   return (
     <span
       className={clsx(
-        "inline-flex h-5 items-center rounded border border-line bg-surface-2 px-1.5 text-[11.5px] font-medium text-ink-2",
+        "chip inline-flex h-5 items-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-2 text-[11.5px] font-medium text-ink-2",
         className,
       )}
     >

@@ -511,6 +511,7 @@ export default function QuickCheckPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Search any brand"
         title="Quick check"
         description="Find fake accounts and apps that imitate a brand. Pick the platforms, then enter a brand name or paste an official profile or app link."
       />

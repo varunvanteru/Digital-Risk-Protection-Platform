@@ -39,7 +39,9 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col">
       <div className="flex h-[52px] items-center gap-2.5 px-4">
         <ProductMark />
-        <span className="text-[14px] font-semibold tracking-[-0.01em]">BrandShield</span>
+        <span className="page-title !text-[15px] !leading-none text-ink">
+          Brand<em>Shield</em>
+        </span>
       </div>
 
       <div className="px-3 pb-3">
@@ -57,17 +59,17 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={clsx(
-                "group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors",
-                active ? "bg-accent-soft font-medium text-ink" : "text-ink-2 hover:bg-surface-2/70 hover:text-ink",
+                "group flex h-9 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[13px] transition-colors",
+                active ? "bg-[var(--nav-active-bg)] font-semibold text-[var(--nav-active-ink)]" : "text-ink-2 hover:bg-surface-2 hover:text-ink",
               )}
             >
-              <Icon className={clsx("size-4", active ? "text-accent" : "text-ink-3 group-hover:text-ink-2")} />
+              <Icon className={clsx("size-4", active ? "text-[var(--nav-active-icon)]" : "text-ink-3 group-hover:text-ink-2")} />
               <span className="flex-1">{label}</span>
               {badge > 0 && (
                 <span
                   className={clsx(
-                    "tabular rounded px-1.5 text-[11px] font-medium leading-[18px]",
-                    href === "/sources" ? "bg-high-bg text-high" : "bg-surface-2 text-ink-2 group-aria-[current=page]:bg-surface",
+                    "tabular rounded-full px-2 text-[11px] font-semibold leading-[18px]",
+                    href === "/sources" ? "bg-high-bg text-high" : active ? "bg-[var(--brand)] text-white" : "bg-surface-2 text-ink-2",
                   )}
                 >
                   {badge}
@@ -83,8 +85,8 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           href="/setup"
           onClick={onNavigate}
           className={clsx(
-            "flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px]",
-            pathname.startsWith("/setup") ? "bg-accent-soft font-medium text-ink" : "text-ink-2 hover:bg-surface-2/70 hover:text-ink",
+            "flex h-9 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[13px]",
+            pathname.startsWith("/setup") ? "bg-[var(--nav-active-bg)] font-semibold text-[var(--nav-active-ink)]" : "text-ink-2 hover:bg-surface-2 hover:text-ink",
           )}
         >
           <Settings2 className="size-4 text-ink-3" />
@@ -161,7 +163,9 @@ function LoadingFrame({ error, waking, onRetry }: { error?: string; waking?: boo
     <div className="flex min-h-dvh flex-col">
       <header className="flex h-[52px] items-center gap-2.5 border-b border-line px-4 sm:px-6">
         <ProductMark />
-        <span className="text-[14px] font-semibold">BrandShield</span>
+        <span className="page-title !text-[15px] !leading-none text-ink">
+              Brand<em>Shield</em>
+            </span>
       </header>
       <main className="flex flex-1 items-center justify-center px-6">
         {error ? (
@@ -208,14 +212,14 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_1fr]">
-      <aside className="sticky top-0 hidden h-dvh border-r border-line bg-bg lg:block">
+      <aside className="sticky top-0 hidden h-dvh border-r border-line bg-surface lg:block">
         <Sidebar />
       </aside>
 
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button aria-label="Close menu" className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-[260px] border-r border-line bg-bg">
+          <aside className="absolute inset-y-0 left-0 w-[260px] border-r border-line bg-surface">
             <Sidebar onNavigate={() => setOpen(false)} />
           </aside>
         </div>
@@ -227,7 +231,9 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
             <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-1.5 text-ink-2 hover:bg-surface-2">
               {open ? <X className="size-4" /> : <Menu className="size-4" />}
             </button>
-            <span className="text-[14px] font-semibold">BrandShield</span>
+            <span className="page-title !text-[15px] !leading-none text-ink">
+              Brand<em>Shield</em>
+            </span>
           </div>
           <div className="hidden lg:block" />
           <ScanStatus />

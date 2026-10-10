@@ -60,7 +60,8 @@ export default function AccuracyPage() {
   return (
     <>
       <PageHeader
-        title="Accuracy"
+        eyebrow="Labelled test set"
+        title="Detection accuracy"
         description="Every labelled case runs through the same engine as scans and Quick check: official verification first, then risk scoring. Nothing on this page is typed in by hand."
         actions={
           <Button onClick={load} disabled={loading}>

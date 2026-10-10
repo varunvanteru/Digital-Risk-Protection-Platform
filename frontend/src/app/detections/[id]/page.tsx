@@ -299,7 +299,7 @@ export default function DetectionPage() {
         <div className="flex min-w-0 items-center gap-4">
           <BrandMark variant={d.mark} size={48} initials={initialsOf(d.displayName)} src={mediaUrl(d.iconUrl)} />
           <div className="min-w-0">
-            <h1 className="truncate text-[20px] font-semibold tracking-[-0.01em]">{d.displayName}</h1>
+            <h1 className="truncate font-[family-name:var(--font-heading)] text-[22px] font-bold tracking-[-0.01em]">{d.displayName}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
               <Mono className="text-ink-2">{handleDisplay(d.platform, d.handle)}</Mono>
               <PlatformLabel platform={d.platform} />

@@ -265,6 +265,7 @@ export default function SetupPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Setup wizard"
         title={isNew ? "Add a brand" : `Edit ${current.name}`}
         description="Tell us what is genuinely yours. Everything you add here is on the allowlist, verified against the stores, and never flagged."
         actions={

@@ -36,7 +36,25 @@
   --ok-bg: #11241a;
 }
 
-/* ---------- Graphite: warm neutral, black accent (default) ---------- */
+/* ---------- Shape and type: the classic look, which Crimson overrides ---------- */
+:root {
+  --radius-control: 6px;
+  --shadow-card: none;
+  --card-border: var(--border);
+  --brand: var(--ink);
+  --font-heading: var(--font-plex-sans), system-ui, sans-serif;
+  --font-body: var(--font-plex-sans), system-ui, sans-serif;
+  --title-case: none;
+  --title-tracking: -0.01em;
+  --title-size: 20px;
+  --title-weight: 600;
+  --label-color: var(--ink-3);
+  --nav-active-bg: var(--surface-2);
+  --nav-active-ink: var(--ink);
+  --nav-active-icon: var(--accent);
+}
+
+/* ---------- Graphite: warm neutral, black accent ---------- */
 :root,
 [data-palette="graphite"] {
   --bg: #f7f7f5;
@@ -173,6 +191,69 @@
   --chart-grid: #26211b;
 }
 
+/* ---------- Crimson: soft white, black pills, crimson accent (default) ----------
+ * Modelled on rfentity.com: a pale blue-grey page, white raised cards with large
+ * radii and a soft two-way shadow, pill buttons and chips, uppercase Archivo
+ * titles with one word in crimson, and small crimson labels above them.
+ * Crimson marks the brand and headings only; Critical severity keeps its own
+ * red with an icon and label.
+ */
+[data-palette="crimson"] {
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f4f6f9;
+  --border: #e4e9ef;
+  --border-strong: #cfd6e0;
+  --ink: #111111;
+  --ink-2: #4a4a4a;
+  --ink-3: #868c95;
+  --inverse: #ffffff;
+  --accent: #111111;
+  --accent-ink: #ffffff;
+  --accent-soft: #e7ebf1;
+  --chart-bar: #1b1b1b;
+  --chart-grid: #eceff4;
+  --brand: #d40000;
+
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-control: 999px;
+  --shadow-card: 8px 8px 20px rgb(163 177 198 / 0.42), -8px -8px 20px rgb(255 255 255 / 0.95);
+  --card-border: transparent;
+  --font-heading: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-montserrat), system-ui, sans-serif;
+  --title-case: uppercase;
+  --title-tracking: 0.025em;
+  --title-size: 30px;
+  --title-weight: 700;
+  --label-color: var(--brand);
+  --nav-active-bg: #111111;
+  --nav-active-ink: #ffffff;
+  --nav-active-icon: #ff4d4d;
+}
+[data-palette="crimson"][data-mode="dark"] {
+  --bg: #0b0c0e;
+  --surface: #15171a;
+  --surface-2: #1c1f23;
+  --border: #24282d;
+  --border-strong: #333940;
+  --ink: #f2f2f2;
+  --ink-2: #b4b8bf;
+  --ink-3: #7c828b;
+  --inverse: #0b0c0e;
+  --accent: #f2f2f2;
+  --accent-ink: #0b0c0e;
+  --accent-soft: #22262b;
+  --chart-bar: #e4e4e4;
+  --chart-grid: #20242a;
+  --brand: #ff4040;
+  --shadow-card: 0 12px 28px rgb(0 0 0 / 0.45);
+  --card-border: #22262b;
+  --nav-active-bg: #f2f2f2;
+  --nav-active-ink: #0b0c0e;
+  --nav-active-icon: #d40000;
+}
+
 /* No script yet (first paint without JS): follow the system setting. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-mode]) {
@@ -232,8 +313,70 @@ html {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-family: var(--font-body);
   font-feature-settings: "ss02" on;
+}
+
+/* ---------- Shared component styles that follow the theme ---------- */
+
+/* Raised card: flat with a hairline in classic themes, soft shadow in Crimson. */
+.card-surface {
+  border-color: var(--card-border);
+  box-shadow: var(--shadow-card);
+}
+
+.page-title {
+  font-family: var(--font-heading);
+  font-size: var(--title-size);
+  font-weight: var(--title-weight);
+  letter-spacing: var(--title-tracking);
+  text-transform: var(--title-case);
+  line-height: 1.15;
+}
+/* The last word of a page title, in the brand colour (Crimson only; ink elsewhere). */
+.page-title em {
+  font-style: normal;
+  color: var(--brand);
+}
+
+.card-title {
+  font-family: var(--font-heading);
+}
+[data-palette="crimson"] .card-title {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Small label above a title, e.g. "THREAT QUEUE". */
+.eyebrow {
+  color: var(--label-color);
+}
+[data-palette="crimson"] .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* Chips and tags: small spaced capitals with a pressed-in look in Crimson. */
+[data-palette="crimson"] .chip {
+  border-color: transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgb(163 177 198 / 0.35), inset 0 2px 5px rgb(163 177 198 / 0.3);
+}
+[data-palette="crimson"][data-mode="dark"] .chip {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+[data-palette="crimson"] th,
+[data-palette="crimson"] th button {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
 }
 
 ::selection {
@@ -242,7 +385,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
 }

@@ -1,21 +1,23 @@
-export type Palette = "graphite" | "slate" | "forest" | "sandstone";
+export type Palette = "crimson" | "graphite" | "slate" | "forest" | "sandstone";
 export type Mode = "system" | "light" | "dark";
 
 export const PALETTES: { id: Palette; name: string; note: string; swatch: [string, string, string] }[] = [
+  { id: "crimson", name: "Crimson", note: "Soft white, raised cards, crimson titles", swatch: ["#eef1f5", "#ffffff", "#d40000"] },
   { id: "graphite", name: "Graphite", note: "Warm neutral, black accent", swatch: ["#f7f7f5", "#d3d3cd", "#1a1a17"] },
   { id: "slate", name: "Slate", note: "Cool grey, deep navy", swatch: ["#f6f7f9", "#cfd4dc", "#1f3a5f"] },
   { id: "forest", name: "Forest", note: "Paper white, deep green", swatch: ["#f6f6f2", "#cfcfc4", "#23513c"] },
   { id: "sandstone", name: "Sandstone", note: "Warm parchment, umber", swatch: ["#f7f4ee", "#d4cab9", "#4a3b2a"] },
 ];
 
-export const THEME_KEY = "brandshield-theme";
+// v2: the default changed to Crimson / light, so earlier saved choices start fresh.
+export const THEME_KEY = "brandshield-theme-v2";
 
 export interface ThemePref {
   palette: Palette;
   mode: Mode;
 }
 
-export const DEFAULT_THEME: ThemePref = { palette: "graphite", mode: "system" };
+export const DEFAULT_THEME: ThemePref = { palette: "crimson", mode: "light" };
 
 export function readTheme(): ThemePref {
   try {
@@ -51,4 +53,4 @@ export function applyTheme(pref: ThemePref) {
  * Runs before first paint (inlined in layout) so there is no flash of the wrong theme.
  * `?palette=slate&mode=dark` in the URL presets the theme, handy for demos and screenshots.
  */
-export const THEME_BOOT_SCRIPT = `(function(){try{var p={palette:"graphite",mode:"system"};var r=localStorage.getItem("${THEME_KEY}");if(r){var v=JSON.parse(r);if(v&&v.palette)p.palette=v.palette;if(v&&v.mode)p.mode=v.mode;}var q=new URLSearchParams(location.search);var qp=q.get("palette"),qm=q.get("mode");if(${JSON.stringify(PALETTES.map((x) => x.id))}.indexOf(qp)>-1)p.palette=qp;if(["system","light","dark"].indexOf(qm)>-1)p.mode=qm;if(qp||qm)localStorage.setItem("${THEME_KEY}",JSON.stringify(p));var m=p.mode==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):p.mode;var d=document.documentElement;d.dataset.palette=p.palette;d.dataset.mode=m;}catch(e){}})();`;
+export const THEME_BOOT_SCRIPT = `(function(){try{var p={palette:"crimson",mode:"light"};var r=localStorage.getItem("${THEME_KEY}");if(r){var v=JSON.parse(r);if(v&&v.palette)p.palette=v.palette;if(v&&v.mode)p.mode=v.mode;}var q=new URLSearchParams(location.search);var qp=q.get("palette"),qm=q.get("mode");if(${JSON.stringify(PALETTES.map((x) => x.id))}.indexOf(qp)>-1)p.palette=qp;if(["system","light","dark"].indexOf(qm)>-1)p.mode=qm;if(qp||qm)localStorage.setItem("${THEME_KEY}",JSON.stringify(p));var m=p.mode==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):p.mode;var d=document.documentElement;d.dataset.palette=p.palette;d.dataset.mode=m;}catch(e){}})();`;

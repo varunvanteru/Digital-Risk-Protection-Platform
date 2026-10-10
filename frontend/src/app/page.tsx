@@ -83,7 +83,8 @@ export default function OverviewPage() {
   return (
     <>
       <PageHeader
-        title="Overview"
+        eyebrow="Brand protection"
+        title="Risk overview"
         description={`Impersonation risk for ${brand.name} across social platforms and app stores.`}
       />
 
