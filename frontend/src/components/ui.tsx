@@ -9,7 +9,7 @@ const buttonBase =
   "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
 const buttonVariant: Record<ButtonVariant, string> = {
-  primary: "bg-ink text-inverse hover:bg-ink/85",
+  primary: "bg-accent text-accent-ink hover:bg-accent/85",
   secondary: "border border-line-strong bg-surface text-ink hover:bg-surface-2",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
   danger: "border border-line-strong bg-surface text-crit hover:bg-crit-bg",
@@ -100,7 +100,7 @@ export function Hint({ error, children }: { error?: boolean; children: ReactNode
 }
 
 const fieldBase =
-  "h-8 rounded-md border bg-surface px-2.5 text-[13px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-ink";
+  "h-8 rounded-md border bg-surface px-2.5 text-[13px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-accent";
 
 /** Fields fill their container unless the caller sets a width. */
 const widthOf = (className?: string) => (/(^|\s)(w-|min-w-)/.test(className ?? "") ? undefined : "w-full");

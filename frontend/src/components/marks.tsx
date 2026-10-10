@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import { PLATFORM_LABEL, PLATFORM_SHORT } from "@/lib/format";
+import { PLATFORM_LABEL } from "@/lib/format";
+import { PlatformLogo } from "./platform-logo";
 import type { MarkVariant, Platform } from "@/lib/types";
 
 /**
@@ -85,11 +86,11 @@ export function PlatformGlyph({ platform, className }: { platform: Platform; cla
     <span
       title={PLATFORM_LABEL[platform]}
       className={clsx(
-        "inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded border border-line bg-surface px-1 font-mono text-[10px] font-medium text-ink-2",
+        "inline-flex size-5 shrink-0 items-center justify-center rounded border border-line bg-surface text-ink-2",
         className,
       )}
     >
-      {PLATFORM_SHORT[platform]}
+      <PlatformLogo platform={platform} size={11} />
     </span>
   );
 }
@@ -107,9 +108,9 @@ export function PlatformLabel({ platform }: { platform: Platform }) {
 export function ProductMark({ size = 22 }: { size?: number }) {
   return (
     <svg aria-hidden width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" className="fill-ink" />
-      <path d="M12 5.5l5 2v4.2c0 3.1-2.1 5.6-5 6.8-2.9-1.2-5-3.7-5-6.8V7.5l5-2z" className="stroke-inverse" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M9.6 12l1.7 1.7 3.2-3.4" className="stroke-inverse" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="24" height="24" rx="6" className="fill-accent" />
+      <path d="M12 5.5l5 2v4.2c0 3.1-2.1 5.6-5 6.8-2.9-1.2-5-3.7-5-6.8V7.5l5-2z" className="stroke-accent-ink" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M9.6 12l1.7 1.7 3.2-3.4" className="stroke-accent-ink" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

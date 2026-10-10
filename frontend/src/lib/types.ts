@@ -169,3 +169,37 @@ export interface QuickCheck {
   };
   official: { platform: Platform; handle: string; status: "official" | "partner" } | null;
 }
+
+export interface SearchResult {
+  platform: Platform;
+  channel: Channel;
+  cls: DetectionClass;
+  displayName: string;
+  handle: string;
+  url: string;
+  mark: MarkVariant;
+  iconUrl: string | null;
+  publisher: string | null;
+  audience: number;
+  reasons: string[];
+  signals: Signals;
+  breakdown: ScoreBreakdown;
+  /** Set when the same account or app is already tracked as a detection. */
+  detectionId: string | null;
+}
+
+export interface SearchResponse {
+  query: string;
+  searchedFor: string;
+  pastedUrl: { platform: Platform; identifier: string | null } | null;
+  reference: { type: "brand" | "query"; name: string };
+  platforms: {
+    platform: Platform;
+    ok: boolean;
+    found: number;
+    sources: { id: string; name: string; mode: string; ok: boolean; error: string | null; latencyMs: number | null }[];
+  }[];
+  results: SearchResult[];
+  officialSkipped: { platform: Platform; handle: string; displayName: string; url: string }[];
+  nameAnalysis: QuickCheck["result"];
+}

@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/format";
 import { API_URL, mediaUrl } from "@/lib/api";
 import { useLoadState, useStore } from "@/lib/store";
 import { BrandMark, ProductMark } from "./marks";
+import { AppearanceMenu } from "./appearance";
 import { Button } from "./ui";
 
 const NAV = [
@@ -61,10 +62,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               aria-current={active ? "page" : undefined}
               className={clsx(
                 "group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors",
-                active ? "bg-surface-2 font-medium text-ink" : "text-ink-2 hover:bg-surface-2/70 hover:text-ink",
+                active ? "bg-accent-soft font-medium text-ink" : "text-ink-2 hover:bg-surface-2/70 hover:text-ink",
               )}
             >
-              <Icon className={clsx("size-4", active ? "text-ink" : "text-ink-3 group-hover:text-ink-2")} />
+              <Icon className={clsx("size-4", active ? "text-accent" : "text-ink-3 group-hover:text-ink-2")} />
               <span className="flex-1">{label}</span>
               {badge > 0 && (
                 <span
@@ -87,12 +88,13 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           onClick={onNavigate}
           className={clsx(
             "flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px]",
-            pathname.startsWith("/setup") ? "bg-surface-2 font-medium text-ink" : "text-ink-2 hover:bg-surface-2/70 hover:text-ink",
+            pathname.startsWith("/setup") ? "bg-accent-soft font-medium text-ink" : "text-ink-2 hover:bg-surface-2/70 hover:text-ink",
           )}
         >
           <Settings2 className="size-4 text-ink-3" />
           Setup wizard
         </Link>
+        <AppearanceMenu />
         <div className="flex items-center gap-2.5 px-2.5 pt-2">
           <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[10.5px] font-semibold text-ink-2">
             SA

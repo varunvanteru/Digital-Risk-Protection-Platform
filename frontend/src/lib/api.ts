@@ -1,4 +1,4 @@
-import type { BrandProfile, Detection, DetectionDetail, DetectionStatus, Platform, QuickCheck, ScanSummary, Source } from "./types";
+import type { BrandProfile, Detection, DetectionDetail, DetectionStatus, Platform, QuickCheck, ScanSummary, SearchResponse, Source } from "./types";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100").replace(/\/$/, "");
 
@@ -73,6 +73,7 @@ export const api = {
   undoAllowlist: (id: string) => request<DetectionDetail>(`/api/detections/${id}/allowlist`, { method: "DELETE" }),
 
   check: (value: string) => request<QuickCheck>("/api/check", json("POST", { value })),
+  search: (query: string, platforms: (Platform | "all")[]) => request<SearchResponse>("/api/search", json("POST", { query, platforms })),
 
   sources: () => request<Source[]>("/api/sources"),
   setOutage: (id: string, simulateOutage: boolean) => request<Source>(`/api/sources/${id}`, json("PATCH", { simulateOutage })),

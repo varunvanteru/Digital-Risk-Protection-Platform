@@ -15,6 +15,7 @@ from .detection.scoring import score_detection
 from .models import Brand, Detection, DetectionEvent, OfficialAsset, Publisher, Scan, Source
 from .serializers import brand_out, detection_out, scan_out, source_out
 from .services.scan import brand_context, is_scanning, start_scan, utcnow
+from .services.search import PLATFORMS, run_search
 from .validation import app_id_error, clean_handle, domain_error, handle_error, name_error
 
 router = APIRouter(prefix="/api")
@@ -330,6 +331,19 @@ def quick_check(body: CheckIn, db: Session = Depends(get_db)):
         "result": result,
         "official": {"platform": official.platform, "handle": official.handle, "status": official.status} if official else None,
     }
+
+
+class SearchIn(BaseModel):
+    query: str = Field(min_length=2, max_length=300)
+    platforms: list[str] = Field(default_factory=lambda: ["all"])
+
+
+@router.post("/search")
+def search(body: SearchIn, db: Session = Depends(get_db)):
+    unknown = [p for p in body.platforms if p != "all" and p not in PLATFORMS]
+    if unknown:
+        bad_request("platforms", f"Unknown platform: {', '.join(unknown)}")
+    return run_search(db, body.query, body.platforms)
 
 
 # ---------- sources and scans ----------

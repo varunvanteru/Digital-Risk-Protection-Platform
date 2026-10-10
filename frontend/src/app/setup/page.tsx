@@ -49,7 +49,7 @@ function TagInput({
     <div>
       <div
         className={clsx(
-          "flex min-h-8 flex-wrap items-center gap-1.5 rounded-md border bg-surface px-1.5 py-1 focus-within:border-ink",
+          "flex min-h-8 flex-wrap items-center gap-1.5 rounded-md border bg-surface px-1.5 py-1 focus-within:border-accent",
           error ? "border-crit" : "border-line-strong",
         )}
       >
@@ -226,7 +226,7 @@ export default function SetupPage() {
               aria-current={i === step ? "step" : undefined}
               className={clsx(
                 "tabular flex size-5 items-center justify-center rounded-full text-[11px] font-medium",
-                i < step ? "bg-ink text-inverse" : i === step ? "border border-ink text-ink" : "border border-line-strong text-ink-3",
+                i < step ? "bg-accent text-accent-ink" : i === step ? "border border-accent text-ink" : "border border-line-strong text-ink-3",
               )}
             >
               {i < step ? <Check className="size-3" strokeWidth={3} /> : i + 1}
