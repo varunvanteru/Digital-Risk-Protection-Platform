@@ -7,7 +7,7 @@ import { HealthBadge, SeverityIcon } from "@/components/badges";
 import { DetectionTable } from "@/components/detection-table";
 import { PlatformGlyph } from "@/components/marks";
 import { TrendChart, type DayCount } from "@/components/trend-chart";
-import { ButtonLink, Card, CardHeader, PageHeader } from "@/components/ui";
+import { ButtonLink, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
 import { PLATFORM_LABEL } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Severity } from "@/lib/types";
@@ -189,7 +189,13 @@ export default function OverviewPage() {
             </ButtonLink>
           }
         />
-        <DetectionTable rows={attention} compact />
+        {attention.length ? (
+          <DetectionTable rows={attention} compact />
+        ) : (
+          <EmptyState icon={<ShieldCheck />} title="Nothing needs attention">
+            No open Critical or High detections for {brand.name}. Official assets are excluded before scoring, so they never appear here.
+          </EmptyState>
+        )}
       </Card>
     </>
   );
