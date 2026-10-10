@@ -25,7 +25,8 @@ class Settings:
     validate_assets: bool = os.getenv("VALIDATE_ASSETS", "1") == "1"
     # Extra CA certificate (PEM) for networks that inspect HTTPS, e.g. a FortiGate firewall.
     ca_bundle: str | None = os.getenv("CA_BUNDLE") or None
-    data_dir: Path = BASE_DIR / "data"
+    # Shared with the Node.js server, which is what gets deployed (frontend/ is the app root).
+    data_dir: Path = BASE_DIR.parent / "frontend" / "data"
     media_dir: Path = BASE_DIR / "media"
 
 

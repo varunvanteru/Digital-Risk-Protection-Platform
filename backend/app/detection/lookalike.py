@@ -12,7 +12,6 @@ import re
 import unicodedata
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
-from pathlib import Path
 
 HOMOGLYPHS = {
     "0": "o",
@@ -55,7 +54,9 @@ COMMON_WORDS = {"zen", "sentra", "centra", "central", "contra", "zebra", "sentry
 @lru_cache(maxsize=1)
 def english_words() -> frozenset[str]:
     """~38k common English words (data/common_words.txt). An ordinary word is never a look-alike on its own."""
-    path = Path(__file__).resolve().parents[2] / "data" / "common_words.txt"
+    from ..config import settings
+
+    path = settings.data_dir / "common_words.txt"
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError:

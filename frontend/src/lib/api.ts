@@ -25,9 +25,11 @@ export type BrandInput = {
   apps: { platform: Platform; packageId: string; name?: string }[];
 };
 
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100").replace(/\/$/, "");
+// The API is served by this app (src/app/api). Set NEXT_PUBLIC_API_URL only to use another server,
+// e.g. the Python reference API at http://localhost:8100.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
-/** Media paths from the API ("/media/...") are served by the backend. */
+/** Media paths from the API ("/media/...") are served by the API's server. */
 export function mediaUrl(path: string | null | undefined) {
   if (!path) return undefined;
   return path.startsWith("/media/") ? `${API_URL}${path}` : path;
@@ -52,7 +54,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       cache: "no-store",
     });
   } catch {
-    throw new ApiError(`Cannot reach the API at ${API_URL}. Is the backend running?`, 0);
+    throw new ApiError(`Cannot reach the API at ${API_URL || "this server"}. Check your connection and try again.`, 0);
   }
   if (!res.ok) {
     const body = await res.json().catch(() => null);

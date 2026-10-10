@@ -168,7 +168,7 @@ function LoadingFrame({ error, waking, onRetry }: { error?: string; waking?: boo
             </div>
             <p className="text-[14px] font-medium">Can&apos;t load data</p>
             <p className="mt-1 text-[13px] text-ink-2">{error}</p>
-            <p className="mt-1 font-mono text-[12px] text-ink-3">{API_URL}</p>
+            {API_URL && <p className="mt-1 font-mono text-[12px] text-ink-3">{API_URL}</p>}
             <Button className="mt-4" onClick={onRetry}>
               <RefreshCw />
               Try again

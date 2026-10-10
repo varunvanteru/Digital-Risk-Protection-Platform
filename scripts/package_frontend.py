@@ -1,5 +1,6 @@
 """
-Build the website upload for Hostinger Node.js hosting: frontend/ source as a zip.
+Build a manual upload for Hostinger Node.js hosting: the frontend/ app (website,
+API and data) as a zip. Only needed when not deploying from GitHub.
 
 Includes only files git tracks or would track (no node_modules, .next or
 .env.local), so local settings and secrets never reach the server. Hostinger
@@ -26,10 +27,10 @@ files = subprocess.run(
 ).stdout.splitlines()
 files = [f for f in files if (FRONTEND / f).is_file()]
 
-for required in ("package.json", "package-lock.json", "server.js", ".env.production", "next.config.ts"):
+for required in ("package.json", "package-lock.json", "server.js", "next.config.ts", "data/labelled_cases.json"):
     if required not in files:
         sys.exit(f"Missing {required}; refusing to build an incomplete package")
-leaked = [f for f in files if Path(f).name.startswith(".env") and f != ".env.production"]
+leaked = [f for f in files if Path(f).name.startswith(".env")]
 if leaked:
     sys.exit(f"Refusing to package local env files: {leaked}")
 

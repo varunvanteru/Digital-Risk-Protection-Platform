@@ -1,91 +1,71 @@
 # Deploying to impostr.live
 
-```
- Browser ──► https://impostr.live          Hostinger (Node.js app: Next.js website)
-    │
-    └──────► https://api.impostr.live      Render (free: FastAPI detection engine)
-                     │
-                     └──► MySQL             Hostinger (database, remote access)
-```
-
-Hostinger web hosting runs Node.js apps but not Python servers, so the API runs on
-Render. It stays on your domain (`api.impostr.live`) and uses the Hostinger database.
-
-Secrets (the MySQL password) are typed into the Hostinger and Render dashboards only.
-They are never committed and never part of the website upload.
-
-## 1. Website on Hostinger
-
-1. Build the upload on your computer:
-   `backend\.venv\Scripts\python scripts\package_frontend.py` → `dist\impostr-frontend.zip`
-2. hPanel → **Websites** → **Add website** → **Node.js Apps** → **Upload files** → choose the zip.
-3. Domain: **impostr.live**.
-4. Build settings:
-
-   | Setting | Value |
-   |---|---|
-   | Framework | Next.js (or Other) |
-   | Node.js version | 20 or 22 |
-   | Install / build command | `npm install` / `npm run build` |
-   | Start command / entry file | `npm start` / `server.js` |
-
-5. Deploy. The site opens but shows "Starting the server" until steps 2–4 are done.
-
-## 2. Database on Hostinger
-
-1. hPanel → **Databases** → **Management** → create a database and a user with a strong
-   password. Note the full names (e.g. `u123456789_impostr` for both).
-2. **Databases** → **Remote MySQL** → add **Any host** for that database. Render has no fixed
-   outgoing IP address, so a specific IP cannot be used.
-3. Note the **MySQL host** shown on that page (e.g. `srv1234.hstgr.io` or an IP address).
-
-The API creates its tables and loads the demo brands on first start.
-
-## 3. API on Render
-
-1. Sign in at render.com with GitHub → **New** → **Blueprint** → select this repository.
-   Render reads `render.yaml`.
-2. Fill in the values from step 2: `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DB`.
-   Then click **Apply**.
-3. When the deploy finishes, open `https://impostr-api.onrender.com/api/health`. It should
-   return `"status": "ok"`.
-4. Service → **Settings** → **Custom Domains** → add `api.impostr.live`. Render shows the
-   CNAME target.
-
-## 4. DNS on Hostinger
-
-hPanel → **Domains** → impostr.live → **DNS / Nameservers** → add a record:
-
-| Type | Name | Points to | TTL |
-|---|---|---|---|
-| CNAME | `api` | `impostr-api.onrender.com` | 3600 |
-
-Back in Render, click **Verify**. Render issues the HTTPS certificate in a few minutes.
-
-## 5. Keep the API awake (optional, recommended before a demo)
-
-Render's free tier sleeps after 15 minutes without traffic; the next visit waits up to a
-minute while it starts (the website shows "Starting the server"). A cron job on Hostinger
-keeps it awake. One always-on free service fits Render's 750 free hours a month.
-
-hPanel → **Advanced** → **Cron Jobs** → every 10 minutes:
+Everything runs on Hostinger, as one Node.js app:
 
 ```
-curl -fsS https://api.impostr.live/api/health > /dev/null
+ Browser ──► https://impostr.live           Hostinger Node.js app (frontend/)
+                ├─ website pages             Next.js
+                ├─ /api/...                  detection engine and REST API (src/server)
+                └─ /media/...                logos and avatars, stored in MySQL
+                        │
+                        └──► MySQL           Hostinger database (MariaDB 11)
 ```
 
-## 6. Check
+The app deploys from GitHub: every push to `main` rebuilds and restarts it.
+The database password lives only in hPanel's environment variables. It is never
+committed.
 
-- `https://api.impostr.live/api/health` shows `"status": "ok"` and the database name.
-- `https://impostr.live` shows the Overview for ZentraPay after the first scan.
+## 1. Database (once)
+
+1. hPanel → **Websites** → impostr.live → **Databases** → **Management**: create a
+   database and user (e.g. `u807314952_impostr`) with a strong password.
+2. **Databases** → **Remote MySQL**: add **Any host** for that database. Note the
+   **MySQL hostname** shown at the top (e.g. `srv637.hstgr.io`).
+
+The app creates its tables and loads the demo brands on first start.
+
+## 2. Environment variables (once)
+
+hPanel → **Websites** → impostr.live → **Environment variables** → add:
+
+| Name | Value |
+|---|---|
+| `MYSQL_HOST` | the MySQL hostname from step 1 (e.g. `srv637.hstgr.io`) |
+| `MYSQL_PORT` | `3306` |
+| `MYSQL_USER` | the database user |
+| `MYSQL_PASSWORD` | the database password |
+| `MYSQL_DB` | the database name |
+
+Then **Deployments** → **Redeploy**, so the app starts with them.
+
+## 3. App (already connected)
+
+hPanel → **Websites** → **Add website** → **Node.js web app** → **Import Git repository**
+→ this repository, branch `main`, **root directory `frontend`**, framework preset
+**Next.js**, Node.js 20 or 22. Domain: impostr.live.
+
+## 4. Check
+
+- `https://impostr.live/api/health` shows `"status": "ok"`, the database name and the
+  MariaDB version.
+- `https://impostr.live` shows the Overview for ZentraPay after the first scan (a minute).
 - **Sources**: Google Play and App Store are *live*; the rest are labelled *simulated*.
 - **Quick check** → `PhonePe` → official apps marked Official; nothing official flagged.
 - **Accuracy** → precision 1.00, 0 official assets flagged.
 
+If `/api/health` returns 503, the database settings are wrong or Remote MySQL is not
+allowed: check step 1 and 2, then Redeploy. `MYSQL_HOST=localhost` is an alternative
+if Hostinger runs the app on the same server as the database.
+
 ## Updating
 
-- **API:** push to `main`; Render redeploys automatically.
-- **Website:** run `scripts/package_frontend.py` again and upload the new zip in hPanel.
+Push to `main` (after review). Hostinger pulls, installs, builds and restarts.
 
-Uploaded logos are also stored in MySQL (`media_files`), so they survive API restarts on
-Render's temporary disk.
+Without GitHub: `python scripts/package_frontend.py` builds `dist/impostr-frontend.zip`
+(no secrets, no `node_modules`) for a manual upload.
+
+## Moving existing data
+
+Logos written by the Python reference engine (`backend/media`) can be copied into a
+database with `npx tsx scripts/import-media.ts ../backend/media` (from `frontend/`,
+with that database's settings in `frontend/.env.local`).
