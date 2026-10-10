@@ -7,7 +7,7 @@ def test_health_reports_mysql(client):
     body = client.get("/api/health").json()
     assert body["status"] == "ok"
     assert body["database"] == "brandshield_test"
-    assert body["mysql"].startswith("8.")
+    assert body["mysql"].startswith(("8.", "9.", "10.", "11."))  # major version
 
 
 def test_first_scan_finds_impersonators_and_never_flags_official(client):

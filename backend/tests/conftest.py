@@ -13,15 +13,23 @@ os.environ["SOURCE_TIMEOUT_S"] = "5"
 os.environ["VALIDATE_ASSETS"] = "0"
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+_drop_db_after_session = False
+
 
 @pytest.fixture(scope="session")
 def client():
-    import pymysql
+    """
+    Session-scoped FastAPI test client backed by brandshield_test.
+    The DB is NOT dropped here so that other test files that also use this
+    fixture (e.g. test_search.py) can run after test_api.py without crashing.
+    The actual DROP runs in pytest_sessionfinish() once all tests are done.
+    """
+    global _drop_db_after_session
     from fastapi.testclient import TestClient
 
-    from app.config import settings
     from app.main import app
 
+    _drop_db_after_session = True
     with TestClient(app) as c:
         # Startup kicks off the first scan in the background; wait for it.
         deadline = time.time() + 120
@@ -35,10 +43,28 @@ def client():
     from app.db import engine
 
     engine.dispose()
-    conn = pymysql.connect(host=settings.mysql_host, port=settings.mysql_port, user=settings.mysql_user, password=settings.mysql_password)
-    with conn.cursor() as cur:
-        cur.execute("DROP DATABASE IF EXISTS brandshield_test")
-    conn.close()
+
+
+def pytest_sessionfinish(session, exitstatus):  # noqa: ARG001
+    """Drop the test schema after ALL tests have finished."""
+    if not _drop_db_after_session:
+        return
+    import pymysql
+
+    from app.config import settings
+
+    try:
+        conn = pymysql.connect(
+            host=settings.mysql_host,
+            port=settings.mysql_port,
+            user=settings.mysql_user,
+            password=settings.mysql_password,
+        )
+        with conn.cursor() as cur:
+            cur.execute("DROP DATABASE IF EXISTS brandshield_test")
+        conn.close()
+    except Exception:
+        pass  # best-effort cleanup
 
 
 def wait_for_scan(c, scan_id: str, timeout: float = 120) -> dict:
