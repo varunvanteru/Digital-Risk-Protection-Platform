@@ -4,6 +4,7 @@
  * the API share one origin.
  */
 
+import { createHash, timingSafeEqual } from "node:crypto";
 import sharp from "sharp";
 import { settings } from "./config";
 import { exec, js, one, q } from "./db";
@@ -548,8 +549,38 @@ const ROUTES: [string, RegExp, Handler, number?][] = [
   ["GET", /^accuracy$/, () => runEvaluation()],
 ];
 
+// ---------- demo password for actions that change data ----------
+
+/**
+ * Writes anyone may make: searching, Quick check, running a scan and switching the
+ * active brand change no profile or verdict, so visitors can still explore the demo.
+ */
+const OPEN_WRITES = [/^search$/, /^check$/, /^scans$/, /^brands\/[^/]+\/activate$/];
+
+function keyMatches(given: string): boolean {
+  const a = createHash("sha256").update(given).digest();
+  const b = createHash("sha256").update(settings.adminPassword).digest();
+  return timingSafeEqual(a, b);
+}
+
+function authorised(method: string, path: string, req: Request): boolean {
+  if (!settings.adminPassword || method === "GET") return true;
+  if (OPEN_WRITES.some((p) => p.test(path))) return true;
+  return keyMatches(req.headers.get("x-admin-key") ?? "");
+}
+
+const LOCKED = { detail: { field: "auth", message: "This action needs the admin password." } };
+
 /** Dispatch one /api request. `path` is the part after /api/. */
 export async function handle(method: string, path: string, req: Request): Promise<{ status: number; body: unknown }> {
+  if (path === "auth") {
+    if (method === "GET") return { status: 200, body: { required: !!settings.adminPassword } };
+    if (method === "POST") {
+      const ok = !settings.adminPassword || keyMatches(req.headers.get("x-admin-key") ?? "");
+      return ok ? { status: 200, body: { ok: true } } : { status: 401, body: { detail: { field: "auth", message: "Wrong password." } } };
+    }
+  }
+  if (!authorised(method, path, req)) return { status: 401, body: LOCKED };
   for (const [m, pattern, fn, ok] of ROUTES) {
     if (m !== method) continue;
     const match = path.match(pattern);

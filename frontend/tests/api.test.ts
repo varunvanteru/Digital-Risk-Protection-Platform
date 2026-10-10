@@ -326,6 +326,30 @@ describe("brands", () => {
     expect(after.filter((b: any) => b.isActive)).toHaveLength(1);
   });
 
+  it("admin password protects changes but not browsing, search or scans", async () => {
+    const { settings } = await import("@/server/config");
+    settings.adminPassword = "test-secret";
+    try {
+      const withKey = (key: string) => ({ "X-Admin-Key": key, "Content-Type": "application/json" });
+      const as = (method: string, path: string, headers: Record<string, string>, body?: unknown) =>
+        handle(method, path, new Request(`http://test/api/${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined }));
+
+      expect((await get("auth")).required).toBe(true);
+      expect((await call("GET", "brand")).status).toBe(200);
+      expect((await call("POST", "check", { value: "zentrapay" })).status).toBe(200);
+      const locked = await call("PATCH", "sources/src_x", { simulateOutage: false });
+      expect(locked.status).toBe(401);
+      expect(locked.body.detail.field).toBe("auth");
+      expect((await as("PATCH", "sources/src_x", withKey("wrong"), { simulateOutage: false })).status).toBe(401);
+      expect((await as("PATCH", "sources/src_x", withKey("test-secret"), { simulateOutage: false })).status).toBe(200);
+      expect((await as("POST", "auth", withKey("wrong"))).status).toBe(401);
+      expect((await as("POST", "auth", withKey("test-secret"))).status).toBe(200);
+    } finally {
+      settings.adminPassword = "";
+    }
+    expect((await get("auth")).required).toBe(false);
+  });
+
   it("unknown routes", async () => {
     expect((await call("GET", "nope")).status).toBe(404);
     expect((await call("DELETE", "health")).status).toBe(405);

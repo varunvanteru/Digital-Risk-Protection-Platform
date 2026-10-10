@@ -182,10 +182,25 @@ function downloadEvidence(d: Detection) {
   URL.revokeObjectURL(a.href);
 }
 
+/** Plain-text report to paste into the platform's own "Report" form. */
+function reportText(d: Detection, brand: string) {
+  return [
+    `Impersonation report: ${d.displayName} (${handleDisplay(d.platform, d.handle)}) on ${PLATFORM_LABEL[d.platform]}`,
+    d.url,
+    "",
+    `This ${d.channel === "app" ? "app" : "account"} impersonates ${brand} and is not an official ${brand} channel.`,
+    `Risk score ${d.breakdown.score}/100 (${d.breakdown.severity}), first seen ${d.firstSeen?.slice(0, 10) ?? "recently"}.`,
+    "",
+    "Evidence:",
+    ...d.reasons.map((r) => `- ${r}`),
+  ].join("\n");
+}
+
 export default function DetectionPage() {
   const { id } = useParams<{ id: string }>();
-  const { setStatus, refresh } = useStore();
+  const { setStatus, refresh, brand } = useStore();
   const [d, setD] = useState<DetectionDetail | null>(null);
+  const [reported, setReported] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<DetectionStatus | "undo" | null>(null);
 
@@ -210,6 +225,17 @@ export default function DetectionPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  /** Copy a ready-made report and open the item on its platform, where the "Report" option lives. */
+  async function reportOnPlatform(x: Detection) {
+    try {
+      await navigator.clipboard.writeText(reportText(x, brand.name));
+      setReported(true);
+    } catch {
+      setReported(false);
+    }
+    if (x.url) window.open(x.url, "_blank", "noopener,noreferrer");
   }
 
   async function undoAllowlist() {
@@ -310,6 +336,12 @@ export default function DetectionPage() {
               Reopen
             </Button>
           )}
+          {(d.status === "confirmed" || d.status === "takedown_requested") && d.url && (
+            <Button onClick={() => reportOnPlatform(d)}>
+              <ExternalLink />
+              Report on {PLATFORM_LABEL[d.platform]}
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => downloadEvidence(d)}>
             <FileDown />
             Evidence
@@ -317,6 +349,12 @@ export default function DetectionPage() {
         </div>
       </div>
 
+      {reported && (
+        <p className="mb-4 rounded-md border border-line bg-surface px-3 py-2 text-[13px] text-ink-2" role="status">
+          Report text copied. On the {PLATFORM_LABEL[d.platform]} page that just opened, choose <span className="font-medium text-ink">Report</span> and paste
+          it; attach the Evidence file if the form allows.
+        </p>
+      )}
       {error && <p className="mb-4 text-[13px] text-crit">{error}</p>}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">

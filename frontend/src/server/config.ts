@@ -12,6 +12,9 @@ export const settings = {
   sourceRetries: Number(process.env.SOURCE_RETRIES ?? 2),
   // Validate official apps against the live stores. Off in offline tests.
   validateAssets: (process.env.VALIDATE_ASSETS ?? "1") === "1",
+  // Password for actions that change data (edit brands, change detection status, simulate outages).
+  // Unset: open, as in local development. Set it in hPanel for the public site.
+  adminPassword: process.env.ADMIN_PASSWORD || "",
   // data/ holds the simulated datasets, the labelled test set and the word list.
   dataDir: path.join(process.cwd(), "data"),
 };

@@ -11,6 +11,7 @@ import { useLoadState, useStore } from "@/lib/store";
 import { BrandSwitcher } from "./brand-switcher";
 import { ProductMark } from "./marks";
 import { AppearanceMenu } from "./appearance";
+import { UnlockDialog } from "./unlock";
 import { Button } from "./ui";
 
 const NAV = [
@@ -231,6 +232,7 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="mx-auto w-full max-w-[1680px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
+      <UnlockDialog />
     </div>
   );
 }

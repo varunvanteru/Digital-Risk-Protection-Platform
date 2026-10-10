@@ -45,16 +45,53 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
+// ---------- admin password (for actions that change data on the public site) ----------
+
+const KEY_STORAGE = "brandshield.adminKey";
+
+export function adminKey(): string {
   try {
-    res = await fetch(`${API_URL}${path}`, {
-      ...init,
-      headers: init?.body instanceof FormData ? init.headers : { "Content-Type": "application/json", ...init?.headers },
-      cache: "no-store",
-    });
+    return localStorage.getItem(KEY_STORAGE) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setAdminKey(key: string | null) {
+  try {
+    if (key) localStorage.setItem(KEY_STORAGE, key);
+    else localStorage.removeItem(KEY_STORAGE);
+  } catch {
+    /* private mode: the key lasts for this page only */
+  }
+}
+
+/**
+ * Set by the unlock dialog (components/unlock.tsx). Asks for the password and resolves
+ * true once a correct one is saved, false if the user cancels.
+ */
+let unlockHandler: (() => Promise<boolean>) | null = null;
+export function onUnlockRequest(fn: (() => Promise<boolean>) | null) {
+  unlockHandler = fn;
+}
+
+async function send(path: string, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  // FormData sets its own multipart Content-Type with the boundary.
+  if (!(init?.body instanceof FormData) && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const key = adminKey();
+  if (key) headers.set("X-Admin-Key", key);
+  try {
+    return await fetch(`${API_URL}${path}`, { ...init, headers, cache: "no-store" });
   } catch {
     throw new ApiError(`Cannot reach the API at ${API_URL || "this server"}. Check your connection and try again.`, 0);
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let res = await send(path, init);
+  if (res.status === 401 && unlockHandler && (await unlockHandler())) {
+    res = await send(path, init); // retry once with the password just entered
   }
   if (!res.ok) {
     const body = await res.json().catch(() => null);
@@ -71,6 +108,13 @@ const json = (method: string, body: unknown): RequestInit => ({ method, body: JS
 
 export const api = {
   health: () => request<{ status: string; database: string; mysql: string }>("/api/health"),
+
+  authStatus: () => request<{ required: boolean }>("/api/auth"),
+  /** Check a password without saving it. */
+  checkAdminKey: async (key: string) => {
+    const res = await fetch(`${API_URL}/api/auth`, { method: "POST", headers: { "X-Admin-Key": key }, cache: "no-store" });
+    return res.ok;
+  },
 
   brand: () => request<BrandProfile>("/api/brand"),
   saveBrand: (body: BrandInput) => request<BrandProfile>("/api/brand", json("PUT", body)),

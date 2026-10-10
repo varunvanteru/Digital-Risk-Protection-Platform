@@ -35,8 +35,13 @@ hPanel → **Websites** → impostr.live → **Environment variables** → add:
 | `MYSQL_USER` | the database user |
 | `MYSQL_PASSWORD` | the database password |
 | `MYSQL_DB` | the database name |
+| `ADMIN_PASSWORD` | a password for changes (recommended on the public site) |
 
 Then **Deployments** → **Redeploy**, so the app starts with them.
+
+With `ADMIN_PASSWORD` set, anyone can browse, run Quick check, run scans and switch
+the active brand, but editing brands, changing a detection's status or simulating an
+outage asks for the password once per browser. Without it, everything is open.
 
 ## 3. App (already connected)
 

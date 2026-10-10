@@ -6,6 +6,37 @@ Built for the Bytexl hackathon (Kampus.VC problem statement: Social & App Monito
 
 ## Architecture
 
+```mermaid
+flowchart TD
+    U[Analyst's browser] -->|https://impostr.live| APP
+
+    subgraph APP [Next.js app on Hostinger]
+        UI[Website pages<br/>Overview · Detections · Quick check · Brand · Sources · Accuracy]
+        API[REST API /api<br/>admin password on changes]
+        UI --> API
+        API --> ORCH[Scan / Quick check orchestrator<br/>parallel, 10 s timeout, 2 retries per source]
+    end
+
+    ORCH --> VAL[Validate official apps on the stores<br/>developer ID, title, icon · cached 24 h]
+    ORCH --> SRC
+
+    subgraph SRC [Sources]
+        GP[Google Play · live]
+        AS[Apple App Store · live]
+        DS[16 social platforms, APK sites,<br/>store snapshot · simulated datasets]
+    end
+
+    SRC --> OFF{Official-asset verification<br/>L1 ID · L2 URL · L3 developer account<br/>L4 publisher name · L5 cross-store twin}
+    VAL --> OFF
+    OFF -->|official| EXC[Excluded · risk 0<br/>listed as official, never scored]
+    OFF -->|not official| SIG[Risk signals<br/>look-alike name · icon pHash · description<br/>claims · scam behaviour · publisher]
+    SIG --> SCORE[Score 0-100<br/>Critical / High / Medium / Low]
+    SCORE --> G2[Gate 2: allowlist re-check]
+    G2 --> DB[(MySQL / MariaDB<br/>brands · assets · detections · scans<br/>source cache · images)]
+    EXC --> DB
+    DB --> API
+```
+
 One Next.js app serves the website, the API and the images:
 
 | Part | Where | Stack |
