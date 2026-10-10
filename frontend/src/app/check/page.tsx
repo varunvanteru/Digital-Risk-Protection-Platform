@@ -1,11 +1,14 @@
 "use client";
 
 import clsx from "clsx";
-import { CircleCheck, CircleDot, OctagonAlert, ScanSearch, ShieldCheck, TriangleAlert } from "lucide-react";
-import { useMemo, useState } from "react";
+import { CircleCheck, CircleDot, LoaderCircle, OctagonAlert, ScanSearch, ShieldCheck, TriangleAlert } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, EmptyState, Input, Mono, PageHeader, Tag } from "@/components/ui";
 import { handleDisplay } from "@/lib/format";
-import { analyseName, type Verdict } from "@/lib/lookalike";
+import { api } from "@/lib/api";
+import type { QuickCheck } from "@/lib/types";
+
+type Verdict = QuickCheck["result"]["verdict"];
 import { useStore } from "@/lib/store";
 
 const EXAMPLES = [
@@ -30,12 +33,32 @@ export default function QuickCheckPage() {
   const { brand } = useStore();
   const [value, setValue] = useState("z3ntra.pay_official");
 
-  const official = useMemo(() => {
-    const h = value.trim().replace(/^@/, "").split("/").filter(Boolean).at(-1)?.toLowerCase();
-    return brand.accounts.find((a) => a.handle.toLowerCase() === h);
-  }, [value, brand.accounts]);
+  const [data, setData] = useState<QuickCheck | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const result = useMemo(() => (value.trim() ? analyseName(value, brand.aliases) : null), [value, brand.aliases]);
+  // Ask the backend engine, debounced so typing stays smooth.
+  useEffect(() => {
+    if (!value.trim()) {
+      setData(null);
+      return;
+    }
+    setPending(true);
+    const t = window.setTimeout(() => {
+      api
+        .check(value)
+        .then((r) => {
+          setData(r);
+          setError(null);
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : "Check failed"))
+        .finally(() => setPending(false));
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [value]);
+
+  const result = value.trim() ? data?.result ?? null : null;
+  const official = value.trim() ? data?.official ?? null : null;
 
   return (
     <>
@@ -60,7 +83,11 @@ export default function QuickCheckPage() {
               autoComplete="off"
               spellCheck={false}
             />
+            {pending && (
+              <LoaderCircle aria-label="Checking" className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-ink-3" />
+            )}
           </div>
+          {error && <p className="mt-2 text-[12.5px] text-crit">{error}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <span className="mr-1 text-[12px] text-ink-3">Try</span>
             {EXAMPLES.map((ex) => (
@@ -81,9 +108,13 @@ export default function QuickCheckPage() {
 
       {!result ? (
         <Card className="mt-4">
-          <EmptyState icon={<ScanSearch />} title="Enter a name to check">
-            Results appear as you type.
-          </EmptyState>
+          {value.trim() && pending ? (
+            <EmptyState icon={<LoaderCircle className="animate-spin" />} title="Checking" />
+          ) : (
+            <EmptyState icon={<ScanSearch />} title="Enter a name to check">
+              Results appear as you type.
+            </EmptyState>
+          )}
         </Card>
       ) : official ? (
         <Card className="mt-4">

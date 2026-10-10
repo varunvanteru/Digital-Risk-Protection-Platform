@@ -1,25 +1,26 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, Ban, CircleX, ExternalLink, FileDown, Flag, ShieldCheck, Undo2 } from "lucide-react";
+import { ArrowLeft, Ban, CircleX, ExternalLink, FileDown, Flag, LoaderCircle, ShieldCheck, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { SeverityBadge, StatusBadge } from "@/components/badges";
+import { initialsOf } from "@/components/detection-table";
 import { BrandMark, PlatformLabel } from "@/components/marks";
 import { Button, Card, CardHeader, EmptyState, KeyValue, Mono, Tag } from "@/components/ui";
-import { CLASS_LABEL, PLATFORM_LABEL, ageInDays, formatCount, formatDate, formatDateTime, handleDisplay } from "@/lib/format";
-import { DETECTIONS } from "@/lib/mock-data";
+import { api, ApiError, mediaUrl } from "@/lib/api";
+import { CLASS_LABEL, PLATFORM_LABEL, STATUS_LABEL, ageInDays, formatCount, formatDate, formatDateTime, handleDisplay } from "@/lib/format";
 import { SEVERITY_ACTION, signalLabel } from "@/lib/scoring";
-import { useStore, type ScoredDetection } from "@/lib/store";
+import { useStore } from "@/lib/store";
+import type { Detection, DetectionDetail, DetectionStatus } from "@/lib/types";
 
-function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join("");
+function signed(n: number) {
+  const v = (Math.abs(n) * 100).toFixed(1);
+  return n < 0 ? `−${v}` : `+${v}`;
 }
 
-function Breakdown({ d }: { d: ScoredDetection }) {
+function Breakdown({ d }: { d: Detection }) {
   const { parts, boosts, cap, score } = d.breakdown;
   return (
     <Card>
@@ -53,10 +54,10 @@ function Breakdown({ d }: { d: ScoredDetection }) {
             {boosts.map((b) => (
               <tr key={b.label} className="border-t border-line">
                 <td colSpan={3} className="py-2 pr-3 text-ink-2">
-                  <span className="mr-2 text-[11.5px] font-medium uppercase tracking-wide text-ink-3">Boost</span>
+                  <span className="mr-2 text-[11.5px] font-medium uppercase tracking-wide text-ink-3">{b.amount < 0 ? "Penalty" : "Boost"}</span>
                   {b.label}
                 </td>
-                <td className="tabular py-2 text-right font-mono text-[12px] text-ink">+{(b.amount * 100).toFixed(1)}</td>
+                <td className="tabular py-2 text-right font-mono text-[12px] text-ink">{signed(b.amount)}</td>
               </tr>
             ))}
             {cap && (
@@ -81,27 +82,25 @@ function Breakdown({ d }: { d: ScoredDetection }) {
   );
 }
 
-function Compare({ d }: { d: ScoredDetection }) {
+function Compare({ d }: { d: Detection }) {
   const { brand } = useStore();
   const isApp = d.channel === "app";
   const officialAccount = brand.accounts.find((a) => a.platform === d.platform && a.status === "official") ?? brand.accounts[0];
   const officialApp = brand.apps.find((a) => a.platform === d.platform) ?? brand.apps[0];
 
-  const official = isApp
-    ? { name: officialApp.name, id: officialApp.packageId, publisher: officialApp.publisher, text: brand.description, platform: officialApp.platform }
-    : {
-        name: officialAccount.displayName,
-        id: handleDisplay(officialAccount.platform, officialAccount.handle),
-        publisher: undefined,
-        text: brand.description,
-        platform: officialAccount.platform,
-      };
+  const official =
+    isApp && officialApp
+      ? { name: officialApp.name, id: officialApp.packageId, publisher: officialApp.publisher, platform: officialApp.platform }
+      : officialAccount
+        ? { name: officialAccount.displayName, id: handleDisplay(officialAccount.platform, officialAccount.handle), publisher: undefined, platform: officialAccount.platform }
+        : null;
+  if (!official) return null;
 
   const rows: { k: string; suspect: React.ReactNode; official: React.ReactNode; differs?: boolean }[] = [
     {
       k: isApp ? "Icon" : "Picture",
-      suspect: <BrandMark variant={d.mark} size={40} initials={initialsOf(d.displayName)} />,
-      official: <BrandMark size={40} />,
+      suspect: <BrandMark variant={d.mark} size={44} initials={initialsOf(d.displayName)} src={mediaUrl(d.iconUrl)} />,
+      official: <BrandMark size={44} src={mediaUrl(brand.logoUrl)} />,
     },
     { k: "Name", suspect: d.displayName, official: official.name },
     {
@@ -111,17 +110,17 @@ function Compare({ d }: { d: ScoredDetection }) {
     },
   ];
   if (isApp) {
-    rows.push({ k: "Publisher", suspect: d.publisher, official: official.publisher, differs: (d.signals.publisher ?? 0) >= 0.5 });
+    rows.push({ k: "Publisher", suspect: d.publisher ?? "Unknown", official: official.publisher, differs: (d.signals.publisher ?? 0) >= 0.5 });
   }
   rows.push({
     k: isApp ? "Description" : "Bio",
-    suspect: d.bio ? <span className="text-ink-2">{d.bio}</span> : <span className="text-ink-3">Empty</span>,
-    official: <span className="text-ink-2">{official.text}</span>,
+    suspect: d.bio ? <span className="line-clamp-6 text-ink-2">{d.bio}</span> : <span className="text-ink-3">Empty</span>,
+    official: <span className="text-ink-2">{brand.description}</span>,
   });
   rows.push({
     k: isApp ? "Released" : "Created",
-    suspect: `${formatDate(d.createdAt)} · ${ageInDays(d.createdAt)} days ago`,
-    official: "Verified, on allowlist",
+    suspect: d.createdAt ? `${formatDate(d.createdAt)} · ${ageInDays(d.createdAt)} days ago` : "Unknown",
+    official: "On the allowlist",
   });
 
   return (
@@ -156,7 +155,7 @@ function Compare({ d }: { d: ScoredDetection }) {
   );
 }
 
-function downloadEvidence(d: ScoredDetection) {
+function downloadEvidence(d: Detection) {
   const payload = {
     detection: d.id,
     capturedAt: new Date().toISOString(),
@@ -171,6 +170,7 @@ function downloadEvidence(d: ScoredDetection) {
     signals: d.signals,
     links: d.links,
     firstSeen: d.firstSeen,
+    lastSeen: d.lastSeen,
     scanId: d.scanId,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -183,49 +183,86 @@ function downloadEvidence(d: ScoredDetection) {
 
 export default function DetectionPage() {
   const { id } = useParams<{ id: string }>();
-  const { detections, setStatus, addOfficialAccount, removeOfficialAccount } = useStore();
-  const d = detections.find((x) => x.id === id);
+  const { setStatus, refresh } = useStore();
+  const [d, setD] = useState<DetectionDetail | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<DetectionStatus | "undo" | null>(null);
 
-  if (!d) {
-    const raw = DETECTIONS.find((x) => x.id === id);
+  const load = useCallback(() => {
+    api
+      .detection(id)
+      .then((x) => {
+        setD(x);
+        setError(null);
+      })
+      .catch((e: unknown) => setError(e instanceof ApiError && e.status === 404 ? "not_found" : e instanceof Error ? e.message : "Failed to load"));
+  }, [id]);
+
+  useEffect(load, [load]);
+
+  async function act(status: DetectionStatus) {
+    setBusy(status);
+    try {
+      setD(await setStatus(id, status));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Action failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function undoAllowlist() {
+    setBusy("undo");
+    try {
+      setD(await api.undoAllowlist(id));
+      await refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (error === "not_found") {
     return (
       <>
         <BackLink />
         <Card>
-          {raw ? (
-            <EmptyState icon={<ShieldCheck />} title={`${handleDisplay(raw.platform, raw.handle)} is on the allowlist`}>
-              <p>It was added to the brand profile as an official account and will not be flagged in future scans.</p>
-              <Button size="sm" className="mt-3" onClick={() => removeOfficialAccount(`manual:${raw.id}`)}>
-                <Undo2 />
-                Undo
-              </Button>
-            </EmptyState>
-          ) : (
-            <EmptyState icon={<CircleX />} title="Detection not found">
-              <p>It may have been removed. Go back to the list to see current detections.</p>
-            </EmptyState>
-          )}
+          <EmptyState icon={<CircleX />} title="Detection not found">
+            <p>It may have been removed. Go back to the list to see current detections.</p>
+          </EmptyState>
+        </Card>
+      </>
+    );
+  }
+  if (!d) {
+    return (
+      <>
+        <BackLink />
+        <div className="flex items-center gap-2 text-[13px] text-ink-3" role="status">
+          {error ? <span className="text-crit">{error}</span> : <><LoaderCircle className="size-4 animate-spin" /> Loading</>}
+        </div>
+      </>
+    );
+  }
+
+  if (d.allowlisted) {
+    return (
+      <>
+        <BackLink />
+        <Card>
+          <EmptyState icon={<ShieldCheck />} title={`${handleDisplay(d.platform, d.handle)} is on the allowlist`}>
+            <p>It is part of the brand profile as an official asset and will not be flagged in future scans.</p>
+            <Button size="sm" className="mt-3" onClick={undoAllowlist} disabled={busy !== null}>
+              {busy === "undo" ? <LoaderCircle className="animate-spin" /> : <Undo2 />}
+              Undo
+            </Button>
+          </EmptyState>
         </Card>
       </>
     );
   }
 
   const { score, severity } = d.breakdown;
-
-  function markOfficial() {
-    if (!d) return;
-    if (d.channel === "social") {
-      addOfficialAccount({
-        platform: d.platform,
-        handle: d.handle,
-        canonicalId: `manual:${d.id}`,
-        displayName: d.displayName,
-        status: "official",
-        verified: false,
-      });
-    }
-    setStatus(d.id, "official");
-  }
+  const spin = (s: DetectionStatus) => (busy === s ? <LoaderCircle className="animate-spin" /> : null);
 
   return (
     <>
@@ -233,7 +270,7 @@ export default function DetectionPage() {
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <BrandMark variant={d.mark} size={48} initials={initialsOf(d.displayName)} />
+          <BrandMark variant={d.mark} size={48} initials={initialsOf(d.displayName)} src={mediaUrl(d.iconUrl)} />
           <div className="min-w-0">
             <h1 className="truncate text-[20px] font-semibold tracking-[-0.01em]">{d.displayName}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -246,29 +283,29 @@ export default function DetectionPage() {
         <div className="flex flex-wrap items-center gap-2">
           {d.status === "open" && (
             <>
-              <Button variant="primary" onClick={() => setStatus(d.id, "confirmed")}>
-                <Flag />
+              <Button variant="primary" onClick={() => act("confirmed")} disabled={busy !== null}>
+                {spin("confirmed") ?? <Flag />}
                 Confirm threat
               </Button>
-              <Button onClick={() => setStatus(d.id, "false_positive")}>
-                <CircleX />
+              <Button onClick={() => act("false_positive")} disabled={busy !== null}>
+                {spin("false_positive") ?? <CircleX />}
                 False positive
               </Button>
-              <Button onClick={markOfficial}>
-                <ShieldCheck />
+              <Button onClick={() => act("official")} disabled={busy !== null}>
+                {spin("official") ?? <ShieldCheck />}
                 It&apos;s official
               </Button>
             </>
           )}
           {d.status === "confirmed" && (
-            <Button variant="primary" onClick={() => setStatus(d.id, "takedown_requested")}>
-              <Ban />
+            <Button variant="primary" onClick={() => act("takedown_requested")} disabled={busy !== null}>
+              {spin("takedown_requested") ?? <Ban />}
               Request takedown
             </Button>
           )}
           {d.status !== "open" && (
-            <Button variant="ghost" onClick={() => setStatus(d.id, "open")}>
-              <Undo2 />
+            <Button variant="ghost" onClick={() => act("open")} disabled={busy !== null}>
+              {spin("open") ?? <Undo2 />}
               Reopen
             </Button>
           )}
@@ -278,6 +315,8 @@ export default function DetectionPage() {
           </Button>
         </div>
       </div>
+
+      {error && <p className="mb-4 text-[13px] text-crit">{error}</p>}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-4">
@@ -319,8 +358,17 @@ export default function DetectionPage() {
                 items={[
                   { k: "Status", v: <StatusBadge status={d.status} /> },
                   { k: "Source", v: PLATFORM_LABEL[d.platform] },
-                  { k: d.channel === "app" ? "Installs" : "Followers", v: <span className="tabular">{formatCount(d.audience)}{d.channel === "app" ? "+" : ""}</span> },
+                  {
+                    k: d.channel === "app" ? "Installs" : "Followers",
+                    v: (
+                      <span className="tabular">
+                        {formatCount(d.audience)}
+                        {d.channel === "app" && d.audience ? "+" : ""}
+                      </span>
+                    ),
+                  },
                   { k: "First seen", v: formatDateTime(d.firstSeen) },
+                  { k: "Last seen", v: formatDateTime(d.lastSeen) },
                   { k: "Scan", v: <Mono>{d.scanId}</Mono> },
                   {
                     k: "Link",
@@ -351,17 +399,20 @@ export default function DetectionPage() {
           )}
 
           <Card>
-            <CardHeader title="What happens next" />
-            <ol className="space-y-2 px-4 py-3 text-[12.5px] leading-relaxed text-ink-2">
-              <li>
-                <span className="font-medium text-ink">Confirm</span> moves it to the takedown queue with the evidence attached.
+            <CardHeader title="Activity" />
+            <ol className="space-y-2.5 px-4 py-3 text-[12.5px]">
+              <li className="flex justify-between gap-3">
+                <span className="text-ink">First detected</span>
+                <span className="tabular text-ink-3">{formatDateTime(d.firstSeen)}</span>
               </li>
-              <li>
-                <span className="font-medium text-ink">False positive</span> keeps it listed but lowers its score in future scans.
-              </li>
-              <li>
-                <span className="font-medium text-ink">It&apos;s official</span> adds it to the allowlist, so it is never flagged again.
-              </li>
+              {d.events.map((e, i) => (
+                <li key={i} className="flex justify-between gap-3">
+                  <span className="text-ink">
+                    {e.action === "allowlisted" ? "Added to allowlist" : `${e.from ? STATUS_LABEL[e.from] : "—"} → ${e.to ? STATUS_LABEL[e.to] : "—"}`}
+                  </span>
+                  <span className="tabular shrink-0 text-ink-3">{formatDateTime(e.at)}</span>
+                </li>
+              ))}
             </ol>
           </Card>
         </aside>

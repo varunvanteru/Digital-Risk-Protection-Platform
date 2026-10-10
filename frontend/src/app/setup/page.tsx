@@ -1,15 +1,18 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, Check, ImageUp, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, ImageUp, LoaderCircle, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { BrandMark, PlatformLabel } from "@/components/marks";
+import { PlatformLabel } from "@/components/marks";
 import { Button, Card, Hint, Input, Label, Mono, PageHeader, Select, Tag, Textarea } from "@/components/ui";
 import { handleDisplay } from "@/lib/format";
-import { BRAND } from "@/lib/mock-data";
+import { api, mediaUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
-import type { OfficialAccount, OfficialApp, Platform } from "@/lib/types";
+import type { Platform } from "@/lib/types";
+
+type DraftAccount = { platform: Platform; handle: string; status: "official" | "partner" };
+type DraftApp = { platform: Platform; packageId: string; name: string };
 import { SOCIAL_PLATFORMS, validateBrandName, validateDomain, validateHandle, validatePackageId } from "@/lib/validation";
 
 const STEPS = ["Brand identity", "Official assets", "Review"];
@@ -85,7 +88,7 @@ function TagInput({
 
 export default function SetupPage() {
   const router = useRouter();
-  const { brand: current, saveBrand, runScan } = useStore();
+  const { brand: current, setBrand, runScan, sources } = useStore();
   const [step, setStep] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
 
@@ -93,11 +96,14 @@ export default function SetupPage() {
   const [aliases, setAliases] = useState<string[]>([]);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [description, setDescription] = useState("");
-  const [logo, setLogo] = useState<"demo" | string | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [domains, setDomains] = useState<string[]>([]);
-  const [accounts, setAccounts] = useState<OfficialAccount[]>([]);
-  const [apps, setApps] = useState<OfficialApp[]>([]);
+  const [accounts, setAccounts] = useState<DraftAccount[]>([]);
+  const [apps, setApps] = useState<DraftApp[]>([]);
   const [publisher, setPublisher] = useState("");
 
   const [accPlatform, setAccPlatform] = useState<Platform>("instagram");
@@ -107,16 +113,17 @@ export default function SetupPage() {
   const [appId, setAppId] = useState("");
   const [appError, setAppError] = useState<string | null>(null);
 
-  function fillDemo() {
-    setName(BRAND.name);
-    setAliases(BRAND.aliases.filter((a) => a !== BRAND.name));
-    setKeywords(BRAND.keywords);
-    setDescription(BRAND.description);
-    setLogo("demo");
-    setDomains(BRAND.domains);
-    setAccounts(BRAND.accounts);
-    setApps(BRAND.apps);
-    setPublisher(BRAND.publishers[0].name);
+  function loadSaved() {
+    setName(current.name);
+    setAliases(current.aliases.filter((a) => a !== current.name));
+    setKeywords(current.keywords);
+    setDescription(current.description);
+    setLogo(mediaUrl(current.logoUrl) ?? null);
+    setLogoFile(null);
+    setDomains(current.domains);
+    setAccounts(current.accounts.map((a) => ({ platform: a.platform, handle: a.handle, status: a.status })));
+    setApps(current.apps.map((a) => ({ platform: a.platform, packageId: a.packageId, name: a.name })));
+    setPublisher(current.publishers[0]?.name ?? "");
   }
 
   const errors1 = {
@@ -147,6 +154,7 @@ export default function SetupPage() {
         URL.revokeObjectURL(url);
       } else {
         setLogo(url);
+        setLogoFile(file);
         setLogoError(null);
       }
     };
@@ -158,7 +166,7 @@ export default function SetupPage() {
     if (error) return setAccError(error);
     setAccounts((a) => [
       ...a,
-      { platform: accPlatform, handle, canonicalId: `${accPlatform}:${handle.toLowerCase()}`, displayName: name || handle, status: "official", verified: false },
+      { platform: accPlatform, handle, status: "official" },
     ]);
     setAccHandle("");
     setAccError(null);
@@ -168,26 +176,33 @@ export default function SetupPage() {
     const err = validatePackageId(appId);
     if (err) return setAppError(err);
     if (apps.some((a) => a.packageId === appId.trim())) return setAppError("This app is already in the profile");
-    setApps((a) => [...a, { platform: appStore, name: name || appId, packageId: appId.trim(), publisher, publisherId: "" }]);
+    setApps((a) => [...a, { platform: appStore, name: name || appId, packageId: appId.trim() }]);
     setAppId("");
     setAppError(null);
   }
 
-  function finish() {
-    saveBrand({
-      ...current,
-      name: name.trim(),
-      aliases: [name.trim(), ...aliases],
-      keywords,
-      domains,
-      description: description.trim(),
-      accounts,
-      apps: apps.map((a) => ({ ...a, publisher: a.publisher || publisher })),
-      publishers: publisher ? [{ name: publisher, id: current.publishers[0]?.id ?? "" }] : current.publishers,
-      updatedAt: new Date().toISOString(),
-    });
-    runScan();
-    router.push("/");
+  async function finish() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      let saved = await api.saveBrand({
+        name: name.trim(),
+        aliases,
+        keywords,
+        domains,
+        description: description.trim(),
+        publisher: publisher.trim() || undefined,
+        accounts,
+        apps,
+      });
+      if (logoFile) saved = await api.uploadLogo(logoFile);
+      setBrand(saved);
+      await runScan();
+      router.push("/");
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Could not save the profile");
+      setSaving(false);
+    }
   }
 
   return (
@@ -197,8 +212,8 @@ export default function SetupPage() {
         description="Tell us what is genuinely yours. Everything you add here is on the allowlist and is never flagged."
         actions={
           step < 2 && (
-            <Button variant="ghost" onClick={fillDemo}>
-              Fill with demo brand
+            <Button variant="ghost" onClick={loadSaved}>
+              Load saved profile
             </Button>
           )
         }
@@ -246,9 +261,7 @@ export default function SetupPage() {
                       (showErrors && errors1.logo) || logoError ? "border-crit" : "border-line-strong",
                     )}
                   >
-                    {logo === "demo" ? (
-                      <BrandMark size={64} />
-                    ) : logo ? (
+                    {logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={logo} alt="Uploaded logo" className="size-16 rounded-md object-contain" />
                     ) : (
@@ -315,13 +328,13 @@ export default function SetupPage() {
                 {accounts.length > 0 && (
                   <ul className="mt-3 divide-y divide-line rounded-md border border-line">
                     {accounts.map((a) => (
-                      <li key={a.canonicalId} className="flex items-center justify-between gap-3 px-3 py-2">
+                      <li key={`${a.platform}:${a.handle}`} className="flex items-center justify-between gap-3 px-3 py-2">
                         <span className="flex items-center gap-3">
                           <PlatformLabel platform={a.platform} />
                           <Mono className="text-ink">{handleDisplay(a.platform, a.handle)}</Mono>
                           {a.status === "partner" && <Tag>Partner</Tag>}
                         </span>
-                        <button aria-label="Remove" onClick={() => setAccounts((l) => l.filter((x) => x.canonicalId !== a.canonicalId))} className="rounded p-1 text-ink-3 hover:text-ink">
+                        <button aria-label="Remove" onClick={() => setAccounts((l) => l.filter((x) => x !== a))} className="rounded p-1 text-ink-3 hover:text-ink">
                           <X className="size-3.5" />
                         </button>
                       </li>
@@ -386,7 +399,7 @@ export default function SetupPage() {
           {step === 2 && (
             <div className="space-y-4 text-[13px]">
               <div className="flex items-center gap-4">
-                {logo === "demo" ? <BrandMark size={48} /> : logo ? (
+                {logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logo} alt="" className="size-12 rounded-md object-contain" />
                 ) : null}
@@ -409,15 +422,20 @@ export default function SetupPage() {
                 ))}
               </dl>
               <p className="leading-relaxed text-ink-2">
-                The first scan searches 7 sources for <span className="font-medium text-ink">{name}</span> and its aliases, skips the{" "}
+                The scan searches {sources.length} sources for <span className="font-medium text-ink">{name}</span> and its aliases, skips the{" "}
                 {accounts.length + apps.length} assets above, and scores everything else. It usually takes under a minute.
               </p>
             </div>
           )}
         </div>
 
+        {saveError && (
+          <p className="border-t border-line bg-crit-bg px-5 py-2.5 text-[13px] text-crit" role="alert">
+            {saveError}
+          </p>
+        )}
         <footer className="flex items-center justify-between border-t border-line px-5 py-3">
-          <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0}>
+          <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0 || saving}>
             <ArrowLeft />
             Back
           </Button>
@@ -426,8 +444,9 @@ export default function SetupPage() {
               Continue
             </Button>
           ) : (
-            <Button variant="primary" onClick={finish}>
-              Save and run first scan
+            <Button variant="primary" onClick={finish} disabled={saving}>
+              {saving && <LoaderCircle className="animate-spin" />}
+              {saving ? "Saving" : "Save and run scan"}
             </Button>
           )}
         </footer>

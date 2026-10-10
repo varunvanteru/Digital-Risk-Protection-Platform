@@ -1,97 +1,128 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { BRAND, DETECTIONS, SOURCES } from "./mock-data";
-import { scoreDetection, type ScoreBreakdown } from "./scoring";
-import type { BrandProfile, Detection, DetectionStatus, OfficialAccount, Source, SourceHealth } from "./types";
-
-export type ScoredDetection = Detection & { breakdown: ScoreBreakdown };
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { api, ApiError } from "./api";
+import type { BrandProfile, Detection, DetectionDetail, DetectionStatus, ScanSummary, Source } from "./types";
 
 interface Store {
   brand: BrandProfile;
-  detections: ScoredDetection[];
+  detections: Detection[];
   sources: Source[];
-  setStatus: (id: string, status: DetectionStatus) => void;
-  saveBrand: (b: BrandProfile) => void;
-  addOfficialAccount: (a: OfficialAccount) => void;
-  removeOfficialAccount: (canonicalId: string) => void;
-  setSourceHealth: (id: string, health: SourceHealth) => void;
+  lastScan: ScanSummary | null;
   scanning: boolean;
-  runScan: () => void;
-  lastScanAt: string;
+  runScan: () => Promise<void>;
+  refresh: () => Promise<void>;
+  setBrand: (b: BrandProfile) => void;
+  setStatus: (id: string, status: DetectionStatus) => Promise<DetectionDetail>;
+  setOutage: (id: string, on: boolean) => Promise<void>;
 }
 
-const Ctx = createContext<Store | null>(null);
+type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready" };
 
-/**
- * Client-side state for the prototype. The backend will own this later;
- * the shape mirrors the planned API so components do not change.
- */
+const Ctx = createContext<(Store & { load: LoadState; retry: () => void }) | null>(null);
+
+/** Client state backed by the BrandShield API. */
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [brand, setBrand] = useState<BrandProfile>(BRAND);
-  const [statuses, setStatuses] = useState<Record<string, DetectionStatus>>({});
-  const [sources, setSources] = useState<Source[]>(SOURCES);
+  const [load, setLoad] = useState<LoadState>({ kind: "loading" });
+  const [brand, setBrand] = useState<BrandProfile | null>(null);
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [sources, setSources] = useState<Source[]>([]);
+  const [lastScan, setLastScan] = useState<ScanSummary | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [lastScanAt, setLastScanAt] = useState("2026-10-10T14:02:00+05:30");
+  const poll = useRef<number | null>(null);
 
-  const detections = useMemo(() => {
-    const officialIds = new Set(brand.accounts.map((a) => `${a.platform}:${a.handle.toLowerCase()}`));
-    return DETECTIONS.filter((d) => !officialIds.has(`${d.platform}:${d.handle.toLowerCase()}`))
-      .map((d) => ({ ...d, status: statuses[d.id] ?? d.status, breakdown: scoreDetection(d) }))
-      .sort((a, b) => b.breakdown.score - a.breakdown.score);
-  }, [brand.accounts, statuses]);
-
-  const setStatus = useCallback((id: string, status: DetectionStatus) => {
-    setStatuses((s) => ({ ...s, [id]: status }));
+  const refresh = useCallback(async () => {
+    const [b, d, s, scans] = await Promise.all([api.brand(), api.detections(), api.sources(), api.latestScan()]);
+    setBrand(b);
+    setDetections(d);
+    setSources(s);
+    setLastScan(scans.last);
+    setScanning(!!scans.running);
   }, []);
 
-  const saveBrand = useCallback((b: BrandProfile) => setBrand(b), []);
+  const initial = useCallback(() => {
+    setLoad({ kind: "loading" });
+    refresh()
+      .then(() => setLoad({ kind: "ready" }))
+      .catch((e: unknown) => setLoad({ kind: "error", message: e instanceof Error ? e.message : "Something went wrong" }));
+  }, [refresh]);
 
-  const addOfficialAccount = useCallback((a: OfficialAccount) => {
-    setBrand((b) => ({ ...b, accounts: [...b.accounts, a] }));
-  }, []);
+  useEffect(initial, [initial]);
 
-  const removeOfficialAccount = useCallback((canonicalId: string) => {
-    setBrand((b) => ({ ...b, accounts: b.accounts.filter((a) => a.canonicalId !== canonicalId) }));
-  }, []);
+  // While a scan runs, poll until it finishes, then refresh everything.
+  useEffect(() => {
+    if (!scanning) return;
+    poll.current = window.setInterval(async () => {
+      try {
+        const s = await api.latestScan();
+        if (!s.running) {
+          setScanning(false);
+          await refresh();
+        }
+      } catch {
+        /* keep polling; the banner shows if the API goes away */
+      }
+    }, 1500);
+    return () => {
+      if (poll.current) window.clearInterval(poll.current);
+    };
+  }, [scanning, refresh]);
 
-  const setSourceHealth = useCallback((id: string, health: SourceHealth) => {
-    setSources((list) =>
-      list.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              health,
-              note:
-                health === "unavailable"
-                  ? "Not reachable. The scan continues with other sources; showing the last good results."
-                  : health === "degraded"
-                    ? s.note ?? "Responding slowly. Results may be incomplete."
-                    : undefined,
-            }
-          : s,
-      ),
-    );
-  }, []);
-
-  const runScan = useCallback(() => {
+  const runScan = useCallback(async () => {
+    try {
+      await api.startScan();
+    } catch (e) {
+      if (!(e instanceof ApiError && e.status === 409)) throw e; // already running: just follow it
+    }
     setScanning(true);
-    window.setTimeout(() => {
-      setScanning(false);
-      setLastScanAt(new Date().toISOString());
-    }, 2200);
+  }, []);
+
+  const setStatus = useCallback(async (id: string, status: DetectionStatus) => {
+    const updated = await api.setStatus(id, status);
+    const [d, b] = await Promise.all([api.detections(), api.brand()]);
+    setDetections(d);
+    setBrand(b);
+    return updated;
+  }, []);
+
+  const setOutage = useCallback(async (id: string, on: boolean) => {
+    const s = await api.setOutage(id, on);
+    setSources((list) => list.map((x) => (x.id === id ? s : x)));
   }, []);
 
   const value = useMemo(
-    () => ({ brand, detections, sources, setStatus, saveBrand, addOfficialAccount, removeOfficialAccount, setSourceHealth, scanning, runScan, lastScanAt }),
-    [brand, detections, sources, setStatus, saveBrand, addOfficialAccount, removeOfficialAccount, setSourceHealth, scanning, runScan, lastScanAt],
+    () => ({
+      load,
+      retry: initial,
+      brand: brand as BrandProfile,
+      detections,
+      sources,
+      lastScan,
+      scanning,
+      runScan,
+      refresh,
+      setBrand,
+      setStatus,
+      setOutage,
+    }),
+    [load, initial, brand, detections, sources, lastScan, scanning, runScan, refresh, setStatus, setOutage],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export function useStore() {
+function useCtx() {
   const s = useContext(Ctx);
   if (!s) throw new Error("useStore must be used inside StoreProvider");
   return s;
+}
+
+/** For pages: only rendered once data has loaded, so `brand` is always set. */
+export function useStore(): Store {
+  return useCtx();
+}
+
+export function useLoadState() {
+  const { load, retry } = useCtx();
+  return { load, retry };
 }

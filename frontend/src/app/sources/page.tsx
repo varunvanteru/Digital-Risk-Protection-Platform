@@ -5,12 +5,22 @@ import { HealthBadge } from "@/components/badges";
 import { PlatformGlyph } from "@/components/marks";
 import { Button, Card, CardHeader, PageHeader } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
+import { useState } from "react";
 import { useStore } from "@/lib/store";
 
 const MODE_LABEL = { live: "Live", dataset: "Dataset", manual: "Manual" } as const;
 
 export default function SourcesPage() {
-  const { sources, setSourceHealth } = useStore();
+  const { sources, setOutage } = useStore();
+  const [busy, setBusy] = useState<string | null>(null);
+  async function toggle(id: string, on: boolean) {
+    setBusy(id);
+    try {
+      await setOutage(id, on);
+    } finally {
+      setBusy(null);
+    }
+  }
   const groups = [
     { title: "App stores", rows: sources.filter((s) => s.channel === "app") },
     { title: "Social platforms", rows: sources.filter((s) => s.channel === "social") },
@@ -28,16 +38,16 @@ export default function SourcesPage() {
           <Card key={g.title}>
             <CardHeader title={g.title} />
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-[13px]">
+              <table className="w-full min-w-[860px] table-fixed text-[13px]">
                 <thead className="border-b border-line bg-surface-2/50 text-[12px] text-ink-3">
                   <tr>
                     <th className="h-9 px-4 text-left font-medium">Source</th>
-                    <th className="h-9 px-4 text-left font-medium">Mode</th>
-                    <th className="h-9 px-4 text-left font-medium">Health</th>
-                    <th className="h-9 px-4 text-left font-medium">Last success</th>
-                    <th className="h-9 px-4 text-right font-medium">Latency</th>
-                    <th className="h-9 px-4 text-right font-medium">Items, last scan</th>
-                    <th className="h-9 w-36 px-4" />
+                    <th className="h-9 w-24 px-4 text-left font-medium">Mode</th>
+                    <th className="h-9 w-32 px-4 text-left font-medium">Health</th>
+                    <th className="h-9 w-36 px-4 text-left font-medium">Last success</th>
+                    <th className="h-9 w-24 px-4 text-right font-medium">Latency</th>
+                    <th className="h-9 w-32 px-4 text-right font-medium">Items, last scan</th>
+                    <th className="h-9 w-40 px-4" />
                   </tr>
                 </thead>
                 <tbody>
@@ -58,19 +68,19 @@ export default function SourcesPage() {
                       <td className="px-4 py-3">
                         <HealthBadge health={s.health} />
                       </td>
-                      <td className="tabular px-4 py-3 text-ink-2">{formatDateTime(s.lastSuccess)}</td>
+                      <td className="tabular px-4 py-3 text-ink-2">{s.lastSuccess ? formatDateTime(s.lastSuccess) : "Never"}</td>
                       <td className="tabular px-4 py-3 text-right font-mono text-[12px] text-ink-2">
                         {s.health === "operational" && s.latencyMs !== null ? `${s.latencyMs} ms` : "—"}
                       </td>
                       <td className="tabular px-4 py-3 text-right text-ink">{s.health === "operational" ? s.itemsLastScan : "—"}</td>
                       <td className="px-4 py-3 text-right">
-                        {s.health === "operational" ? (
-                          <Button size="sm" variant="ghost" onClick={() => setSourceHealth(s.id, "unavailable")}>
+                        {!s.simulateOutage ? (
+                          <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)}>
                             Simulate outage
                           </Button>
                         ) : (
-                          <Button size="sm" onClick={() => setSourceHealth(s.id, "operational")}>
-                            Retry now
+                          <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)}>
+                            End outage
                           </Button>
                         )}
                       </td>

@@ -1,0 +1,4 @@
+[
+  {"platform": "apk_site", "package_id": "zentrapay-pro-mod.apk", "title": "ZentraPay Pro (Mod)", "description": "ZentraPay lets you pay bills, send money over UPI and manage cards in one secure app. Pro version unlocked.", "installs": 12000, "released": "2026-09-10", "publisher": "Unknown uploader", "publisher_id": "apk:unknown", "privacy_url": null, "avatar": "copy", "url": "https://apk-mirror.example/zentrapay-pro-mod", "first_seen": "2026-09-29T08:32:00Z", "status": "takedown_requested"},
+  {"platform": "apk_site", "package_id": "zentra-lite-v2.apk", "title": "Zentra Lite", "description": "Lightweight UPI payments. Old version of a popular payments app.", "installs": 900, "released": "2026-09-30", "publisher": "apkdrop", "publisher_id": "apk:apkdrop", "privacy_url": null, "avatar": "recolor", "url": "https://apk-mirror.example/zentra-lite", "first_seen": "2026-10-05T08:32:00Z"}
+]

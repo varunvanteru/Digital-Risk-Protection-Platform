@@ -4,7 +4,8 @@ import clsx from "clsx";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CLASS_LABEL, formatShortDate, handleDisplay } from "@/lib/format";
-import type { ScoredDetection } from "@/lib/store";
+import { mediaUrl } from "@/lib/api";
+import type { Detection } from "@/lib/types";
 import { ScoreCell, StatusBadge } from "./badges";
 import { BrandMark, PlatformGlyph } from "./marks";
 
@@ -17,10 +18,12 @@ function initialsOf(name: string) {
     .join("");
 }
 
-export function Identity({ d, size = 28 }: { d: ScoredDetection; size?: number }) {
+export { initialsOf };
+
+export function Identity({ d, size = 28 }: { d: Detection; size?: number }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <BrandMark variant={d.mark} size={size} initials={initialsOf(d.displayName)} />
+      <BrandMark variant={d.mark} size={size} initials={initialsOf(d.displayName)} src={mediaUrl(d.iconUrl)} />
       <div className="min-w-0">
         <div className="truncate text-[13px] font-medium text-ink">{d.displayName}</div>
         <div className="truncate font-mono text-[11.5px] text-ink-3">{handleDisplay(d.platform, d.handle)}</div>
@@ -60,7 +63,7 @@ export function DetectionTable({
   sort,
   onSort,
 }: {
-  rows: ScoredDetection[];
+  rows: Detection[];
   compact?: boolean;
   sort?: { key: SortKey; dir: "asc" | "desc" };
   onSort?: (k: SortKey) => void;

@@ -1,12 +1,13 @@
 "use client";
 
 import clsx from "clsx";
-import { Building2, ChevronsUpDown, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, X } from "lucide-react";
+import { Building2, ChevronsUpDown, CloudOff, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/format";
-import { useStore } from "@/lib/store";
+import { API_URL, mediaUrl } from "@/lib/api";
+import { useLoadState, useStore } from "@/lib/store";
 import { BrandMark, ProductMark } from "./marks";
 import { Button } from "./ui";
 
@@ -39,7 +40,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="px-3 pb-3">
         <button className="flex w-full items-center gap-2.5 rounded-md border border-line bg-surface px-2.5 py-2 text-left hover:bg-surface-2">
-          <BrandMark size={22} />
+          <BrandMark size={22} src={mediaUrl(brand.logoUrl)} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[13px] font-medium">{brand.name}</span>
             <span className="block text-[11.5px] text-ink-3">Protected brand</span>
@@ -107,16 +108,35 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function ScanStatus() {
-  const { scanning, runScan, lastScanAt, sources } = useStore();
+  const { scanning, runScan, lastScan, sources } = useStore();
+  const [error, setError] = useState<string | null>(null);
   const down = sources.filter((s) => s.health !== "operational");
+
+  async function start() {
+    setError(null);
+    try {
+      await runScan();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start the scan");
+    }
+  }
+
   return (
     <div className="flex items-center gap-3">
-      <span className="hidden text-[12.5px] text-ink-3 sm:inline">
-        {scanning ? (
-          "Scanning 7 sources…"
+      <span className="hidden text-[12.5px] text-ink-3 sm:inline" role="status">
+        {error ? (
+          <span className="text-crit">{error}</span>
+        ) : scanning ? (
+          `Scanning ${sources.length} sources…`
         ) : (
           <>
-            Last scan <span className="text-ink-2">{formatDateTime(lastScanAt)}</span>
+            {lastScan?.finishedAt ? (
+              <>
+                Last scan <span className="text-ink-2">{formatDateTime(lastScan.finishedAt)}</span>
+              </>
+            ) : (
+              "No scans yet"
+            )}
             {down.length > 0 && (
               <>
                 {" · "}
@@ -128,7 +148,7 @@ function ScanStatus() {
           </>
         )}
       </span>
-      <Button variant="primary" onClick={runScan} disabled={scanning}>
+      <Button variant="primary" onClick={start} disabled={scanning}>
         {scanning ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
         {scanning ? "Scanning" : "Run scan"}
       </Button>
@@ -136,7 +156,45 @@ function ScanStatus() {
   );
 }
 
+function LoadingFrame({ error, onRetry }: { error?: string; onRetry: () => void }) {
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <header className="flex h-[52px] items-center gap-2.5 border-b border-line px-4 sm:px-6">
+        <ProductMark />
+        <span className="text-[14px] font-semibold">BrandShield</span>
+      </header>
+      <main className="flex flex-1 items-center justify-center px-6">
+        {error ? (
+          <div className="max-w-md text-center">
+            <div className="mx-auto mb-3 flex size-9 items-center justify-center rounded-md border border-line bg-surface text-ink-3">
+              <CloudOff className="size-4" />
+            </div>
+            <p className="text-[14px] font-medium">Can&apos;t load data</p>
+            <p className="mt-1 text-[13px] text-ink-2">{error}</p>
+            <p className="mt-1 font-mono text-[12px] text-ink-3">{API_URL}</p>
+            <Button className="mt-4" onClick={onRetry}>
+              <RefreshCw />
+              Try again
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-[13px] text-ink-3" role="status">
+            <LoaderCircle className="size-4 animate-spin" />
+            Loading
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { load, retry } = useLoadState();
+  if (load.kind !== "ready") return <LoadingFrame error={load.kind === "error" ? load.message : undefined} onRetry={retry} />;
+  return <ReadyShell>{children}</ReadyShell>;
+}
+
+function ReadyShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   useEffect(() => setOpen(false), [pathname]);

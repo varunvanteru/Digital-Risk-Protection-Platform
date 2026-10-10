@@ -1,41 +1,45 @@
 "use client";
 
-import { Check, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, LoaderCircle, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { BrandMark, PlatformLabel } from "@/components/marks";
 import { Button, ButtonLink, Card, CardHeader, Hint, Input, KeyValue, Label, Mono, PageHeader, Select, Tag } from "@/components/ui";
+import { api, mediaUrl } from "@/lib/api";
 import { formatDateTime, handleDisplay } from "@/lib/format";
-import { POSSIBLY_OFFICIAL } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import type { Platform } from "@/lib/types";
 import { SOCIAL_PLATFORMS, validateHandle } from "@/lib/validation";
 
 function AddAccount() {
-  const { brand, addOfficialAccount } = useStore();
+  const { brand, setBrand, refresh } = useStore();
   const [platform, setPlatform] = useState<Platform>("instagram");
   const [value, setValue] = useState("");
   const [kind, setKind] = useState<"official" | "partner">("official");
   const [touched, setTouched] = useState(false);
   const [added, setAdded] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const { handle, error } = validateHandle(platform, value, brand.accounts);
+  const { handle, error: clientError } = validateHandle(platform, value, brand.accounts);
+  const error = serverError ?? clientError;
   const spec = SOCIAL_PLATFORMS.find((p) => p.value === platform)!;
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (error) return;
-    addOfficialAccount({
-      platform,
-      handle,
-      canonicalId: `${platform}:${handle.toLowerCase()}`,
-      displayName: brand.name,
-      status: kind,
-      verified: false,
-    });
-    setAdded(handleDisplay(platform, handle));
-    setValue("");
-    setTouched(false);
+    if (clientError) return;
+    setSaving(true);
+    try {
+      setBrand(await api.addAccount({ platform, handle, status: kind }));
+      await refresh(); // an allowlisted account drops out of detections
+      setAdded(handleDisplay(platform, handle));
+      setValue("");
+      setTouched(false);
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Could not add the account");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -43,7 +47,7 @@ function AddAccount() {
       <div className="grid gap-3 sm:grid-cols-[150px_1fr_130px_auto] sm:items-start">
         <div>
           <Label htmlFor="add-platform">Platform</Label>
-          <Select id="add-platform" value={platform} onChange={(e) => setPlatform(e.target.value as Platform)}>
+          <Select id="add-platform" value={platform} onChange={(e) => { setPlatform(e.target.value as Platform); setServerError(null); }}>
             {SOCIAL_PLATFORMS.map((p) => (
               <option key={p.value} value={p.value}>
                 {p.label}
@@ -59,6 +63,7 @@ function AddAccount() {
             onChange={(e) => {
               setValue(e.target.value);
               setAdded(null);
+              setServerError(null);
             }}
             onBlur={() => value && setTouched(true)}
             placeholder={platform === "facebook" ? "zentrapay" : "@zentrapay"}
@@ -78,8 +83,8 @@ function AddAccount() {
           </Select>
         </div>
         <div className="sm:pt-[22px]">
-          <Button type="submit" variant="primary" className="w-full sm:w-auto">
-            <Plus />
+          <Button type="submit" variant="primary" className="w-full sm:w-auto" disabled={saving}>
+            {saving ? <LoaderCircle className="animate-spin" /> : <Plus />}
             Add to allowlist
           </Button>
         </div>
@@ -95,7 +100,23 @@ function AddAccount() {
 }
 
 export default function BrandPage() {
-  const { brand, removeOfficialAccount } = useStore();
+  const { brand, setBrand, refresh, lastScan } = useStore();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const possiblyOfficial = (lastScan?.possiblyOfficial ?? []).filter((p) => !brand.apps.some((a) => a.packageId === p.packageId));
+
+  async function run(key: string, fn: () => Promise<typeof brand>) {
+    setBusy(key);
+    setError(null);
+    try {
+      setBrand(await fn());
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   return (
     <>
@@ -105,13 +126,19 @@ export default function BrandPage() {
         actions={<ButtonLink href="/setup">Edit in wizard</ButtonLink>}
       />
 
+      {error && (
+        <p className="mb-4 rounded-md border border-line bg-crit-bg px-3 py-2 text-[13px] text-crit" role="alert">
+          {error}
+        </p>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0 space-y-4">
           <Card>
             <CardHeader title="Identity" description={`Last updated ${formatDateTime(brand.updatedAt)}`} />
             <div className="flex flex-col gap-6 px-4 py-4 sm:flex-row">
               <div className="flex shrink-0 flex-col items-center gap-2">
-                <BrandMark size={72} />
+                <BrandMark size={72} src={mediaUrl(brand.logoUrl)} />
                 <span className="text-[11.5px] text-ink-3">Official logo</span>
               </div>
               <div className="min-w-0 flex-1">
@@ -158,10 +185,11 @@ export default function BrandPage() {
                       <td className="px-4 py-2.5 text-right">
                         <button
                           aria-label={`Remove ${a.handle}`}
-                          onClick={() => removeOfficialAccount(a.canonicalId)}
-                          className="rounded p-1 text-ink-3 hover:bg-surface-2 hover:text-crit"
+                          disabled={busy !== null}
+                          onClick={() => run(`rm-${a.id}`, () => api.removeAccount(a.id))}
+                          className="rounded p-1 text-ink-3 hover:bg-surface-2 hover:text-crit disabled:opacity-50"
                         >
-                          <Trash2 className="size-3.5" />
+                          {busy === `rm-${a.id}` ? <LoaderCircle className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                         </button>
                       </td>
                     </tr>
@@ -197,7 +225,7 @@ export default function BrandPage() {
                       <td className="px-4 py-2.5 text-ink-2">{a.publisher}</td>
                     </tr>
                   ))}
-                  {POSSIBLY_OFFICIAL.map((a) => (
+                  {possiblyOfficial.map((a) => (
                     <tr key={a.packageId} className="bg-surface-2/50">
                       <td className="px-4 py-2.5">
                         <PlatformLabel platform={a.platform} />
@@ -210,8 +238,16 @@ export default function BrandPage() {
                         <Mono>{a.packageId}</Mono>
                       </td>
                       <td className="px-4 py-2.5">
-                        <Button size="sm">
-                          <Plus />
+                        <Button
+                          size="sm"
+                          disabled={busy !== null}
+                          onClick={() =>
+                            run(`app-${a.packageId}`, () =>
+                              api.addApp({ platform: a.platform, packageId: a.packageId, name: a.name, publisher: a.publisher, publisherId: a.publisherId }),
+                            )
+                          }
+                        >
+                          {busy === `app-${a.packageId}` ? <LoaderCircle className="animate-spin" /> : <Plus />}
                           Add
                         </Button>
                       </td>
@@ -259,7 +295,7 @@ export default function BrandPage() {
           <div className="flex gap-2.5 rounded-lg border border-line bg-surface px-4 py-3 text-[12.5px] text-ink-2">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-ok" />
             <p>
-              <span className="font-medium text-ink">0 official assets flagged</span> in the last scan. Every asset above is
+              <span className="font-medium text-ink">{lastScan?.officialFlagged ?? 0} official assets flagged</span> in the last scan. Every asset above is
               also planted in the test data to prove it.
             </p>
           </div>

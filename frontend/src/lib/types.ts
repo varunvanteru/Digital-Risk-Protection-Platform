@@ -38,10 +38,20 @@ export type MarkVariant =
   | "badge"
   | "mirror"
   | "monogram"
-  | "unrelated";
+  | "unrelated"
+  | "similar";
+
+export interface ScoreBreakdown {
+  score: number;
+  severity: Severity;
+  parts: { key: SignalKey; value: number; weight: number; contribution: number }[];
+  boosts: { label: string; amount: number }[];
+  cap: string | null;
+}
 
 export interface Detection {
   id: string;
+  sourceId: string;
   channel: Channel;
   platform: Platform;
   cls: DetectionClass;
@@ -50,23 +60,33 @@ export interface Detection {
   handle: string;
   url: string;
   mark: MarkVariant;
+  iconUrl: string | null;
   bio: string;
   audience: number; // followers or installs
-  createdAt: string; // ISO date the account / app appeared
-  publisher?: string;
-  publisherId?: string;
+  createdAt: string | null; // ISO date the account / app appeared
+  publisher: string | null;
+  publisherId: string | null;
   links: string[];
-  firstSeen: string; // ISO datetime
+  firstSeen: string;
+  lastSeen: string;
   scanId: string;
   signals: Signals;
   /** Plain-English evidence, one line per signal that fired. */
   reasons: string[];
-  lookalikeDomain?: boolean;
-  contextLabel?: "fan" | "news" | "review" | "parody";
+  lookalikeDomain: boolean;
+  contextLabel: string | null;
   status: DetectionStatus;
+  breakdown: ScoreBreakdown;
+}
+
+export interface DetectionDetail extends Detection {
+  allowlisted: boolean;
+  allowlistAssetId: number | null;
+  events: { at: string; action: string; from: DetectionStatus | null; to: DetectionStatus | null }[];
 }
 
 export interface OfficialAccount {
+  id: number;
   platform: Platform;
   handle: string;
   canonicalId: string;
@@ -76,6 +96,7 @@ export interface OfficialAccount {
 }
 
 export interface OfficialApp {
+  id: number;
   platform: Platform;
   name: string;
   packageId: string;
@@ -90,6 +111,7 @@ export interface BrandProfile {
   keywords: string[];
   domains: string[];
   description: string;
+  logoUrl: string | null;
   publishers: { name: string; id: string }[];
   accounts: OfficialAccount[];
   apps: OfficialApp[];
@@ -105,8 +127,45 @@ export interface Source {
   channel: Channel;
   mode: "live" | "dataset" | "manual";
   health: SourceHealth;
-  lastSuccess: string;
+  lastSuccess: string | null;
   latencyMs: number | null;
   itemsLastScan: number;
-  note?: string;
+  note: string | null;
+  simulateOutage: boolean;
+}
+
+export interface ScanSummary {
+  id: string;
+  status: "running" | "done" | "failed";
+  startedAt: string;
+  finishedAt: string | null;
+  candidates: number;
+  officialSkipped: number;
+  officialFlagged: number;
+  newDetections: number;
+  sources: Record<string, { ok: boolean; error?: string; items?: number; kept?: number; latencyMs?: number; retries?: number }>;
+  possiblyOfficial: { platform: Platform; name: string; packageId: string; publisher: string; publisherId: string }[];
+}
+
+export interface LookalikeStep {
+  label: string;
+  output: string;
+  changed: boolean;
+  note: string | null;
+}
+
+export interface QuickCheck {
+  result: {
+    input: string;
+    steps: LookalikeStep[];
+    core: string;
+    alias: string;
+    method: string;
+    score: number;
+    verdict: "match" | "partial" | "no_match";
+    variations: string[];
+    guards: string[];
+    explanation: string;
+  };
+  official: { platform: Platform; handle: string; status: "official" | "partner" } | null;
 }

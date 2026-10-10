@@ -8,11 +8,9 @@ import { DetectionTable } from "@/components/detection-table";
 import { PlatformGlyph } from "@/components/marks";
 import { TrendChart, type DayCount } from "@/components/trend-chart";
 import { ButtonLink, Card, CardHeader, PageHeader } from "@/components/ui";
-import { LAST_SCAN, POSSIBLY_OFFICIAL } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import type { Severity } from "@/lib/types";
 
-const TODAY = "2026-10-10";
 
 function istDate(iso: string) {
   return new Date(Date.parse(iso) + 5.5 * 3600e3).toISOString().slice(0, 10);
@@ -42,7 +40,8 @@ function Stat({
 }
 
 export default function OverviewPage() {
-  const { brand, detections, sources } = useStore();
+  const { brand, detections, sources, lastScan } = useStore();
+  const possiblyOfficial = (lastScan?.possiblyOfficial ?? []).filter((p) => !brand.apps.some((a) => a.packageId === p.packageId));
 
   const flagged = detections.filter((d) => d.breakdown.severity !== "low");
   const open = flagged.filter((d) => d.status === "open");
@@ -52,7 +51,7 @@ export default function OverviewPage() {
 
   const trend: DayCount[] = useMemo(() => {
     const days = Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(Date.parse(TODAY) - (13 - i) * 864e5);
+      const d = new Date(Date.parse(istDate(new Date().toISOString())) - (13 - i) * 864e5);
       const date = d.toISOString().slice(0, 10);
       return {
         date,
@@ -68,7 +67,7 @@ export default function OverviewPage() {
   }, [flagged]);
 
   const bySource = sources.map((s) => {
-    const rows = flagged.filter((d) => d.platform === s.platform);
+    const rows = flagged.filter((d) => d.sourceId === s.id);
     return { ...s, flagged: rows.length, critical: rows.filter((d) => d.breakdown.severity === "critical").length };
   });
 
@@ -80,7 +79,7 @@ export default function OverviewPage() {
       />
 
       <Card className="grid grid-cols-2 gap-px overflow-hidden bg-line lg:grid-cols-4 [&>*]:bg-surface">
-        <Stat label="Open detections" value={open.length} sub={`From ${LAST_SCAN.candidates} candidates screened`} />
+        <Stat label="Open detections" value={open.length} sub={lastScan ? `From ${lastScan.candidates} candidates in the last scan` : "No scan yet"} />
         <Stat
           label="Critical"
           icon={<SeverityIcon severity="critical" />}
@@ -91,7 +90,7 @@ export default function OverviewPage() {
         <Stat
           label="Official assets flagged"
           icon={<ShieldCheck className="size-3.5 text-ok" strokeWidth={2.2} />}
-          value={LAST_SCAN.officialFlagged}
+          value={lastScan?.officialFlagged ?? 0}
           sub={`${protectedCount} assets on the allowlist`}
         />
       </Card>
@@ -135,7 +134,7 @@ export default function OverviewPage() {
                   </td>
                   <td className="tabular px-2 py-2 text-right text-ink">{s.flagged}</td>
                   <td className="tabular px-2 py-2 text-right text-ink-2">{s.critical}</td>
-                  <td className="px-4 py-2 text-right" title={s.note}>
+                  <td className="px-4 py-2 text-right" title={s.note ?? undefined}>
                     <HealthBadge health={s.health} compact />
                   </td>
                 </tr>
@@ -145,11 +144,11 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {POSSIBLY_OFFICIAL.length > 0 && (
+      {possiblyOfficial.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-[13px]">
           <Info className="size-4 shrink-0 text-ink-3" />
           <p className="flex-1 text-ink-2">
-            <span className="font-medium text-ink">{POSSIBLY_OFFICIAL[0].name}</span> is published under your official
+            <span className="font-medium text-ink">{possiblyOfficial[0].name}</span> is published under your official
             developer ID but is not in the brand profile. It was not flagged.
           </p>
           <ButtonLink href="/brand#apps" size="sm">

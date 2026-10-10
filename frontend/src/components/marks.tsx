@@ -12,14 +12,31 @@ export function BrandMark({
   variant = "official",
   size = 32,
   initials = "ZP",
+  src,
   className,
 }: {
   variant?: MarkVariant;
   size?: number;
   initials?: string;
+  /** Real avatar / icon URL. When present it is shown instead of the drawn mark. */
+  src?: string;
   className?: string;
 }) {
-  if (variant === "monogram" || variant === "unrelated") {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        style={{ width: size, height: size }}
+        className={clsx("shrink-0 rounded-md border border-line bg-surface object-cover", className)}
+      />
+    );
+  }
+  if (variant === "monogram" || variant === "unrelated" || variant === "similar") {
     return (
       <span
         aria-hidden
