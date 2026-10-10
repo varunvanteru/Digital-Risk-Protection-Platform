@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
-from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,7 +19,8 @@ from ..connectors.base import Candidate, SourceUnavailable
 from ..detection.lookalike import analyse_name, name_similarity
 from ..detection.signals import BrandContext, evaluate, is_relevant
 from ..models import Brand, Detection, Source
-from .scan import CONNECTORS, _fetch_with_retries, _prefetch_images, brand_context, utcnow
+from .scan import CONNECTORS, _fetch_with_retries, _prefetch_images, brand_context, official_entry, source_state, utcnow
+from .urls import ParsedQuery, parse_query  # noqa: F401  (parse_query re-exported for callers and tests)
 
 SOCIAL_SOURCES = {
     "instagram": "src_ig",
@@ -51,78 +50,13 @@ PLATFORM_SOURCES = {
 }
 PLATFORMS = list(PLATFORM_SOURCES)
 
-HOSTS = {
-    "instagram.com": "instagram",
-    "facebook.com": "facebook",
-    "fb.com": "facebook",
-    "whatsapp.com": "whatsapp",
-    "x.com": "x",
-    "twitter.com": "x",
-    "threads.net": "threads",
-    "threads.com": "threads",
-    "linkedin.com": "linkedin",
-    "t.me": "telegram",
-    "telegram.me": "telegram",
-    "snapchat.com": "snapchat",
-    "youtube.com": "youtube",
-    "sharechat.com": "sharechat",
-    "mojapp.in": "moj",
-    "myjosh.in": "josh",
-    "share.myjosh.in": "josh",
-    "pinterest.com": "pinterest",
-    "in.pinterest.com": "pinterest",
-    "reddit.com": "reddit",
-    "quora.com": "quora",
-    "discord.gg": "discord",
-    "discord.com": "discord",
-    "play.google.com": "google_play",
-    "apps.apple.com": "app_store",
-}
-
-# Path words that come before the handle, e.g. linkedin.com/company/<h>, reddit.com/user/<h>
-PATH_PREFIXES = {"company", "in", "add", "profile", "user", "u", "r", "c", "channel", "invite", "user-profile"}
-
-@dataclass
-class ParsedQuery:
-    raw: str
-    name: str  # what we search for
-    platform: str | None  # platform of a pasted URL
-    identifier: str | None  # handle / package id of a pasted URL
-
-
-def parse_query(raw: str) -> ParsedQuery:
-    s = raw.strip()
-    looks_like_url = "://" in s or re.match(r"^(www\.)?[a-z0-9-]+\.[a-z]{2,}/", s, re.I)
-    if looks_like_url:
-        u = urlparse(s if "://" in s else "https://" + s)
-        host = (u.hostname or "").lower().removeprefix("www.").removeprefix("m.")
-        if host not in HOSTS and host.count(".") > 1:
-            host = host.split(".", 1)[1]  # e.g. in.pinterest.com, mobile subdomains
-        platform = HOSTS.get(host)
-        if platform == "google_play":
-            pkg = parse_qs(u.query).get("id", [""])[0]
-            if pkg:
-                # com.zentrapay.app -> "zentrapay": the most distinctive segment
-                parts = [p for p in pkg.split(".") if p not in {"com", "in", "app", "android", "org", "net", "co"}]
-                return ParsedQuery(s, parts[0] if parts else pkg, platform, pkg.lower())
-        segments = [p for p in u.path.split("/") if p]
-        if platform not in ("app_store", "google_play"):
-            segments = [p for p in segments if p.lower() not in PATH_PREFIXES]
-        if platform == "app_store":
-            app_id = next((p for p in segments if re.fullmatch(r"id\d+", p)), None)
-            name = next((p for p in segments if p not in {"app", app_id} and not re.fullmatch(r"[a-z]{2}", p)), app_id or s)
-            return ParsedQuery(s, name.replace("-", " "), platform, app_id)
-        if segments:
-            handle = segments[0].removeprefix("@")
-            return ParsedQuery(s, handle, platform, handle.lower())
-    handle = s.removeprefix("@")
-    return ParsedQuery(s, handle, None, None)
-
-
 def _reference(db: Session, q: ParsedQuery) -> tuple[BrandContext, Brand | None]:
-    """Compare against the registered brand when the query is that brand; otherwise against the query itself."""
-    brand = db.scalar(select(Brand).order_by(Brand.updated_at.desc()).limit(1))
-    if brand is not None:
+    """
+    Compare against the registered brand the query refers to (any brand, active first);
+    otherwise against the typed name alone, with nothing known to be official.
+    """
+    brands = db.scalars(select(Brand).order_by(Brand.is_active.desc(), Brand.updated_at.desc())).all()
+    for brand in brands:
         ctx = brand_context(db, brand)
         is_official_url = q.platform is not None and (q.platform, q.identifier) in ctx.allowlist
         if is_official_url or name_similarity([q.name], ctx.aliases)[0] >= 0.85:
@@ -149,13 +83,19 @@ def run_search(db: Session, raw: str, platforms: list[str]) -> dict:
     q = parse_query(raw)
     wanted = PLATFORMS if not platforms or "all" in platforms else [p for p in PLATFORMS if p in platforms]
     ctx, brand = _reference(db, q)
+    if brand is not None:
+        # Make sure official apps are validated (cached for 24 h) before judging candidates.
+        from .validation import validate_brand_assets
+
+        validate_brand_assets(db, brand)
+        ctx = brand_context(db, brand)
     today = utcnow().date()
     keywords = list(dict.fromkeys([q.name, *ctx.aliases]))
 
     source_ids = list(dict.fromkeys(sid for p in wanted for sid in PLATFORM_SOURCES[p]))
     sources = {s.id: s for s in db.scalars(select(Source).where(Source.id.in_(source_ids))).all()}
 
-    status: dict[str, dict] = {p: {"platform": p, "ok": False, "found": 0, "sources": []} for p in wanted}
+    status: dict[str, dict] = {p: {"platform": p, "ok": False, "found": 0, "official": 0, "sources": []} for p in wanted}
     candidates: list[Candidate] = []
 
     # Own executor for the fan-out: each task waits on the shared pool, so sharing it could deadlock.
@@ -164,14 +104,19 @@ def run_search(db: Session, raw: str, platforms: list[str]) -> dict:
     for fut in as_completed(futures):
         sid = futures[fut]
         src = sources[sid]
+        cached_at = None
         try:
-            items, latency, _ = fut.result()
+            items, latency, _, cached_at = fut.result()
             ok, error = True, None
         except SourceUnavailable as e:
             items, latency, ok, error = [], None, False, str(e)
+        state = source_state(src, ok, cached_at)
         for p in wanted:
             if sid in PLATFORM_SOURCES[p]:
-                status[p]["sources"].append({"id": sid, "name": src.name, "mode": src.mode, "ok": ok, "error": error, "latencyMs": latency})
+                status[p]["sources"].append({
+                    "id": sid, "name": src.name, "mode": src.mode, "state": state, "ok": ok, "error": error,
+                    "latencyMs": latency, "cachedAt": cached_at.isoformat() + "Z" if cached_at else None,
+                })
         candidates.extend(c for c in items if c.platform in wanted)
 
     outer.shutdown(wait=False)
@@ -196,15 +141,20 @@ def run_search(db: Session, raw: str, platforms: list[str]) -> dict:
         if key in seen:
             continue
         seen.add(key)
-        if key in ctx.allowlist or (c.channel == "app" and c.publisher_id and c.publisher_id in ctx.publisher_ids):
-            official.append({"platform": c.platform, "handle": c.handle, "displayName": c.display_name, "url": c.url})
-            continue
         ev = evaluate(c, ctx, today)
+        # Official assets were verified before scoring and are reported separately, with zero risk.
+        if ev.excluded:
+            status[c.platform]["official"] += 1
+            official.append(official_entry(c, ev))
+            continue
         if not is_relevant(ev.signals):
             continue
         status[c.platform]["found"] += 1
         results.append(
             {
+                "status": ev.status,
+                "riskScore": ev.breakdown.score,
+                "excluded": False,
                 "platform": c.platform,
                 "channel": c.channel,
                 "cls": ev.cls,
@@ -214,22 +164,27 @@ def run_search(db: Session, raw: str, platforms: list[str]) -> dict:
                 "mark": ev.mark,
                 "iconUrl": c.image,
                 "publisher": c.publisher,
+                "publisherId": c.publisher_id,
                 "audience": c.audience,
                 "reasons": ev.reasons,
                 "signals": ev.signals,
+                "checks": ev.checks,
                 "breakdown": ev.breakdown.to_dict(),
                 "detectionId": tracked.get(key),
             }
         )
 
     results.sort(key=lambda r: r["breakdown"]["score"], reverse=True)
+    official.sort(key=lambda o: (o["level"], o["platform"]))
     return {
         "query": raw,
         "searchedFor": q.name,
         "pastedUrl": {"platform": q.platform, "identifier": q.identifier} if q.platform else None,
-        "reference": {"type": "brand", "name": brand.name} if brand else {"type": "query", "name": ctx.name},
+        "reference": {"type": "brand", "name": brand.name, "id": brand.id} if brand else {"type": "query", "name": ctx.name},
         "platforms": [status[p] for p in wanted],
         "results": results,
-        "officialSkipped": official,
+        "official": official,
+        # Kept for older clients: same entries, short form.
+        "officialSkipped": [{"platform": o["platform"], "handle": o["handle"], "displayName": o["displayName"], "url": o["url"]} for o in official],
         "nameAnalysis": analyse_name(q.name, ctx.aliases).to_dict(),
     }

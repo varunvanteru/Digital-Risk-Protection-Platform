@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { ArrowLeft, Check, ImageUp, LoaderCircle, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlatformLabel } from "@/components/marks";
 import { Button, Card, Hint, Input, Label, Mono, PageHeader, Select, Tag, Textarea } from "@/components/ui";
 import { handleDisplay } from "@/lib/format";
@@ -88,7 +88,9 @@ function TagInput({
 
 export default function SetupPage() {
   const router = useRouter();
-  const { brand: current, setBrand, runScan, sources } = useStore();
+  const { brand: current, setBrand, runScan, sources, refresh } = useStore();
+  // /setup?new=1 registers another brand; /setup edits the active one.
+  const [isNew, setIsNew] = useState(false);
   const [step, setStep] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
 
@@ -105,6 +107,8 @@ export default function SetupPage() {
   const [accounts, setAccounts] = useState<DraftAccount[]>([]);
   const [apps, setApps] = useState<DraftApp[]>([]);
   const [publisher, setPublisher] = useState("");
+  const [publisherAliases, setPublisherAliases] = useState<string[]>([]);
+  const [legalName, setLegalName] = useState("");
 
   const [accPlatform, setAccPlatform] = useState<Platform>("instagram");
   const [accHandle, setAccHandle] = useState("");
@@ -124,12 +128,21 @@ export default function SetupPage() {
     setAccounts(current.accounts.map((a) => ({ platform: a.platform, handle: a.handle, status: a.status })));
     setApps(current.apps.map((a) => ({ platform: a.platform, packageId: a.packageId, name: a.name })));
     setPublisher(current.publishers[0]?.name ?? "");
+    setPublisherAliases(current.publishers[0]?.aliases ?? []);
+    setLegalName(current.legalName ?? "");
   }
+
+  useEffect(() => {
+    const fresh = new URLSearchParams(window.location.search).get("new") === "1";
+    setIsNew(fresh);
+    if (!fresh) loadSaved();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const errors1 = {
     name: validateBrandName(name),
     description: description.trim().length < 50 ? `Add at least 50 characters (${description.trim().length} so far)` : null,
-    logo: logo ? null : "Upload the official logo",
+    logo: null as string | null, // optional: the verified official app icon is used when no logo is uploaded
   };
   const errors2 = {
     assets: accounts.length + apps.length === 0 ? "Add at least one official account or app" : null,
@@ -185,18 +198,22 @@ export default function SetupPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      let saved = await api.saveBrand({
+      const body = {
         name: name.trim(),
+        legalName: legalName.trim() || undefined,
         aliases,
         keywords,
         domains,
         description: description.trim(),
         publisher: publisher.trim() || undefined,
+        publisherAliases,
         accounts,
         apps,
-      });
+      };
+      let saved = isNew ? await api.createBrand(body) : await api.saveBrand(body);
       if (logoFile) saved = await api.uploadLogo(logoFile);
       setBrand(saved);
+      await refresh();
       await runScan();
       router.push("/");
     } catch (e) {
@@ -208,12 +225,13 @@ export default function SetupPage() {
   return (
     <>
       <PageHeader
-        title="Set up brand protection"
-        description="Tell us what is genuinely yours. Everything you add here is on the allowlist and is never flagged."
+        title={isNew ? "Add a brand" : `Edit ${current.name}`}
+        description="Tell us what is genuinely yours. Everything you add here is on the allowlist, verified against the stores, and never flagged."
         actions={
-          step < 2 && (
+          step < 2 &&
+          !isNew && (
             <Button variant="ghost" onClick={loadSaved}>
-              Load saved profile
+              Reset to saved
             </Button>
           )
         }
@@ -251,6 +269,11 @@ export default function SetupPage() {
                   <div>
                     <Label htmlFor="aliases">Other names people use</Label>
                     <TagInput id="aliases" values={aliases} onChange={setAliases} placeholder="Zentra, Zentra Pay" />
+                  </div>
+                  <div>
+                    <Label htmlFor="legal-name">Legal company name (optional)</Label>
+                    <Input id="legal-name" value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="ZentraPay Technologies Pvt Ltd" />
+                    <Hint>Recognised in any spelling: &ldquo;Pvt. Ltd.&rdquo;, &ldquo;Private Limited&rdquo; and capitals are normalised</Hint>
                   </div>
                 </div>
                 <div>
@@ -383,7 +406,15 @@ export default function SetupPage() {
                 <div className="mt-4">
                   <Label htmlFor="publisher">Official publisher name</Label>
                   <Input id="publisher" value={publisher} onChange={(e) => setPublisher(e.target.value)} placeholder="ZentraPay Technologies Pvt Ltd" invalid={showErrors && !!errors2.publisher} />
-                  {showErrors && errors2.publisher ? <Hint error>{errors2.publisher}</Hint> : <Hint>Apps from any other publisher are compared against yours</Hint>}
+                  {showErrors && errors2.publisher ? (
+                    <Hint error>{errors2.publisher}</Hint>
+                  ) : (
+                    <Hint>Each app is then checked on its store; its developer account identifies your other official apps automatically</Hint>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <Label htmlFor="publisher-aliases">Other publisher spellings (optional)</Label>
+                  <TagInput id="publisher-aliases" values={publisherAliases} onChange={setPublisherAliases} placeholder="ZentraPay, ZENTRAPAY TECHNOLOGIES" />
                 </div>
               </section>
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { Check, LoaderCircle, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, CircleAlert, CircleX, LoaderCircle, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { BrandMark, PlatformLabel } from "@/components/marks";
 import { Button, ButtonLink, Card, CardHeader, Hint, Input, KeyValue, Label, Mono, PageHeader, Select, Tag } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/api";
 import { formatDateTime, handleDisplay } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import type { Platform } from "@/lib/types";
+import type { OfficialApp, Platform } from "@/lib/types";
 import { SOCIAL_PLATFORMS, validateHandle } from "@/lib/validation";
 
 function AddAccount() {
@@ -145,6 +145,7 @@ export default function BrandPage() {
                 <KeyValue
                   items={[
                     { k: "Brand name", v: <span className="font-medium">{brand.name}</span> },
+                    ...(brand.legalName ? [{ k: "Legal name", v: brand.legalName }] : []),
                     { k: "Aliases", v: <div className="flex flex-wrap gap-1.5">{brand.aliases.map((a) => <Tag key={a}>{a}</Tag>)}</div> },
                     { k: "Search keywords", v: <div className="flex flex-wrap gap-1.5">{brand.keywords.map((a) => <Tag key={a}>{a}</Tag>)}</div> },
                     { k: "Official domains", v: <div className="flex flex-wrap gap-x-3 gap-y-1">{brand.domains.map((d) => <Mono key={d}>{d}</Mono>)}</div> },
@@ -201,7 +202,16 @@ export default function BrandPage() {
           </Card>
 
           <Card id="apps">
-            <CardHeader title="Official apps" description="Matched by package ID and developer ID, never by name" />
+            <CardHeader
+              title="Official apps"
+              description="Validated on each store. The developer account behind them identifies official variants; names alone never do."
+              actions={
+                <Button size="sm" onClick={() => run("validate", async () => (await api.validateBrand()).brand)} disabled={busy !== null}>
+                  {busy === "validate" ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
+                  Validate now
+                </Button>
+              }
+            />
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-[13px]">
                 <thead className="border-b border-line bg-surface-2/50 text-[12px] text-ink-3">
@@ -210,6 +220,7 @@ export default function BrandPage() {
                     <th className="h-9 px-4 text-left font-medium">App</th>
                     <th className="h-9 px-4 text-left font-medium">Package / ID</th>
                     <th className="h-9 px-4 text-left font-medium">Publisher</th>
+                    <th className="h-9 px-4 text-left font-medium">Store check</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -222,7 +233,13 @@ export default function BrandPage() {
                       <td className="px-4 py-2.5">
                         <Mono>{a.packageId}</Mono>
                       </td>
-                      <td className="px-4 py-2.5 text-ink-2">{a.publisher}</td>
+                      <td className="px-4 py-2.5 text-ink-2">
+                        {a.publisher}
+                        {a.publisherId && <div className="font-mono text-[11px] text-ink-3">developer {a.publisherId}</div>}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <ValidationBadge app={a} />
+                      </td>
                     </tr>
                   ))}
                   {possiblyOfficial.map((a) => (
@@ -264,9 +281,10 @@ export default function BrandPage() {
             <CardHeader title="Official publishers" />
             <ul className="px-4 py-3 text-[13px]">
               {brand.publishers.map((p) => (
-                <li key={p.id}>
+                <li key={p.name}>
                   <div className="text-ink">{p.name}</div>
-                  <Mono className="text-ink-3">dev id {p.id}</Mono>
+                  {p.aliases.length > 0 && <div className="text-[12px] text-ink-3">Also: {p.aliases.join(", ")}</div>}
+                  {p.id && <Mono className="text-ink-3">dev id {p.id}</Mono>}
                 </li>
               ))}
             </ul>
@@ -302,5 +320,31 @@ export default function BrandPage() {
         </aside>
       </div>
     </>
+  );
+}
+
+function ValidationBadge({ app }: { app: OfficialApp }) {
+  if (app.validationStatus === "verified") {
+    return (
+      <div className="text-[12px]">
+        <span className="inline-flex items-center gap-1 font-medium text-ok">
+          <Check className="size-3.5" /> Verified
+        </span>
+        {app.storeTitle && <div className="max-w-[220px] truncate text-ink-3">{app.storeTitle}</div>}
+        {app.validatedAt && <div className="text-ink-3">{formatDateTime(app.validatedAt)}</div>}
+      </div>
+    );
+  }
+  if (app.validationStatus === "not_found") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[12px] text-crit" title={app.validationNote ?? undefined}>
+        <CircleX className="size-3.5" /> Not on the store
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[12px] text-high" title={app.validationNote ?? undefined}>
+      <CircleAlert className="size-3.5" /> {app.validationStatus === "unavailable" ? "Store unreachable" : "Not checked yet"}
+    </span>
   );
 }

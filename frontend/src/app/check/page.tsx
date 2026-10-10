@@ -1,18 +1,19 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowUpRight, ChevronRight, CircleX, ExternalLink, LayoutGrid, LoaderCircle, Search, SearchX, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Check, ChevronRight, ExternalLink, LayoutGrid, LoaderCircle, Plus, Search, SearchX, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ScoreCell } from "@/components/badges";
 import { initialsOf } from "@/components/detection-table";
+import { EvidenceStrip, VerdictChip } from "@/components/evidence";
 import { BrandMark } from "@/components/marks";
 import { PlatformLogo } from "@/components/platform-logo";
-import { Button, Card, CardHeader, EmptyState, Mono, PageHeader, Tag } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, PageHeader, Tag } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/api";
 import { ALL_PLATFORMS, CLASS_LABEL, PLATFORM_GROUPS, PLATFORM_LABEL, handleDisplay } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import type { Platform, SearchResponse } from "@/lib/types";
+import type { Platform, SearchResponse, SourceState } from "@/lib/types";
 
 const PLATFORMS = ALL_PLATFORMS;
 
@@ -110,34 +111,53 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
     </div>
   );
 }
+const STATE_STYLE: Record<SourceState, string> = {
+  live: "text-ok",
+  cached: "text-high",
+  simulated: "text-ink-3",
+  down: "text-crit",
+};
+
 function PlatformStatus({ data }: { data: SearchResponse }) {
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-line px-4 py-3">
-      {data.platforms.map((p) => {
-        const failed = p.sources.filter((s) => !s.ok);
-        const error = failed.map((s) => `${s.name}: ${s.error}`).join("\n");
-        return (
-          <span key={p.platform} className="inline-flex items-center gap-1.5 text-[12.5px]" title={error || undefined}>
-            <PlatformLogo platform={p.platform} size={14} className={p.ok ? "text-ink-2" : "text-ink-3"} />
-            <span className="text-ink-2">{PLATFORM_LABEL[p.platform]}</span>
-            {p.ok ? (
-              <>
-                <span className="tabular font-medium text-ink">{p.found}</span>
-                {failed.length > 0 && <span className="text-high">· live search unavailable</span>}
-              </>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-crit">
-                <CircleX className="size-3.5" />
-                Unavailable
+    <div className="border-b border-line px-4 py-3">
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        {data.platforms.map((p) => {
+          const states = Array.from(new Set(p.sources.map((s) => s.state)));
+          const tip = p.sources.map((s) => `${s.name}: ${s.state.toUpperCase()}${s.error ? ` (${s.error})` : ""}`).join("\n");
+          return (
+            <span key={p.platform} className="inline-flex items-center gap-1.5 text-[12.5px]" title={tip}>
+              <PlatformLogo platform={p.platform} size={14} className={p.ok ? undefined : "opacity-40 grayscale"} />
+              <span className="text-ink-2">{PLATFORM_LABEL[p.platform]}</span>
+              <span className="tabular font-medium text-ink">{p.found}</span>
+              {p.official > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-ok">
+                  <ShieldCheck className="size-3" />
+                  {p.official}
+                </span>
+              )}
+              <span className="text-[10.5px] font-semibold uppercase tracking-wide">
+                {states.map((st, i) => (
+                  <span key={st} className={STATE_STYLE[st]}>
+                    {i > 0 && <span className="text-ink-3"> + </span>}
+                    {st}
+                  </span>
+                ))}
               </span>
-            )}
-          </span>
-        );
-      })}
+            </span>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[11.5px] text-ink-3">
+        <span className="font-semibold text-ok">LIVE</span> searched just now ·{" "}
+        <span className="font-semibold text-high">CACHED</span> live source down, last good results ·{" "}
+        <span className="font-semibold">SIMULATED</span> curated sample data, no open API ·{" "}
+        <span className="font-semibold text-crit">DOWN</span> unavailable. <ShieldCheck className="inline size-3 text-ok" /> = official assets
+        excluded.
+      </p>
     </div>
   );
 }
-
 function NameAnalysis({ data }: { data: SearchResponse }) {
   const a = data.nameAnalysis;
   return (
@@ -169,18 +189,108 @@ function NameAnalysis({ data }: { data: SearchResponse }) {
   );
 }
 
+const LEVEL_LABEL: Record<number, string> = {
+  1: "Matched by official ID",
+  2: "Matched by official URL",
+  3: "Verified developer account",
+  4: "Publisher + supporting metadata",
+};
+
+function OfficialAssets({ data }: { data: SearchResponse }) {
+  const { refresh } = useStore();
+  const [added, setAdded] = useState<Record<string, "busy" | "done" | string>>({});
+  if (data.official.length === 0) return null;
+
+  async function addToProfile(o: SearchResponse["official"][number]) {
+    const key = `${o.platform}:${o.handle}`;
+    setAdded((s) => ({ ...s, [key]: "busy" }));
+    try {
+      await api.addApp({ platform: o.platform, packageId: o.handle, name: o.displayName, publisher: o.publisher ?? undefined, publisherId: o.publisherId ?? undefined });
+      await refresh();
+      setAdded((s) => ({ ...s, [key]: "done" }));
+    } catch (e) {
+      setAdded((s) => ({ ...s, [key]: e instanceof Error ? e.message : "Could not add" }));
+    }
+  }
+
+  return (
+    <Card className="mt-4 overflow-hidden">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-ok-bg/60 px-4 py-3">
+        <div>
+          <h2 className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+            <ShieldCheck className="size-4 text-ok" />
+            {data.official.length} official {data.official.length === 1 ? "asset" : "assets"} · excluded before risk scoring
+          </h2>
+          <p className="mt-0.5 text-[12.5px] text-ink-2">
+            Verified as {data.reference.name}&apos;s own. They never enter risk scoring, so their risk is 0.
+          </p>
+        </div>
+      </header>
+      <ul>
+        {data.official.map((o) => {
+          const key = `${o.platform}:${o.handle}`;
+          const state = added[key];
+          return (
+            <li key={key} className="grid gap-3 border-b border-line px-4 py-3 last:border-0 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_auto] sm:items-start">
+              <div className="flex min-w-0 items-center gap-3">
+                <BrandMark variant="official" size={30} initials={initialsOf(o.displayName)} src={mediaUrl(o.iconUrl)} />
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-medium text-ink">{o.displayName}</div>
+                  <div className="flex items-center gap-1.5 truncate text-[11.5px] text-ink-3">
+                    <PlatformLogo platform={o.platform} size={12} />
+                    <span className="font-mono">{handleDisplay(o.platform, o.handle)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <VerdictChip verdict={o.status} />
+                  <span className="text-[12px] text-ink-2">{LEVEL_LABEL[o.level]}</span>
+                  <span className="tabular text-[12px] text-ink-3">· Risk 0</span>
+                </div>
+                <ul className="space-y-0.5 text-[12.5px] leading-snug text-ink-2">
+                  {o.evidence.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex items-center gap-2 sm:justify-end">
+                {o.inProfile ? (
+                  <span className="text-[12px] text-ink-3">In brand profile</span>
+                ) : o.channel === "app" && (o.platform === "google_play" || o.platform === "app_store") && data.reference.type === "brand" ? (
+                  state === "done" ? (
+                    <span className="inline-flex items-center gap-1 text-[12px] text-ok">
+                      <Check className="size-3.5" /> Added
+                    </span>
+                  ) : (
+                    <Button size="sm" onClick={() => addToProfile(o)} disabled={state === "busy"} title={state && state !== "busy" ? state : undefined}>
+                      {state === "busy" ? <LoaderCircle className="animate-spin" /> : <Plus />}
+                      Add to profile
+                    </Button>
+                  )
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
 function Results({ data }: { data: SearchResponse }) {
   const n = data.results.length;
-  const flagged = data.results.filter((r) => r.breakdown.severity !== "low").length;
+  const flagged = data.results.filter((r) => r.status === "SUSPICIOUS" || r.status === "LOOKALIKE").length;
   return (
     <>
+      <OfficialAssets data={data} />
       <Card className="mt-4">
         <CardHeader
           title={
             n ? (
               <>
                 {flagged} suspicious {flagged === 1 ? "match" : "matches"} for &ldquo;{data.searchedFor}&rdquo;
-                {n > flagged && <span className="font-normal text-ink-3"> · {n - flagged} low risk</span>}
+                {n > flagged && <span className="font-normal text-ink-3"> · {n - flagged} mention{n - flagged === 1 ? "" : "s"}, not flagged</span>}
               </>
             ) : (
               <>No look-alikes for &ldquo;{data.searchedFor}&rdquo;</>
@@ -188,8 +298,8 @@ function Results({ data }: { data: SearchResponse }) {
           }
           description={
             data.reference.type === "brand"
-              ? `Compared with your registered brand ${data.reference.name}: its logo, description and allowlist`
-              : `Compared with the name you entered. Register it as a brand to also compare logos and descriptions.`
+              ? `Compared with the registered brand ${data.reference.name}: official IDs, developer accounts, logo, description and allowlist`
+              : `Compared with the name you entered only. Nothing is known to be official, so publisher and domain checks are skipped. Register it as a brand for full verification.`
           }
         />
         <PlatformStatus data={data} />
@@ -199,21 +309,24 @@ function Results({ data }: { data: SearchResponse }) {
           </EmptyState>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] border-collapse">
+            <table className="w-full min-w-[880px] border-collapse">
               <thead className="border-b border-line bg-surface-2/50">
                 <tr className="text-left text-[12px] text-ink-3">
-                  <th className="h-9 w-[150px] px-4 font-medium">Score</th>
+                  <th className="h-9 w-[150px] px-4 font-medium">Risk</th>
                   <th className="h-9 px-4 font-medium">Account or app</th>
                   <th className="h-9 w-[140px] px-4 font-medium">Platform</th>
-                  <th className="h-9 px-4 font-medium">Why it looks fake</th>
+                  <th className="h-9 px-4 font-medium">Evidence</th>
                   <th className="h-9 w-[110px] px-4 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {data.results.map((r) => (
-                  <tr key={`${r.platform}:${r.handle}`} className={clsx("border-b border-line align-top last:border-0", r.breakdown.severity === "low" && "opacity-70")}>
+                  <tr key={`${r.platform}:${r.handle}`} className={clsx("border-b border-line align-top last:border-0", r.status === "MENTION" && "opacity-75")}>
                     <td className="px-4 py-3">
                       <ScoreCell score={r.breakdown.score} severity={r.breakdown.severity} />
+                      <div className="mt-1.5">
+                        <VerdictChip verdict={r.status} />
+                      </div>
                     </td>
                     <td className="max-w-[260px] px-4 py-3">
                       <div className="flex min-w-0 items-center gap-3">
@@ -221,6 +334,7 @@ function Results({ data }: { data: SearchResponse }) {
                         <div className="min-w-0">
                           <div className="truncate text-[13px] font-medium text-ink">{r.displayName}</div>
                           <div className="truncate font-mono text-[11.5px] text-ink-3">{handleDisplay(r.platform, r.handle)}</div>
+                          {r.publisher && <div className="truncate text-[11.5px] text-ink-3">by {r.publisher}</div>}
                         </div>
                       </div>
                     </td>
@@ -240,6 +354,9 @@ function Results({ data }: { data: SearchResponse }) {
                         ))}
                         {r.reasons.length > 3 && <li className="text-ink-3">+{r.reasons.length - 3} more</li>}
                       </ul>
+                      <div className="mt-2 border-t border-line pt-1.5">
+                        <EvidenceStrip checks={r.checks} app={r.channel === "app"} />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right">
                       {r.detectionId ? (
@@ -260,25 +377,11 @@ function Results({ data }: { data: SearchResponse }) {
             </table>
           </div>
         )}
-        {data.officialSkipped.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line bg-surface-2/40 px-4 py-2.5 text-[12.5px] text-ink-2">
-            <ShieldCheck className="size-3.5 text-ok" />
-            <span>
-              {data.officialSkipped.length} official {data.officialSkipped.length === 1 ? "account" : "accounts and apps"} on your allowlist skipped:
-            </span>
-            {data.officialSkipped.map((o) => (
-              <Mono key={`${o.platform}:${o.handle}`} className="text-ink">
-                {handleDisplay(o.platform, o.handle)}
-              </Mono>
-            ))}
-          </div>
-        )}
       </Card>
       <NameAnalysis data={data} />
     </>
   );
 }
-
 export default function QuickCheckPage() {
   const { brand } = useStore();
   const [platforms, setPlatforms] = useState<Platform[] | "all">("all");

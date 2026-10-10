@@ -6,7 +6,7 @@ import json
 from datetime import date, datetime
 
 from ..config import settings
-from ..demo_assets import ensure_avatar
+from ..demo_assets import ensure_avatar, ensure_avatar_from_base
 from ..detection.lookalike import name_similarity
 from .base import Candidate
 
@@ -38,6 +38,24 @@ STORE_URL = {
 def _load(name: str) -> list[dict]:
     with open(settings.data_dir / name, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _brand_logo(name: str):
+    """Media path of a registered brand's reference image, used to derive simulated impersonator icons."""
+    from sqlalchemy import func, select
+
+    from ..db import SessionLocal
+    from ..models import Brand
+
+    with SessionLocal() as db:
+        logo = db.scalar(select(Brand.logo_path).where(func.lower(Brand.name) == name.lower()))
+    return settings.media_dir / logo.removeprefix("/media/") if logo else settings.media_dir / "__none__"
+
+
+def _avatar(row: dict, key: str, label: str) -> str:
+    if row.get("base_brand"):
+        return ensure_avatar_from_base(row["avatar"], key, _brand_logo(row["base_brand"]), label)
+    return ensure_avatar(row["avatar"], key, label)
 
 
 def _dt(s: str | None) -> datetime | None:
@@ -78,7 +96,7 @@ class SocialDataset:
                     created_on=date.fromisoformat(p["created_at"]),
                     links=p["links"],
                     verified=p["verified"],
-                    image=ensure_avatar(p["avatar"], f"{p['platform']}-{p['handle']}", p["display_name"]),
+                    image=_avatar(p, f"{p['platform']}-{p['handle']}", p["display_name"]),
                     mark=p["avatar"],
                     first_seen=_dt(p.get("first_seen")),
                     seed_status=p.get("status"),
@@ -112,7 +130,7 @@ class StoreDataset:
                     publisher=a["publisher"],
                     publisher_id=a["publisher_id"],
                     links=[a["privacy_url"]] if a.get("privacy_url") else [],
-                    image=ensure_avatar(a["avatar"], f"{a['platform']}-{a['package_id']}", a["title"]),
+                    image=_avatar(a, f"{a['platform']}-{a['package_id']}", a["title"]),
                     mark=a["avatar"],
                     privacy_url=a.get("privacy_url"),
                     first_seen=_dt(a.get("first_seen")),

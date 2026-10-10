@@ -86,7 +86,8 @@ def score_detection(
 
     score = round(100 * max(0.0, capped))
     cap = None
-    strong = sum(1 for p in parts if p.value > 0.5 and p.key not in CONTEXT_ONLY)
+    # Linking to a look-alike of the official domain is strong evidence on its own.
+    strong = sum(1 for p in parts if p.value > 0.5 and p.key not in CONTEXT_ONLY) + (1 if lookalike_domain else 0)
     if strong <= 1 and score > 39:
         score, cap = 39, "Only one signal is strong, so the score is capped at Low"
     if context_label and score > 39:

@@ -16,6 +16,9 @@ class Brand(Base):
     domains: Mapped[list] = mapped_column(JSON, default=list)
     description: Mapped[str] = mapped_column(Text, default="")
     logo_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    legal_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    # The brand the dashboard, scans and Quick check default to. One brand is active at a time.
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime)
 
     publishers: Mapped[list["Publisher"]] = relationship(back_populates="brand", cascade="all, delete-orphan")
@@ -29,6 +32,8 @@ class Publisher(Base):
     brand_id: Mapped[str] = mapped_column(ForeignKey("brands.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(120))
     publisher_id: Mapped[str] = mapped_column(String(80), default="")
+    # Other spellings the publisher appears under, e.g. "PHONEPE PRIVATE LIMITED" and "PhonePe".
+    aliases: Mapped[list | None] = mapped_column(JSON, nullable=True, default=list)
 
     brand: Mapped[Brand] = relationship(back_populates="publishers")
 
@@ -52,6 +57,12 @@ class OfficialAsset(Base):
     publisher: Mapped[str | None] = mapped_column(String(120), nullable=True)
     publisher_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+    # Filled by validating the asset against its live store (services/validation.py).
+    store_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    icon_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    validated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    validation_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # verified | not_found | unavailable
+    validation_note: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     brand: Mapped[Brand] = relationship(back_populates="assets")
 
@@ -71,6 +82,8 @@ class Source(Base):
     note: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # Demo control: force the connector to fail so the UI can show graceful degradation.
     simulate_outage: Mapped[bool] = mapped_column(Boolean, default=False)
+    # What the last run actually served: live | cached | simulated | down. Never claims live for cached data.
+    state: Mapped[str | None] = mapped_column(String(12), nullable=True)
 
 
 class Scan(Base):
@@ -121,6 +134,8 @@ class Detection(Base):
     severity: Mapped[str] = mapped_column(String(10), default="low")
     status: Mapped[str] = mapped_column(String(20), default="open")
     feedback_penalty: Mapped[float] = mapped_column(Float, default=0.0)
+    # Structured evidence for the UI: official ID / developer / publisher match, similarities, keywords.
+    checks: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class DetectionEvent(Base):
@@ -132,3 +147,16 @@ class DetectionEvent(Base):
     action: Mapped[str] = mapped_column(String(30))
     from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
     to_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+
+class SourceCache(Base):
+    """Last good raw results per live source and query, used when the source is down."""
+
+    __tablename__ = "source_cache"
+    __table_args__ = (UniqueConstraint("source_id", "query_key", name="uq_source_cache"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_id: Mapped[str] = mapped_column(String(30))
+    query_key: Mapped[str] = mapped_column(String(255))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime)
+    payload: Mapped[list] = mapped_column(JSON, default=list)

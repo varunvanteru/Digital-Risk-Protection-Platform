@@ -21,6 +21,8 @@ class Settings:
     # Per-source network budget, from the design doc: 10 s timeout, 2 retries.
     source_timeout_s: float = float(os.getenv("SOURCE_TIMEOUT_S", "10"))
     source_retries: int = int(os.getenv("SOURCE_RETRIES", "2"))
+    # Validate official apps against the live stores (developer ID, icon). Off in offline tests.
+    validate_assets: bool = os.getenv("VALIDATE_ASSETS", "1") == "1"
     # Extra CA certificate (PEM) for networks that inspect HTTPS, e.g. a FortiGate firewall.
     ca_bundle: str | None = os.getenv("CA_BUNDLE") or None
     data_dir: Path = BASE_DIR / "data"

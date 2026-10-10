@@ -13,7 +13,7 @@ SOURCES = [
     # id, name, platform, channel, mode
     ("src_play", "Google Play", "google_play", "app", "live"),
     ("src_appstore", "Apple App Store", "app_store", "app", "live"),
-    ("src_store_demo", "Store snapshot (demo brand)", "google_play", "app", "dataset"),
+    ("src_store_demo", "Store snapshot (simulated)", "google_play", "app", "dataset"),
     ("src_apk", "APK mirror sites", "apk_site", "app", "dataset"),
     ("src_ig", "Instagram", "instagram", "social", "dataset"),
     ("src_x", "X", "x", "social", "dataset"),
@@ -38,8 +38,11 @@ DEMO_BRAND_ID = "brd_zentrapay"
 
 def seed(db: Session) -> None:
     for sid, name, platform, channel, mode in SOURCES:
-        if db.get(Source, sid) is None:
+        src = db.get(Source, sid)
+        if src is None:
             db.add(Source(id=sid, name=name, platform=platform, channel=channel, mode=mode, health="operational", items_last_scan=0))
+        else:
+            src.name, src.mode = name, mode
 
     if db.scalar(select(Brand.id).limit(1)) is None:
         now = utcnow()
@@ -54,6 +57,7 @@ def seed(db: Session) -> None:
                 "Trusted by over 2 crore Indians. ZentraPay will never ask for your OTP, PIN or password."
             ),
             logo_path=ensure_brand_logo(DEMO_BRAND_ID),
+            is_active=True,
             updated_at=now,
         )
         brand.publishers = [Publisher(name="ZentraPay Technologies Pvt Ltd", publisher_id="8174492036215501734")]
@@ -82,4 +86,52 @@ def seed(db: Session) -> None:
             for p, pkg, n, pid in apps
         ]
         db.add(brand)
+    db.flush()
+
+    seed_phonepe_demo(db)
+
+    # Exactly one active brand.
+    brands = db.scalars(select(Brand).order_by(Brand.updated_at.desc())).all()
+    if brands and not any(b.is_active for b in brands):
+        (next((b for b in brands if b.id == DEMO_BRAND_ID), brands[0])).is_active = True
     db.commit()
+
+
+PHONEPE_ID = "brd_phonepe"
+
+
+def seed_phonepe_demo(db: Session) -> None:
+    """
+    A real-brand demo profile, entered the way a customer would: the main app on each
+    store and the publisher name, nothing else. Variants (business, investing apps)
+    are NOT listed; the engine must find them through store validation.
+    """
+    if db.scalar(select(Brand.id).where(Brand.name == "PhonePe")) is not None:
+        return
+    now = utcnow()
+    brand = Brand(
+        id=PHONEPE_ID,
+        name="PhonePe",
+        legal_name="PhonePe Private Limited",
+        aliases=["Phone Pe"],
+        keywords=["phonepe"],
+        domains=["phonepe.com"],
+        description=(
+            "PhonePe is a digital payments app for UPI money transfers, bill payments, mobile recharges, "
+            "insurance and investments. PhonePe never asks for your UPI PIN or OTP."
+        ),
+        logo_path=None,  # filled from the verified official app icon on first validation
+        is_active=False,
+        updated_at=now,
+    )
+    brand.publishers = [Publisher(name="PhonePe Private Limited", publisher_id="", aliases=["PhonePe"])]
+    brand.assets = [
+        OfficialAsset(kind="app", platform="google_play", identifier="com.phonepe.app", handle="com.phonepe.app",
+                      canonical_id="google_play:com.phonepe.app", display_name="PhonePe", status="official",
+                      verified=True, publisher="PhonePe Private Limited", created_at=now),
+        OfficialAsset(kind="app", platform="app_store", identifier="id1170055821", handle="id1170055821",
+                      canonical_id="app_store:id1170055821", display_name="PhonePe", status="official",
+                      verified=True, publisher="PhonePe Private Limited", created_at=now),
+    ]
+    db.add(brand)
+    db.flush()

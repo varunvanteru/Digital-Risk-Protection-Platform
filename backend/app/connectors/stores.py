@@ -28,6 +28,8 @@ class GooglePlayLive:
     """Google Play search via google-play-scraper, then app detail for publisher ID and release date."""
 
     source_id = "src_play"
+    # Play search pages are slow under load; give this connector its own budget.
+    timeout_s = 25.0
 
     def __init__(self, country: str = "in", hits: int = 30):
         self.country = country

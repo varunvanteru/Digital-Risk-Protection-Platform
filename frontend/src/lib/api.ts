@@ -1,4 +1,29 @@
-import type { BrandProfile, Detection, DetectionDetail, DetectionStatus, Platform, QuickCheck, ScanSummary, SearchResponse, Source } from "./types";
+import type {
+  AccuracyReport,
+  BrandProfile,
+  BrandSummary,
+  Detection,
+  DetectionDetail,
+  DetectionStatus,
+  Platform,
+  QuickCheck,
+  ScanSummary,
+  SearchResponse,
+  Source,
+} from "./types";
+
+export type BrandInput = {
+  name: string;
+  legalName?: string;
+  aliases: string[];
+  keywords: string[];
+  domains: string[];
+  description: string;
+  publisher?: string;
+  publisherAliases?: string[];
+  accounts: { platform: Platform; handle: string; status: "official" | "partner" }[];
+  apps: { platform: Platform; packageId: string; name?: string }[];
+};
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100").replace(/\/$/, "");
 
@@ -46,16 +71,14 @@ export const api = {
   health: () => request<{ status: string; database: string; mysql: string }>("/api/health"),
 
   brand: () => request<BrandProfile>("/api/brand"),
-  saveBrand: (body: {
-    name: string;
-    aliases: string[];
-    keywords: string[];
-    domains: string[];
-    description: string;
-    publisher?: string;
-    accounts: { platform: Platform; handle: string; status: "official" | "partner" }[];
-    apps: { platform: Platform; packageId: string; name?: string }[];
-  }) => request<BrandProfile>("/api/brand", json("PUT", body)),
+  saveBrand: (body: BrandInput) => request<BrandProfile>("/api/brand", json("PUT", body)),
+  brands: () => request<BrandSummary[]>("/api/brands"),
+  createBrand: (body: BrandInput) => request<BrandProfile>("/api/brands", json("POST", body)),
+  activateBrand: (id: string) => request<BrandProfile>(`/api/brands/${id}/activate`, { method: "POST" }),
+  deleteBrand: (id: string) => request<BrandSummary[]>(`/api/brands/${id}`, { method: "DELETE" }),
+  validateBrand: () =>
+    request<{ brand: BrandProfile; summary: Record<string, number> }>("/api/brand/validate", { method: "POST" }),
+  accuracy: () => request<AccuracyReport>("/api/accuracy"),
   uploadLogo: (file: File) => {
     const fd = new FormData();
     fd.append("file", file);

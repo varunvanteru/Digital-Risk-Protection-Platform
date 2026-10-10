@@ -13,7 +13,7 @@ from .db import get_db
 from .detection.lookalike import analyse_name
 from .detection.scoring import score_detection
 from .models import Brand, Detection, DetectionEvent, OfficialAsset, Publisher, Scan, Source
-from .serializers import brand_out, detection_out, scan_out, source_out
+from .serializers import brand_out, brand_summary, detection_out, scan_out, source_out
 from .services.scan import brand_context, is_scanning, start_scan, utcnow
 from .services.search import PLATFORMS, run_search
 from .validation import SOCIAL_PLATFORMS, app_id_error, clean_handle, domain_error, handle_error, name_error
@@ -25,7 +25,8 @@ FALSE_POSITIVE_PENALTY = 0.15
 
 
 def current_brand(db: Session) -> Brand:
-    brand = db.scalar(select(Brand).order_by(Brand.updated_at.desc()).limit(1))
+    """The active brand (one at a time); falls back to the most recently updated."""
+    brand = db.scalar(select(Brand).order_by(Brand.is_active.desc(), Brand.updated_at.desc()).limit(1))
     if brand is None:
         raise HTTPException(404, "No brand profile yet. Complete the setup wizard.")
     return brand
@@ -70,11 +71,13 @@ class AppIn(BaseModel):
 
 class BrandIn(BaseModel):
     name: str
+    legalName: str | None = None
     aliases: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
     domains: list[str] = Field(default_factory=list)
     description: str
     publisher: str | None = None
+    publisherAliases: list[str] = Field(default_factory=list)
     accounts: list[AccountIn] = Field(default_factory=list)
     apps: list[AppIn] = Field(default_factory=list)
 
@@ -101,8 +104,7 @@ def _app_asset(brand: Brand, a: AppIn, publisher: str | None) -> OfficialAsset:
     )
 
 
-@router.put("/brand")
-def put_brand(body: BrandIn, db: Session = Depends(get_db)):
+def _check_brand_body(body: BrandIn) -> None:
     if err := name_error(body.name):
         bad_request("name", err)
     if len(body.description.strip()) < 50:
@@ -115,27 +117,25 @@ def put_brand(body: BrandIn, db: Session = Depends(get_db)):
     if body.apps and not (body.publisher or "").strip():
         bad_request("publisher", "Required when apps are listed")
 
-    brand = current_brand(db)
-    # A different brand name means a different brand: start its monitoring from a clean slate,
-    # so detections found for the previous brand never appear under the new one.
-    if brand.name.strip().lower() != body.name.strip().lower():
-        db.execute(delete(Detection).where(Detection.brand_id == brand.id))
-        db.execute(delete(Scan).where(Scan.brand_id == brand.id))
-        from .detection.images import _cached
 
-        _cached.cache_clear()
+def _apply_brand(db: Session, brand: Brand, body: BrandIn) -> None:
+    """Write profile fields and official assets. Validation results of unchanged apps are kept."""
     brand.name = body.name.strip()
+    brand.legal_name = (body.legalName or "").strip() or None
     brand.aliases = [a.strip() for a in body.aliases if a.strip() and a.strip() != brand.name]
     brand.keywords = [k.strip() for k in body.keywords if k.strip()]
     brand.domains = [d.strip().lower() for d in body.domains]
     brand.description = body.description.strip()
     brand.updated_at = utcnow()
     if body.publisher:
+        aliases = [a.strip() for a in body.publisherAliases if a.strip()]
         if brand.publishers:
             brand.publishers[0].name = body.publisher.strip()
+            brand.publishers[0].aliases = aliases
         else:
-            brand.publishers.append(Publisher(name=body.publisher.strip(), publisher_id=""))
+            brand.publishers.append(Publisher(name=body.publisher.strip(), publisher_id="", aliases=aliases))
 
+    previous = {(a.platform, a.identifier): a for a in brand.assets}
     seen: set[tuple[str, str]] = set()
     assets = []
     for a in body.accounts:
@@ -145,16 +145,117 @@ def put_brand(body: BrandIn, db: Session = Depends(get_db)):
             assets.append(asset)
     for a in body.apps:
         asset = _app_asset(brand, a, body.publisher)
-        if (asset.platform, asset.identifier) not in seen:
-            seen.add((asset.platform, asset.identifier))
-            assets.append(asset)
+        key = (asset.platform, asset.identifier)
+        if key in seen:
+            continue
+        seen.add(key)
+        if (old := previous.get(key)) is not None:
+            for f in ("publisher_id", "store_title", "icon_url", "validated_at", "validation_status", "validation_note"):
+                setattr(asset, f, getattr(asset, f) or getattr(old, f))
+            asset.publisher = asset.publisher or old.publisher
+        assets.append(asset)
     brand.assets.clear()
     db.flush()
     brand.assets.extend(assets)
+
+
+def _validate_quietly(db: Session, brand: Brand) -> None:
+    from .services.validation import validate_brand_assets
+
+    validate_brand_assets(db, brand)
+
+
+@router.put("/brand")
+def put_brand(body: BrandIn, db: Session = Depends(get_db)):
+    _check_brand_body(body)
+    brand = current_brand(db)
+    # A different brand name means a different brand: start its monitoring from a clean slate,
+    # so detections found for the previous brand never appear under the new one.
+    if brand.name.strip().lower() != body.name.strip().lower():
+        db.execute(delete(Detection).where(Detection.brand_id == brand.id))
+        db.execute(delete(Scan).where(Scan.brand_id == brand.id))
+        from .detection.images import _cached
+
+        _cached.cache_clear()
+    _apply_brand(db, brand, body)
+    db.commit()
+    _validate_quietly(db, brand)
+    db.refresh(brand)
+    return brand_out(brand)
+
+
+# ---------- multiple brands ----------
+
+
+@router.get("/brands")
+def list_brands(db: Session = Depends(get_db)):
+    return [brand_summary(b) for b in db.scalars(select(Brand).order_by(Brand.is_active.desc(), Brand.name)).all()]
+
+
+@router.post("/brands", status_code=201)
+def create_brand(body: BrandIn, db: Session = Depends(get_db)):
+    """Register another brand and make it the active one."""
+    import re as _re
+    import uuid as _uuid
+
+    _check_brand_body(body)
+    if db.scalar(select(Brand.id).where(func.lower(Brand.name) == body.name.strip().lower())):
+        bad_request("name", "A brand with this name already exists. Switch to it instead.")
+    slug = _re.sub(r"[^a-z0-9]+", "", body.name.lower())[:20] or "brand"
+    brand = Brand(id=f"brd_{slug}_{_uuid.uuid4().hex[:4]}", name=body.name.strip(), aliases=[], keywords=[], domains=[],
+                  description="", is_active=True, updated_at=utcnow())
+    for other in db.scalars(select(Brand)).all():
+        other.is_active = False
+    db.add(brand)
+    db.flush()
+    _apply_brand(db, brand, body)
+    db.commit()
+    _validate_quietly(db, brand)
+    db.refresh(brand)
+    return brand_out(brand)
+
+
+@router.post("/brands/{brand_id}/activate")
+def activate_brand(brand_id: str, db: Session = Depends(get_db)):
+    brand = db.get(Brand, brand_id)
+    if brand is None:
+        raise HTTPException(404, "Brand not found")
+    for b in db.scalars(select(Brand)).all():
+        b.is_active = b.id == brand_id
     db.commit()
     db.refresh(brand)
     return brand_out(brand)
 
+
+@router.delete("/brands/{brand_id}")
+def delete_brand(brand_id: str, db: Session = Depends(get_db)):
+    """Remove a brand with its profile, detections and scans. Another brand becomes active if needed."""
+    brand = db.get(Brand, brand_id)
+    if brand is None:
+        raise HTTPException(404, "Brand not found")
+    if db.scalar(select(func.count()).select_from(Brand)) <= 1:
+        bad_request("brand", "Keep at least one brand")
+    was_active = brand.is_active
+    db.execute(delete(Detection).where(Detection.brand_id == brand_id))
+    db.execute(delete(Scan).where(Scan.brand_id == brand_id))
+    db.delete(brand)
+    db.flush()
+    if was_active:
+        nxt = db.scalar(select(Brand).order_by(Brand.updated_at.desc()).limit(1))
+        nxt.is_active = True
+    db.commit()
+    return [brand_summary(b) for b in db.scalars(select(Brand).order_by(Brand.is_active.desc(), Brand.name)).all()]
+
+
+@router.post("/brand/validate")
+def validate_brand(db: Session = Depends(get_db)):
+    """Re-check every official app against its live store now."""
+    from .services.validation import validate_brand_assets
+
+    brand = current_brand(db)
+    summary = validate_brand_assets(db, brand, force=True)
+    db.refresh(brand)
+    return {"brand": brand_out(brand), "summary": summary}
 
 @router.post("/brand/logo")
 async def upload_logo(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -226,6 +327,7 @@ def add_app(body: AppIn, db: Session = Depends(get_db)):
         db.rollback()
         bad_request("packageId", "This app is already in the profile")
     _retract_alerts(db, brand.id, asset.platform, asset.identifier)
+    _validate_quietly(db, brand)
     db.refresh(brand)
     return brand_out(brand)
 
@@ -403,3 +505,14 @@ def get_scan(scan_id: str, db: Session = Depends(get_db)):
     if s is None:
         raise HTTPException(404, "Scan not found")
     return scan_out(s)
+
+
+# ---------- accuracy ----------
+
+
+@router.get("/accuracy")
+def accuracy():
+    """Precision, recall and official-asset safety on the labelled test set, run through the real engine."""
+    from .evaluation import run_evaluation
+
+    return run_evaluation()

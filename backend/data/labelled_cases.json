@@ -1,0 +1,87 @@
+{
+  "about": "Labelled test set for the accuracy panel. Labels: official (incl. official variants), fake, mention (legitimate third party using the name), unrelated. ZentraPay cases reference rows of the curated datasets and run through the real connectors. PhonePe cases are inline; their developer IDs are illustrative test values, not real store IDs.",
+  "today": "2026-10-10",
+  "brands": [
+    {
+      "name": "ZentraPay",
+      "aliases": ["Zentra", "Zentra Pay"],
+      "keywords": ["zentra", "zpay"],
+      "domains": ["zentrapay.com", "zentrapay.in"],
+      "description": "ZentraPay lets you pay bills, send money over UPI and manage cards in one secure app. Trusted by over 2 crore Indians. ZentraPay will never ask for your OTP, PIN or password.",
+      "logo": "demo",
+      "publishers": [{"name": "ZentraPay Technologies Pvt Ltd", "aliases": []}],
+      "apps": [
+        {"platform": "google_play", "id": "com.zentrapay.app", "publisher": "ZentraPay Technologies Pvt Ltd", "publisherId": "8174492036215501734"},
+        {"platform": "app_store", "id": "id1234567890", "publisher": "ZentraPay Technologies Pvt Ltd", "publisherId": "1588120034"}
+      ],
+      "accounts": [
+        {"platform": "instagram", "handle": "zentrapay"}, {"platform": "x", "handle": "ZentraPay"},
+        {"platform": "facebook", "handle": "zentrapay"}, {"platform": "telegram", "handle": "zentrapay_official"},
+        {"platform": "instagram", "handle": "zentrapay_partner_mumbai"}, {"platform": "youtube", "handle": "zentrapay"},
+        {"platform": "linkedin", "handle": "zentrapay"}, {"platform": "whatsapp", "handle": "0029VaZentraPay01"}
+      ]
+    },
+    {
+      "name": "PhonePe",
+      "aliases": ["Phone Pe"],
+      "keywords": ["phonepe"],
+      "domains": ["phonepe.com"],
+      "description": "PhonePe is a digital payments app for UPI money transfers, bill payments, mobile recharges, insurance and investments. PhonePe never asks for your UPI PIN or OTP.",
+      "logo": null,
+      "publishers": [{"name": "PhonePe Private Limited", "aliases": ["PhonePe"]}],
+      "apps": [
+        {"platform": "google_play", "id": "com.phonepe.app", "publisher": "PhonePe", "publisherId": "TEST-PLAY-DEV-PHONEPE"},
+        {"platform": "app_store", "id": "id1170055821", "publisher": "PHONEPE PRIVATE LIMITED", "publisherId": "TEST-APPLE-PHONEPE"}
+      ],
+      "accounts": [{"platform": "instagram", "handle": "phonepe"}]
+    }
+  ],
+  "dataset_labels": {
+    "brand": "ZentraPay",
+    "official": [
+      "instagram:zentrapay", "x:zentrapay", "facebook:zentrapay", "telegram:zentrapay_official",
+      "instagram:zentrapay_partner_mumbai", "whatsapp:0029vazentrapay01", "youtube:zentrapay", "linkedin:zentrapay",
+      "google_play:com.zentrapay.app", "app_store:id1234567890", "google_play:com.zentrapay.business"
+    ],
+    "fake": [
+      "instagram:zentrapay_care_india", "x:zentrapay_support", "facebook:zentrapay.offers", "telegram:zentrapay_refund",
+      "instagram:z3ntra.pay_official", "x:zentarpay", "instagram:zentrapay.helpdesk", "facebook:zentrapayindia",
+      "instagram:zentrapayy", "x:zentra_rewards", "telegram:zentra_signals",
+      "whatsapp:0029vbzpsupport24", "whatsapp:0029vczentraloans", "youtube:zentrapay.official.help",
+      "linkedin:zentrapay-careers-india", "threads:zentrapay.offers", "snapchat:zentrapay_snap",
+      "sharechat:zentrapay_sahayata", "moj:zentrapay.cashback", "josh:zentra_pay_rewards", "pinterest:zentrapayindia",
+      "reddit:zentrapay_support_team", "quora:zentrapay-customer-care-number", "discord:zentrapay-rewards",
+      "google_play:com.zentrapay.wallet.upi", "google_play:com.zentraloan.instant", "app_store:id6450011223",
+      "google_play:com.zentrpay.send", "app_store:id6451907761", "apk_site:zentrapay-pro-mod.apk", "apk_site:zentra-lite-v2.apk"
+    ],
+    "mention": [
+      "instagram:zentrapay_fanpage", "x:zentrapaynews", "youtube:techwithrahul", "reddit:upi_nerd", "google_play:com.scansoft.zentraqr"
+    ],
+    "unrelated": ["x:sentra_motors", "facebook:zentrofoods", "instagram:chai_and_code", "google_play:com.sentra.fitness"]
+  },
+  "cases": [
+    {"brand": "PhonePe", "label": "official", "group": "Official app (exact ID)", "channel": "app", "platform": "google_play", "handle": "com.phonepe.app", "display_name": "PhonePe UPI, Payment, Recharge", "publisher": "PhonePe", "publisher_id": "TEST-PLAY-DEV-PHONEPE", "bio": "Send money with UPI, pay bills and recharge."},
+    {"brand": "PhonePe", "label": "official", "group": "Official app (exact ID)", "channel": "app", "platform": "app_store", "handle": "id1170055821", "display_name": "PhonePe UPI, Payment, Recharge", "publisher": "PHONEPE PRIVATE LIMITED", "publisher_id": "TEST-APPLE-PHONEPE", "bio": "24x7 support. Verified merchants."},
+    {"brand": "PhonePe", "label": "official", "group": "Official variant (same developer account)", "channel": "app", "platform": "google_play", "handle": "com.phonepe.app.business", "display_name": "PhonePe Business UPI, Loan App", "publisher": "PhonePe", "publisher_id": "TEST-PLAY-DEV-PHONEPE", "bio": "Accept payments, get business loans and settlements."},
+    {"brand": "PhonePe", "label": "official", "group": "Official variant (same developer account)", "channel": "app", "platform": "google_play", "handle": "com.phonepe.stockbroking", "display_name": "PhonePe Invest (Share.Market)", "publisher": "PhonePe", "publisher_id": "TEST-PLAY-DEV-PHONEPE", "bio": "Invest in stocks and mutual funds. Read reviews and research."},
+    {"brand": "PhonePe", "label": "official", "group": "Official variant (same developer account)", "channel": "app", "platform": "app_store", "handle": "id1463742453", "display_name": "PhonePe Business: Merchant App", "publisher": "PHONEPE PRIVATE LIMITED", "publisher_id": "TEST-APPLE-PHONEPE", "bio": "Accept payments. 24x7 support. Verified settlements.", "links": ["https://www.phonepe.com/business-solutions"]},
+    {"brand": "PhonePe", "label": "official", "group": "Official variant (publisher name, ID not reported)", "channel": "app", "platform": "google_play", "handle": "com.phonepe.insurance", "display_name": "PhonePe Insurance", "publisher": "PhonePe Pvt. Ltd.", "publisher_id": null, "bio": "Buy health and motor insurance."},
+    {"brand": "PhonePe", "label": "official", "group": "Official social handle", "channel": "social", "platform": "instagram", "handle": "phonepe", "display_name": "PhonePe", "bio": "Official PhonePe account. We never ask for your OTP."},
+
+    {"brand": "PhonePe", "label": "fake", "group": "Added words: customer care", "channel": "app", "platform": "google_play", "handle": "com.fastsupport.phonepecare", "display_name": "PhonePe Customer Care - Fast Support", "publisher": "Fast Support Apps", "publisher_id": "5551234567890000", "bio": "Get the PhonePe customer care number and helpline support instantly. Toll free number for refunds and failed payments.", "created_at": "2026-09-25", "audience": 500, "privacy_url": "https://sites.google.com/view/fastsupport-privacy"},
+    {"brand": "PhonePe", "label": "fake", "group": "Copied publisher name, different developer", "channel": "app", "platform": "google_play", "handle": "com.phonepe.kyc.verify", "display_name": "PhonePe KYC Verify", "publisher": "PhonePe Private Limited", "publisher_id": "9990001112223334", "bio": "Complete your PhonePe KYC to avoid account block. Enter the OTP you receive to verify.", "created_at": "2026-10-03", "audience": 100},
+    {"brand": "PhonePe", "label": "fake", "group": "Unicode homoglyph", "channel": "app", "platform": "app_store", "handle": "id6470000001", "display_name": "PhonеPe Wallet", "publisher": "Wallet Labs Inc", "publisher_id": "1799000111", "bio": "PhonePe is a digital payments app for UPI money transfers, bill payments and mobile recharges. Send money instantly.", "created_at": "2026-09-29", "audience": 40},
+    {"brand": "PhonePe", "label": "fake", "group": "Spacing variation", "channel": "app", "platform": "google_play", "handle": "com.quickhelp.phonepay.refund", "display_name": "Phone Pe Refund Help", "publisher": "QuickHelp Apps", "publisher_id": "4440009998887776", "bio": "Raise a refund request for failed UPI payments. Share your UPI PIN with our agent to reverse it.", "created_at": "2026-09-20", "audience": 1000},
+    {"brand": "PhonePe", "label": "fake", "group": "Modified APK", "channel": "app", "platform": "apk_site", "handle": "phonepe-pro-mod.apk", "display_name": "PhonePe Pro (Mod)", "publisher": "Unknown uploader", "publisher_id": "apk:unknown", "bio": "PhonePe premium unlocked. Cashback hack, no limits.", "created_at": "2026-09-27", "audience": 8000},
+    {"brand": "PhonePe", "label": "fake", "group": "Fake social: support", "channel": "social", "platform": "instagram", "handle": "phonepe_support_help", "display_name": "PhonePe Customer Support", "bio": "Official PhonePe helpline. Share your registered number and OTP to get your refund in 10 minutes. WhatsApp: wa.me/919900112233", "links": ["wa.me/919900112233", "phonepe-refund.in"], "created_at": "2026-10-06", "audience": 85},
+    {"brand": "PhonePe", "label": "fake", "group": "Fake social: refunds", "channel": "social", "platform": "x", "handle": "PhonePe_Refunds", "display_name": "PhonePe Refunds", "bio": "Failed UPI payment? DM us your UPI PIN and we will reverse it.", "created_at": "2026-09-30", "audience": 120},
+    {"brand": "PhonePe", "label": "fake", "group": "Fake social: KYC", "channel": "social", "platform": "telegram", "handle": "phonepe_kyc_update", "display_name": "PhonePe KYC Update", "bio": "Your PhonePe KYC expires today and your account will be blocked. Update at bit.ly/pp-kyc", "links": ["bit.ly/pp-kyc"], "created_at": "2026-10-03", "audience": 1400},
+    {"brand": "PhonePe", "label": "fake", "group": "Leetspeak", "channel": "social", "platform": "instagram", "handle": "ph0nepe.rewards", "display_name": "Ph0nePe Rewards", "bio": "Spin and win ₹5,000 cashback. Tap the link to claim before midnight.", "links": ["ph0nepe-rewards.top"], "created_at": "2026-10-02", "audience": 340},
+
+    {"brand": "PhonePe", "label": "mention", "group": "Comparison tool", "channel": "app", "platform": "google_play", "handle": "com.fincompare.upicompare", "display_name": "Compare PhonePe Payments", "publisher": "FinCompare Labs", "publisher_id": "3332221110009998", "bio": "Compare UPI apps like PhonePe, Google Pay and Paytm side by side: fees, cashback and limits. Not affiliated with any payment provider.", "created_at": "2023-04-02", "audience": 50000},
+    {"brand": "PhonePe", "label": "mention", "group": "Independent review channel", "channel": "social", "platform": "youtube", "handle": "upitipsdaily", "display_name": "UPI Tips Daily", "bio": "Independent reviews of PhonePe, Google Pay and Paytm features. Not affiliated with any company.", "created_at": "2021-08-14", "audience": 52000},
+
+    {"brand": "PhonePe", "label": "unrelated", "group": "Unrelated", "channel": "app", "platform": "google_play", "handle": "com.cleaner.phonecleaner", "display_name": "Phone Cleaner Pro", "publisher": "CleanTools", "publisher_id": "1112223334445556", "bio": "Free up storage on your phone.", "created_at": "2022-01-01", "audience": 1000000},
+    {"brand": "PhonePe", "label": "unrelated", "group": "Unrelated", "channel": "app", "platform": "app_store", "handle": "id1500000002", "display_name": "PE Ratio Calculator", "publisher": "Stock Tools LLC", "publisher_id": "1600000003", "bio": "Calculate price to earnings ratios.", "created_at": "2021-05-05", "audience": 5000}
+  ]
+}

@@ -2,10 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError } from "./api";
-import type { BrandProfile, Detection, DetectionDetail, DetectionStatus, ScanSummary, Source } from "./types";
+import type { BrandProfile, BrandSummary, Detection, DetectionDetail, DetectionStatus, ScanSummary, Source } from "./types";
 
 interface Store {
   brand: BrandProfile;
+  brands: BrandSummary[];
+  switchBrand: (id: string) => Promise<void>;
   detections: Detection[];
   sources: Source[];
   lastScan: ScanSummary | null;
@@ -25,6 +27,7 @@ const Ctx = createContext<(Store & { load: LoadState; retry: () => void }) | nul
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [load, setLoad] = useState<LoadState>({ kind: "loading" });
   const [brand, setBrand] = useState<BrandProfile | null>(null);
+  const [brands, setBrands] = useState<BrandSummary[]>([]);
   const [detections, setDetections] = useState<Detection[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
   const [lastScan, setLastScan] = useState<ScanSummary | null>(null);
@@ -32,8 +35,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const poll = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
-    const [b, d, s, scans] = await Promise.all([api.brand(), api.detections(), api.sources(), api.latestScan()]);
+    const [b, d, s, scans, list] = await Promise.all([api.brand(), api.detections(), api.sources(), api.latestScan(), api.brands()]);
     setBrand(b);
+    setBrands(list);
     setDetections(d);
     setSources(s);
     setLastScan(scans.last);
@@ -85,6 +89,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return updated;
   }, []);
 
+  const switchBrand = useCallback(
+    async (id: string) => {
+      await api.activateBrand(id);
+      await refresh();
+    },
+    [refresh],
+  );
+
   const setOutage = useCallback(async (id: string, on: boolean) => {
     const s = await api.setOutage(id, on);
     setSources((list) => list.map((x) => (x.id === id ? s : x)));
@@ -95,6 +107,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       load,
       retry: initial,
       brand: brand as BrandProfile,
+      brands,
+      switchBrand,
       detections,
       sources,
       lastScan,
@@ -105,7 +119,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setStatus,
       setOutage,
     }),
-    [load, initial, brand, detections, sources, lastScan, scanning, runScan, refresh, setStatus, setOutage],
+    [load, initial, brand, brands, switchBrand, detections, sources, lastScan, scanning, runScan, refresh, setStatus, setOutage],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

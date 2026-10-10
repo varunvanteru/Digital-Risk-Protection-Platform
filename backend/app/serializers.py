@@ -36,6 +36,11 @@ def app_out(a: OfficialAsset) -> dict:
         "packageId": a.handle,
         "publisher": a.publisher or "",
         "publisherId": a.publisher_id or "",
+        "storeTitle": a.store_title,
+        "iconUrl": a.icon_url,
+        "validatedAt": iso(a.validated_at),
+        "validationStatus": a.validation_status,
+        "validationNote": a.validation_note,
     }
 
 
@@ -48,7 +53,9 @@ def brand_out(b: Brand) -> dict:
         "domains": b.domains,
         "description": b.description,
         "logoUrl": b.logo_path,
-        "publishers": [{"name": p.name, "id": p.publisher_id} for p in b.publishers],
+        "legalName": b.legal_name,
+        "isActive": b.is_active,
+        "publishers": [{"name": p.name, "id": p.publisher_id, "aliases": p.aliases or []} for p in b.publishers],
         "accounts": [asset_out(a) for a in b.assets if a.kind == "social"],
         "apps": [app_out(a) for a in b.assets if a.kind == "app"],
         "updatedAt": iso(b.updated_at),
@@ -82,6 +89,8 @@ def detection_out(d: Detection) -> dict:
         "lookalikeDomain": d.lookalike_domain,
         "contextLabel": d.context_label,
         "status": d.status,
+        "verdict": {"critical": "SUSPICIOUS", "high": "SUSPICIOUS", "medium": "LOOKALIKE"}.get(bd.severity, "MENTION"),
+        "checks": d.checks or {},
         "breakdown": bd.to_dict(),
     }
 
@@ -99,6 +108,8 @@ def source_out(s: Source) -> dict:
         "itemsLastScan": s.items_last_scan,
         "note": s.note,
         "simulateOutage": s.simulate_outage,
+        # live | cached | simulated | down. Datasets are always reported as simulated, never live.
+        "state": s.state or ("down" if s.health == "unavailable" else "simulated" if s.mode != "live" else "live"),
     }
 
 
@@ -116,4 +127,17 @@ def scan_out(s: Scan | None) -> dict | None:
         "newDetections": s.new_detections,
         "sources": (s.source_status or {}).get("sources", {}),
         "possiblyOfficial": (s.source_status or {}).get("possiblyOfficial", []),
+        "officialFound": (s.source_status or {}).get("officialFound", []),
+        "validation": (s.source_status or {}).get("validation"),
+    }
+
+
+def brand_summary(b: Brand) -> dict:
+    return {
+        "id": b.id,
+        "name": b.name,
+        "logoUrl": b.logo_path,
+        "isActive": b.is_active,
+        "accounts": sum(1 for a in b.assets if a.kind == "social"),
+        "apps": sum(1 for a in b.assets if a.kind == "app"),
     }

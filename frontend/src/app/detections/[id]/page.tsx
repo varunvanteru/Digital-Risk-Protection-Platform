@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { SeverityBadge, StatusBadge } from "@/components/badges";
+import { EvidenceTable, VerdictChip } from "@/components/evidence";
 import { initialsOf } from "@/components/detection-table";
 import { BrandMark, PlatformLabel } from "@/components/marks";
 import { Button, Card, CardHeader, EmptyState, KeyValue, Mono, Tag } from "@/components/ui";
@@ -346,6 +347,18 @@ export default function DetectionPage() {
             </div>
           </Card>
 
+          {d.checks && Object.keys(d.checks).length > 0 && (
+            <Card>
+              <CardHeader
+                title="Evidence checks"
+                description="Identity checks ran first; this item did not match any official asset, so it was scored."
+                actions={<VerdictChip verdict={d.verdict} />}
+              />
+              <div className="px-4 py-3">
+                <EvidenceTable checks={d.checks} app={d.channel === "app"} />
+              </div>
+            </Card>
+          )}
           <Compare d={d} />
           <Breakdown d={d} />
         </div>

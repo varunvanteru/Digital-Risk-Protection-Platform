@@ -1,14 +1,15 @@
 "use client";
 
 import clsx from "clsx";
-import { Building2, ChevronsUpDown, CloudOff, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, X } from "lucide-react";
+import { Building2, CloudOff, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, Target, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/format";
-import { API_URL, mediaUrl } from "@/lib/api";
+import { API_URL } from "@/lib/api";
 import { useLoadState, useStore } from "@/lib/store";
-import { BrandMark, ProductMark } from "./marks";
+import { BrandSwitcher } from "./brand-switcher";
+import { ProductMark } from "./marks";
 import { AppearanceMenu } from "./appearance";
 import { Button } from "./ui";
 
@@ -18,6 +19,7 @@ const NAV = [
   { href: "/check", label: "Quick check", Icon: ScanSearch },
   { href: "/brand", label: "Brand profile", Icon: Building2 },
   { href: "/sources", label: "Sources", Icon: PlugZap },
+  { href: "/accuracy", label: "Accuracy", Icon: Target },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -26,7 +28,7 @@ function isActive(pathname: string, href: string) {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { brand, detections, sources } = useStore();
+  const { detections, sources } = useStore();
   const urgent = detections.filter(
     (d) => d.status === "open" && (d.breakdown.severity === "critical" || d.breakdown.severity === "high"),
   ).length;
@@ -40,14 +42,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="px-3 pb-3">
-        <button className="flex w-full items-center gap-2.5 rounded-md border border-line bg-surface px-2.5 py-2 text-left hover:bg-surface-2">
-          <BrandMark size={22} src={mediaUrl(brand.logoUrl)} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-medium">{brand.name}</span>
-            <span className="block text-[11.5px] text-ink-3">Protected brand</span>
-          </span>
-          <ChevronsUpDown className="size-3.5 text-ink-3" />
-        </button>
+        <BrandSwitcher onNavigate={onNavigate} />
       </div>
 
       <nav aria-label="Main" className="flex-1 space-y-0.5 px-3">

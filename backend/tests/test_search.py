@@ -53,7 +53,7 @@ def test_search_all_platforms(client):
     assert r.status_code == 200
     body = r.json()
     assert len(body["platforms"]) == 19
-    assert body["reference"] == {"type": "brand", "name": "ZentraPay"}
+    assert body["reference"]["type"] == "brand" and body["reference"]["name"] == "ZentraPay"
     handles = {x["handle"] for x in body["results"]}
     assert "zentrapay_care_india" in handles and "com.zentrapay.wallet.upi" in handles
     # Official accounts are reported as skipped, never as results

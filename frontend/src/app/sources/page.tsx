@@ -7,8 +7,14 @@ import { Button, Card, CardHeader, PageHeader } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
+import type { SourceState } from "@/lib/types";
 
-const MODE_LABEL = { live: "Live", dataset: "Dataset", manual: "Manual" } as const;
+const STATE: Record<SourceState, { label: string; className: string; note: string }> = {
+  live: { label: "Live", className: "bg-ok-bg text-ok", note: "Searched live" },
+  cached: { label: "Cached", className: "bg-high-bg text-high", note: "Live source down; last good results" },
+  simulated: { label: "Simulated", className: "bg-low-bg text-ink-2", note: "Curated sample data (no open API)" },
+  down: { label: "Down", className: "bg-crit-bg text-crit", note: "Unavailable" },
+};
 
 export default function SourcesPage() {
   const { sources, setOutage } = useStore();
@@ -42,7 +48,7 @@ export default function SourcesPage() {
                 <thead className="border-b border-line bg-surface-2/50 text-[12px] text-ink-3">
                   <tr>
                     <th className="h-9 px-4 text-left font-medium">Source</th>
-                    <th className="h-9 w-24 px-4 text-left font-medium">Mode</th>
+                    <th className="h-9 w-32 px-4 text-left font-medium">State</th>
                     <th className="h-9 w-32 px-4 text-left font-medium">Health</th>
                     <th className="h-9 w-36 px-4 text-left font-medium">Last success</th>
                     <th className="h-9 w-24 px-4 text-right font-medium">Latency</th>
@@ -64,7 +70,12 @@ export default function SourcesPage() {
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-ink-2">{MODE_LABEL[s.mode]}</td>
+                      <td className="px-4 py-3">
+                        <span className={clsx("inline-flex h-5 items-center rounded px-1.5 text-[11px] font-semibold uppercase tracking-wide", STATE[s.state].className)} title={STATE[s.state].note}>
+                          {STATE[s.state].label}
+                        </span>
+                        <div className="mt-1 text-[11.5px] text-ink-3">{s.mode === "live" ? "Live connector" : "Curated dataset"}</div>
+                      </td>
                       <td className="px-4 py-3">
                         <HealthBadge health={s.health} />
                       </td>

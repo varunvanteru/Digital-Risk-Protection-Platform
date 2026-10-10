@@ -89,7 +89,24 @@ export interface Detection {
   lookalikeDomain: boolean;
   contextLabel: string | null;
   status: DetectionStatus;
+  verdict: Verdict;
+  checks: EvidenceChecks;
   breakdown: ScoreBreakdown;
+}
+
+/** Outcome of official verification + risk scoring. OFFICIAL / LIKELY_OFFICIAL are never scored. */
+export type Verdict = "OFFICIAL" | "LIKELY_OFFICIAL" | "SUSPICIOUS" | "LOOKALIKE" | "MENTION";
+
+/** Structured evidence behind a decision, shown as a signal table. */
+export interface EvidenceChecks {
+  officialIdMatch?: boolean;
+  officialDeveloperMatch?: boolean;
+  publisherMatch?: boolean | null;
+  nameSimilarity?: number;
+  iconSimilarity?: number;
+  descriptionSimilarity?: number;
+  suspiciousKeywords?: string[];
+  contactMismatch?: boolean;
 }
 
 export interface DetectionDetail extends Detection {
@@ -115,6 +132,11 @@ export interface OfficialApp {
   packageId: string;
   publisher: string;
   publisherId: string;
+  storeTitle: string | null;
+  iconUrl: string | null;
+  validatedAt: string | null;
+  validationStatus: "verified" | "not_found" | "unavailable" | null;
+  validationNote: string | null;
 }
 
 export interface BrandProfile {
@@ -125,7 +147,9 @@ export interface BrandProfile {
   domains: string[];
   description: string;
   logoUrl: string | null;
-  publishers: { name: string; id: string }[];
+  legalName: string | null;
+  isActive: boolean;
+  publishers: { name: string; id: string; aliases: string[] }[];
   accounts: OfficialAccount[];
   apps: OfficialApp[];
   updatedAt: string;
@@ -145,6 +169,50 @@ export interface Source {
   itemsLastScan: number;
   note: string | null;
   simulateOutage: boolean;
+  /** What the source actually served: never "live" for cached or simulated data. */
+  state: SourceState;
+}
+
+export type SourceState = "live" | "cached" | "simulated" | "down";
+
+export interface BrandSummary {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  isActive: boolean;
+  accounts: number;
+  apps: number;
+}
+
+export interface AccuracyReport {
+  cases: number;
+  truePositives: number;
+  falsePositives: number;
+  falseNegatives: number;
+  trueNegatives: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  officialTested: number;
+  officialRecognised: number;
+  officialFlagged: number;
+  mentionsFlagged: number;
+  byBrand: Record<string, { cases: number; correct: number }>;
+  rows: {
+    brand: string;
+    label: "official" | "fake" | "mention" | "unrelated";
+    group: string;
+    platform: string;
+    name: string;
+    handle: string;
+    outcome: string;
+    status: string;
+    score: number;
+    severity: Severity | null;
+    correct: boolean;
+    reason: string;
+  }[];
+  definition: string;
 }
 
 export interface ScanSummary {
@@ -184,6 +252,11 @@ export interface QuickCheck {
 }
 
 export interface SearchResult {
+  status: Verdict;
+  riskScore: number;
+  excluded: false;
+  publisherId: string | null;
+  checks: EvidenceChecks;
   platform: Platform;
   channel: Channel;
   cls: DetectionClass;
@@ -205,14 +278,35 @@ export interface SearchResponse {
   query: string;
   searchedFor: string;
   pastedUrl: { platform: Platform; identifier: string | null } | null;
-  reference: { type: "brand" | "query"; name: string };
+  reference: { type: "brand" | "query"; name: string; id?: string };
   platforms: {
     platform: Platform;
     ok: boolean;
     found: number;
-    sources: { id: string; name: string; mode: string; ok: boolean; error: string | null; latencyMs: number | null }[];
+    official: number;
+    sources: { id: string; name: string; mode: string; state: SourceState; ok: boolean; error: string | null; latencyMs: number | null; cachedAt: string | null }[];
   }[];
   results: SearchResult[];
+  official: OfficialResult[];
   officialSkipped: { platform: Platform; handle: string; displayName: string; url: string }[];
   nameAnalysis: QuickCheck["result"];
+}
+/** A candidate verified as the brand's own before scoring. Risk is always 0. */
+export interface OfficialResult {
+  platform: Platform;
+  channel: Channel;
+  handle: string;
+  displayName: string;
+  url: string;
+  iconUrl: string | null;
+  publisher: string | null;
+  publisherId: string | null;
+  status: "OFFICIAL" | "LIKELY_OFFICIAL";
+  level: 1 | 2 | 3 | 4;
+  confidence: number;
+  evidence: string[];
+  inProfile: boolean;
+  riskScore: 0;
+  excluded: true;
+  checks: EvidenceChecks;
 }

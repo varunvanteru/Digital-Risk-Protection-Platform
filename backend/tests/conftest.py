@@ -9,6 +9,8 @@ import pytest
 os.environ["MYSQL_DB"] = "brandshield_test"
 os.environ["SOURCE_RETRIES"] = "0"
 os.environ["SOURCE_TIMEOUT_S"] = "5"
+# Offline: never call the live stores to validate official apps during tests.
+os.environ["VALIDATE_ASSETS"] = "0"
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 

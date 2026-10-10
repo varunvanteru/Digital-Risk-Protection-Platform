@@ -8,7 +8,7 @@ from collections import Counter
 from datetime import date
 from urllib.parse import urlparse
 
-from .lookalike import damerau
+from .lookalike import HOMOGLYPHS, damerau
 
 STOPWORDS = set(
     """a an and are as at be by for from has have in is it its of on or our so that the this to was we will with you your
@@ -60,10 +60,24 @@ def context_label(text: str) -> str | None:
     return None
 
 
-def claims_signal(name: str, bio: str, verified: bool) -> tuple[float, list[str]]:
-    """How strongly an unverified account presents itself as the brand's own channel."""
+# In a store description, ordinary words like "support" or "verified" describe features.
+# Only explicit contact claims count there.
+APP_DESCRIPTION_CLAIMS = re.compile(
+    r"\b(customer care|helpline|toll ?free|support)\s*(number|no\b|contact|whatsapp)|\bofficial (help|helpline|customer care|support)\b",
+    re.I,
+)
+
+
+def claims_signal(name: str, bio: str, verified: bool, scope: str = "profile") -> tuple[float, list[str]]:
+    """
+    How strongly an unverified account or app presents itself as the brand's own channel.
+    scope="profile": name + bio. scope="app": title, plus explicit contact claims in the description.
+    """
     if verified:
         return 0.0, []
+    if scope == "app":
+        m = APP_DESCRIPTION_CLAIMS.search(bio or "")
+        bio = m.group(0) if m else ""
     text = f"{name} {bio}".lower()
     if re.search(r"\b(unofficial|not affiliated)\b", text):
         return 0.0, []
@@ -88,10 +102,14 @@ def domain_of(link: str) -> str:
 
 
 def is_lookalike_domain(domain: str, official_domains: list[str], brand_cores: list[str]) -> bool:
-    """A domain that is not official but borrows or misspells the brand name."""
+    """A domain that is not official but borrows or misspells the brand name. Needs known official domains."""
+    if not official_domains:
+        return False  # without the real domain on record, the brand's own site would look like a copy
     if not domain or domain in official_domains or any(domain.endswith("." + d) for d in official_domains):
         return False
-    label = re.sub(r"[^a-z0-9]", "", domain.split(".")[0])
+    # Undo look-alike characters first, so ph0nepe-rewards.top reads as phonepe...
+    first = "".join("l" if ch == "1" else HOMOGLYPHS.get(ch, ch) for ch in domain.split(".")[0])
+    label = re.sub(r"[^a-z0-9]", "", first)
     for core in brand_cores:
         if len(core) < 5:
             continue
@@ -149,6 +167,22 @@ def behaviour_signal(
     return round(min(1.0, score), 2), reasons, lookalike
 
 
+# An actual request for secrets ("share your OTP", "enter the UPI PIN"), not a mention of one.
+# Genuine apps write "set your UPI PIN" or "never share your OTP"; those must not count.
+CREDENTIAL_ASK = re.compile(
+    r"\b(share|send|enter|provide|submit|tell us|dm(?: us)?|whatsapp)\b[^.!?\n]{0,40}?\b(otp|upi pin|pin|password|cvv|card number)\b",
+    re.I,
+)
+NEGATION = re.compile(r"\b(never|not|don't|do not|won't|will not|no one|nobody)\b[^.!?\n]{0,25}$", re.I)
+
+
+def credential_ask(text: str) -> re.Match | None:
+    for m in CREDENTIAL_ASK.finditer(text or ""):
+        if not NEGATION.search(text[max(0, m.start() - 40) : m.start()]):
+            return m
+    return None
+
+
 HIGH_RISK_APP = r"\b(loan|instant cash|credit line|mod|pro unlocked|hack|apk)\b"
 
 
@@ -172,6 +206,9 @@ def app_risk_signal(
     if 0 < installs < 1000:
         score += 0.2
         reasons.append(f"Fewer than 1,000 installs")
+    if m := credential_ask(f"{title}. {description}"):
+        score += 0.4
+        reasons.append(f"Asks users for sensitive details (\u201c{m.group(0)}\u201d)")
     if m := re.search(HIGH_RISK_APP, f"{title} {description}".lower()):
         score += 0.3
         reasons.append(f"High-risk category or modified build (“{m.group(0)}”)")

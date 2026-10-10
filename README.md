@@ -12,13 +12,20 @@ Built for the Bytexl hackathon (Kampus.VC problem statement: Social & App Monito
 | Backend | FastAPI, SQLAlchemy, Python 3.11 | 8100 |
 | Database | MySQL 8, schema `brandshield` (created automatically) | 3306 |
 
-**Scan pipeline** (`backend/app/services/scan.py`): each source is fetched with a timeout and retries, then:
+**Detection pipeline (allowlist-first)** — `backend/app/services/scan.py`, `services/search.py`:
 
-1. Gate 1 drops allowlisted IDs and apps from an official developer ID.
-2. Signals are computed: look-alike name, logo similarity (pHash on real pixels, mirror-aware), description similarity, impersonation claims, scam behaviour or app risk context, publisher mismatch.
-3. Gate 2 re-checks the allowlist in the database, then the detection is stored.
+1. **Validate official assets.** Each official app in the brand profile is looked up on its store (Google Play detail, App Store lookup); its developer account ID, store title, publisher and icon are recorded (cached 24 h).
+2. **Build the allowlist and verified identities:** official IDs/handles, developer account IDs per store, normalised publisher names (`PhonePe Pvt. Ltd.` = `PHONEPE PRIVATE LIMITED` = `PhonePe`), package namespaces, official icons.
+3. **Collect candidates** from every source. Live stores fall back to their last good results when down, labelled CACHED; curated datasets are labelled SIMULATED.
+4. **Official-asset verification before any scoring** (`detection/official.py`):
+   - L1 exact official ID / handle, L2 official URL → OFFICIAL
+   - L3 published by a verified official developer account → OFFICIAL (finds official variants)
+   - L4 official publisher name + supporting metadata, with no contradicting developer ID and no scam signals → LIKELY_OFFICIAL
+   Official candidates stop here: risk 0, never scored.
+5. **Risk signals and scoring** for everything else: look-alike name, icon (pHash, mirror-aware), description, impersonation claims, scam behaviour, publisher mismatch (only when an official publisher is on record: unknown is not a mismatch). Status: SUSPICIOUS / LOOKALIKE / MENTION.
+6. **Gate 2** re-checks the allowlist before saving. No brand-specific code anywhere: brands are data.
 
-A failing source is recorded and skipped; the scan always finishes.
+**Accuracy** (`GET /api/accuracy`, Accuracy page): a labelled set of 71 cases (`backend/data/labelled_cases.json`) run through the same engine. Current result: 0 of 18 official assets flagged, precision 1.00, recall 0.925.
 
 **Sources**
 
@@ -26,9 +33,9 @@ A failing source is recorded and skipped; the scan always finishes.
 | --- | --- |
 | Google Play | Live (`google-play-scraper`) |
 | Apple App Store | Live (iTunes Search API) |
-| Instagram, X, Facebook, Telegram | Curated dataset (no open APIs) |
-| APK mirror sites | Curated dataset |
-| Store snapshot (demo brand) | Curated dataset; the demo brand ZentraPay is fictional, so live stores have no fakes of it |
+| 16 social platforms (Instagram, Facebook, WhatsApp, X, Threads, LinkedIn, Telegram, Snapchat, YouTube, ShareChat, Moj, Josh, Pinterest, Reddit, Quora, Discord) | Simulated: curated dataset (no open search APIs) |
+| APK mirror sites | Simulated: curated dataset |
+| Store snapshot (simulated) | Simulated: curated store fakes for the demo brands (ZentraPay is fictional; PhonePe fakes are made up) |
 
 ## Run locally
 
@@ -62,7 +69,7 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
-38 tests: engine unit tests, connector parsing on recorded store responses, and end-to-end API tests against MySQL. The API tests use a separate `brandshield_test` schema, dropped afterwards.
+97 tests: allowlist-first regression tests, engine unit tests, connector parsing on recorded store responses, and end-to-end API tests against MySQL. The API tests use a separate `brandshield_test` schema, dropped afterwards.
 
 ## Networks that inspect HTTPS
 

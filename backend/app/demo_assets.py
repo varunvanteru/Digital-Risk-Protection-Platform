@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
@@ -91,4 +92,36 @@ def ensure_avatar(kind: str, key: str, label: str) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
         _variant(kind, label).save(path)
+    return f"/media/dataset/{name}"
+
+
+def ensure_avatar_from_base(kind: str, key: str, base_path: Path, label: str) -> str:
+    """
+    Impersonator variants of a real brand image (the brand's own logo or verified app icon):
+    copy (re-encoded), recolor (hue shifted), mirror, badge. Regenerated when the base changes.
+    Falls back to a neutral monogram when no base image is available.
+    """
+    if not base_path.exists() or kind not in ("copy", "recolor", "mirror", "badge"):
+        return ensure_avatar("monogram" if kind != "unrelated" else "unrelated", key, label)
+    stamp = int(base_path.stat().st_mtime)
+    name = f"{slug(key)}-{stamp}.png"
+    path = settings.media_dir / "dataset" / name
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        img = Image.open(base_path).convert("RGBA").resize((SIZE, SIZE))
+        if kind == "copy":
+            img = img.resize((180, 180)).resize((SIZE, SIZE)).filter(ImageFilter.GaussianBlur(0.8))
+        elif kind == "recolor":
+            r, g, b, a = img.split()
+            h, s, v = Image.merge("RGB", (r, g, b)).convert("HSV").split()
+            h = h.point(lambda x: (x + 28) % 256)
+            img = Image.merge("HSV", (h, s, v)).convert("RGB")
+            img.putalpha(a)
+        elif kind == "mirror":
+            img = ImageOps.mirror(img)
+        elif kind == "badge":
+            d = ImageDraw.Draw(img)
+            d.rectangle([0, int(SIZE * 0.75), SIZE, SIZE], fill=(124, 45, 18))
+            d.text((SIZE / 2, SIZE * 0.875), "SUPPORT", fill="white", font=_font(34), anchor="mm")
+        img.save(path)
     return f"/media/dataset/{name}"

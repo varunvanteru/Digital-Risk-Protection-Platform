@@ -8,6 +8,7 @@ from sqlalchemy import select, update
 
 from .config import settings
 from .db import Base, SessionLocal, engine, ensure_database
+from .db_migrate import add_missing_columns
 from .models import Scan
 from .routes import router
 from .seed import seed
@@ -22,6 +23,7 @@ async def lifespan(_: FastAPI):
     install_default_context()
     ensure_database()
     Base.metadata.create_all(engine)
+    add_missing_columns(engine)
     settings.media_dir.mkdir(parents=True, exist_ok=True)
     with SessionLocal() as db:
         seed(db)
