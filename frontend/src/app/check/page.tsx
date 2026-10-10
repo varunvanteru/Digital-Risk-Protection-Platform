@@ -61,14 +61,26 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
         </span>
       </div>
 
-      {/* One shared column grid for every group, so chips line up across rows. */}
-      <div className="space-y-3">
+      {/*
+        One shared column grid for every group, so chips line up across rows.
+        Groups of up to 4 platforms span 4 columns (subgrid), so two of them sit
+        side by side when 8 columns fit; larger groups take the full width.
+      */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-2 gap-y-4">
         {PLATFORM_GROUPS.map((g) => (
-          <div key={g.label} role="group" aria-label={g.label}>
-            <button onClick={() => toggleGroup(g.platforms)} className="mb-1.5 text-[11.5px] font-medium uppercase tracking-wide text-ink-3 hover:text-ink">
+          <div
+            key={g.label}
+            role="group"
+            aria-label={g.label}
+            className={clsx("grid grid-cols-subgrid content-start gap-y-2", g.platforms.length <= 4 ? "col-span-full sm:col-span-4" : "col-span-full")}
+          >
+            <button
+              onClick={() => toggleGroup(g.platforms)}
+              className="col-span-full justify-self-start text-[11.5px] font-medium uppercase tracking-wide text-ink-3 hover:text-ink"
+            >
               {g.label}
             </button>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-2">
+            <div className="contents">
               {g.platforms.map((p) => {
                 const on = !all && isOn(p);
                 return (
