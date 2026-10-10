@@ -66,10 +66,18 @@ export default function OverviewPage() {
     return days;
   }, [flagged]);
 
-  const bySource = sources.map((s) => {
-    const rows = flagged.filter((d) => d.sourceId === s.id);
-    return { ...s, flagged: rows.length, critical: rows.filter((d) => d.breakdown.severity === "critical").length };
-  });
+  // Most critical first; unhealthy sources always make the cut so outages stay visible.
+  const SOURCE_ROWS = 8;
+  const ranked = sources
+    .map((s) => {
+      const rows = flagged.filter((d) => d.sourceId === s.id);
+      return { ...s, flagged: rows.length, critical: rows.filter((d) => d.breakdown.severity === "critical").length };
+    })
+    .sort((a, b) => b.critical - a.critical || b.flagged - a.flagged || a.name.localeCompare(b.name));
+  const unhealthy = ranked.filter((s) => s.health !== "operational");
+  const bySource = [...unhealthy, ...ranked.filter((s) => s.health === "operational")]
+    .slice(0, Math.max(SOURCE_ROWS, unhealthy.length))
+    .sort((a, b) => b.critical - a.critical || b.flagged - a.flagged || a.name.localeCompare(b.name));
 
   return (
     <>
@@ -106,9 +114,10 @@ export default function OverviewPage() {
         <Card>
           <CardHeader
             title="By source"
+            description={`Top ${bySource.length} of ${sources.length}, most critical first`}
             actions={
               <Link href="/sources" className="text-[12.5px] text-ink-2 hover:text-ink">
-                Manage
+                All sources
               </Link>
             }
           />

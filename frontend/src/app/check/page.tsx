@@ -66,7 +66,7 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
         Groups of up to 4 platforms span 4 columns (subgrid), so two of them sit
         side by side when 8 columns fit; larger groups take the full width.
       */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-x-2 gap-y-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(max(132px,calc((100%_-_56px)/8)),1fr))] gap-x-2 gap-y-4">
         {PLATFORM_GROUPS.map((g) => (
           <div
             key={g.label}

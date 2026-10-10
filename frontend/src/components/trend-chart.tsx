@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface DayCount {
   date: string; // YYYY-MM-DD
@@ -12,9 +12,19 @@ export interface DayCount {
  * Single-series column chart. One measure, so one ink colour and no legend;
  * the card title names the series. Hover or focus a day for its value.
  */
-export function TrendChart({ data, height = 168 }: { data: DayCount[]; height?: number }) {
+export function TrendChart({ data, height = 220 }: { data: DayCount[]; height?: number }) {
   const [hover, setHover] = useState<number | null>(null);
-  const W = 640;
+  // Draw at the container's real pixel width so text and bars keep their size on wide screens.
+  const box = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(640);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.max(280, Math.round(entry.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const W = width;
   const H = height;
   const pad = { l: 28, r: 8, t: 12, b: 24 };
   const max = Math.max(4, ...data.map((d) => d.count));
@@ -24,12 +34,12 @@ export function TrendChart({ data, height = 168 }: { data: DayCount[]; height?: 
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
   const slot = innerW / data.length;
-  const barW = Math.min(22, slot * 0.56);
+  const barW = Math.min(28, slot * 0.56);
   const y = (v: number) => pad.t + innerH - (v / top) * innerH;
 
   return (
-    <div className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="New detections per day, last 14 days">
+    <div ref={box} className="relative">
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block max-w-full" role="img" aria-label="New detections per day, last 14 days">
         {ticks.map((t) => (
           <g key={t}>
             <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--chart-grid)" strokeWidth={1} />
