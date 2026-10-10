@@ -75,6 +75,13 @@ def score_detection(
     if channel == "social" and s.get("name", 0) >= 0.8 and s.get("behaviour", 0) >= 0.8:
         boosts.append({"label": "Uses the brand name to run a scam", "amount": 0.10})
         total += 0.10
+    # A strong brand look-alike name together with clear scam behaviour (money lures, fees,
+    # urgency, a brand-new account) is a scam even without a copied logo: count it as a second
+    # strong signal. Fan, news and review accounts are still capped by their label below.
+    brand_lure = channel == "social" and s.get("name", 0) >= 0.85 and 0.4 <= s.get("behaviour", 0) < 0.8
+    if brand_lure:
+        boosts.append({"label": "Brand look-alike name with scam behaviour", "amount": 0.10})
+        total += 0.10
     if lookalike_domain:
         boosts.append({"label": "Links to a look-alike of an official domain", "amount": 0.10})
         total += 0.10
@@ -87,7 +94,11 @@ def score_detection(
     score = round(100 * max(0.0, capped))
     cap = None
     # Linking to a look-alike of the official domain is strong evidence on its own.
-    strong = sum(1 for p in parts if p.value > 0.5 and p.key not in CONTEXT_ONLY) + (1 if lookalike_domain else 0)
+    strong = (
+        sum(1 for p in parts if p.value > 0.5 and p.key not in CONTEXT_ONLY)
+        + (1 if lookalike_domain else 0)
+        + (1 if brand_lure and s.get("behaviour", 0) <= 0.5 else 0)
+    )
     if strong <= 1 and score > 39:
         score, cap = 39, "Only one signal is strong, so the score is capped at Low"
     if context_label and score > 39:

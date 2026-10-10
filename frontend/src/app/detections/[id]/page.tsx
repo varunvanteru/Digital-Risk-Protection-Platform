@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { SeverityBadge, StatusBadge } from "@/components/badges";
 import { EvidenceTable, VerdictChip } from "@/components/evidence";
-import { initialsOf } from "@/components/detection-table";
+import { initialsOf, SampleTag } from "@/components/detection-table";
 import { BrandMark, PlatformLabel } from "@/components/marks";
 import { Button, Card, CardHeader, EmptyState, KeyValue, Mono, Orb, Tag } from "@/components/ui";
 import { api, ApiError, mediaUrl } from "@/lib/api";
@@ -304,6 +304,7 @@ export default function DetectionPage() {
               <Mono className="text-ink-2">{handleDisplay(d.platform, d.handle)}</Mono>
               <PlatformLabel platform={d.platform} />
               <Tag>{CLASS_LABEL[d.cls]}</Tag>
+              {d.sample && <SampleTag />}
             </div>
           </div>
         </div>
@@ -336,7 +337,7 @@ export default function DetectionPage() {
               Reopen
             </Button>
           )}
-          {(d.status === "confirmed" || d.status === "takedown_requested") && d.url && (
+          {(d.status === "confirmed" || d.status === "takedown_requested") && d.url && !d.sample && (
             <Button onClick={() => reportOnPlatform(d)}>
               <ExternalLink />
               Report on {PLATFORM_LABEL[d.platform]}
@@ -349,6 +350,12 @@ export default function DetectionPage() {
         </div>
       </div>
 
+      {d.sample && (
+        <p className="mb-4 rounded-md border border-line bg-surface px-3 py-2 text-[12.5px] text-ink-2" role="note">
+          <span className="font-semibold text-ink">Sample data.</span> This account is a curated example for the demo; its link does not exist.
+          Social platforms and APK sites have no open search API, so they are shown with sample data. Google Play and the App Store are searched live.
+        </p>
+      )}
       {reported && (
         <p className="mb-4 rounded-md border border-line bg-surface px-3 py-2 text-[13px] text-ink-2" role="status">
           Report text copied. On the {PLATFORM_LABEL[d.platform]} page that just opened, choose <span className="font-medium text-ink">Report</span> and paste

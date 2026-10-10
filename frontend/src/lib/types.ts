@@ -65,6 +65,8 @@ export interface ScoreBreakdown {
 export interface Detection {
   id: string;
   sourceId: string;
+  /** From a curated sample dataset (social platforms, APK sites, store snapshot), not a live search. */
+  sample: boolean;
   channel: Channel;
   platform: Platform;
   cls: DetectionClass;
@@ -252,6 +254,8 @@ export interface QuickCheck {
 }
 
 export interface SearchResult {
+  /** From curated sample data, not a live search. */
+  sample?: boolean;
   status: Verdict;
   riskScore: number;
   excluded: false;

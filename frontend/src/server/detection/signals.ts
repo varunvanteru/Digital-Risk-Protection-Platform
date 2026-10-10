@@ -58,6 +58,14 @@ export function statusFor(severity: string): Status {
 
 const pct = (x: number) => pyRound(x * 100);
 
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** "Reels Maker for Instagram", "Stickers for WhatsApp": a tool made for the brand's platform. */
+export function companionTitle(title: string, alias: string): boolean {
+  if (!alias.trim()) return false;
+  return new RegExp(`(?:^|\\s)(?:for|with)\\s+${escapeRe(alias.trim())}(?![\\p{L}\\p{N}])`, "iu").test(title);
+}
+
 function nameReason(r: LookalikeResult, label: string): string | null {
   if (r.score < 0.6) return null;
   if (r.method.startsWith("Brand look-alike")) return `${label} “${r.input}” contains a look-alike of the brand name`;
@@ -187,7 +195,11 @@ export async function evaluate(c: Candidate, ctx: BrandContext, today: string): 
   reasons.push(...extra);
 
   // Fan / news / review labels: profile bios, but only app titles (store descriptions mention "reviews").
-  const label = contextLabel(isApp ? c.displayName : c.bio);
+  // An app titled "... for <brand>" announces a third-party companion tool, unless it also claims to
+  // be an official channel or shows scam behaviour ("Refund helpline for PhonePe" stays scored).
+  const companion =
+    isApp && sig.claims < 0.5 && sig.behaviour < 0.4 && ctx.aliases.some((a) => companionTitle(c.displayName, a));
+  const label = contextLabel(isApp ? c.displayName : c.bio) ?? (companion ? "third-party" : null);
   if (label && !reasons.length) reasons.push(`Mentions the brand but is labelled as ${label}`);
   else if (label) reasons.push(`Openly labelled as ${label}, so it is not treated as impersonation`);
 

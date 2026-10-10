@@ -20,12 +20,27 @@ function initialsOf(name: string) {
 
 export { initialsOf };
 
+/** Marks a detection from curated sample data, so it is never mistaken for a live find. */
+export function SampleTag() {
+  return (
+    <span
+      title="Sample data: a curated example for this demo, not found by a live search. Live searches cover Google Play and the App Store."
+      className="chip inline-flex h-[18px] shrink-0 items-center rounded-full bg-surface-2 px-1.5 text-[9.5px] font-semibold uppercase tracking-wide text-ink-3"
+    >
+      Sample
+    </span>
+  );
+}
+
 export function Identity({ d, size = 28 }: { d: Detection; size?: number }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <BrandMark variant={d.mark} size={size} initials={initialsOf(d.displayName)} src={mediaUrl(d.iconUrl)} />
       <div className="min-w-0">
-        <div className="truncate text-[13px] font-medium text-ink">{d.displayName}</div>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-[13px] font-medium text-ink">{d.displayName}</span>
+          {d.sample && <SampleTag />}
+        </div>
         <div className="truncate font-mono text-[11.5px] text-ink-3">{handleDisplay(d.platform, d.handle)}</div>
       </div>
     </div>

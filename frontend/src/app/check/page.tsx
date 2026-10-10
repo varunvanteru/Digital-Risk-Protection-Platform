@@ -5,7 +5,7 @@ import { ArrowUpRight, Check, ChevronRight, ExternalLink, LayoutGrid, LoaderCirc
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ScoreCell } from "@/components/badges";
-import { initialsOf } from "@/components/detection-table";
+import { initialsOf, SampleTag } from "@/components/detection-table";
 import { EvidenceStrip, VerdictChip } from "@/components/evidence";
 import { BrandMark } from "@/components/marks";
 import { PlatformLogo } from "@/components/platform-logo";
@@ -424,7 +424,10 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
                       <div className="flex min-w-0 items-center gap-3">
                         <BrandMark variant={r.mark} size={30} initials={initialsOf(r.displayName)} src={mediaUrl(r.iconUrl)} />
                         <div className="min-w-0">
-                          <div className="truncate text-[13px] font-medium text-ink">{r.displayName}</div>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="truncate text-[13px] font-medium text-ink">{r.displayName}</span>
+                            {r.sample && <SampleTag />}
+                          </div>
                           <div className="truncate font-mono text-[11.5px] text-ink-3">{handleDisplay(r.platform, r.handle)}</div>
                           {r.publisher && <div className="truncate text-[11.5px] text-ink-3">by {r.publisher}</div>}
                         </div>

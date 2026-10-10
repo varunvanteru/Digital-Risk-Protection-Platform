@@ -54,9 +54,18 @@ def test_severity_bands():
 
 
 def test_single_strong_signal_is_capped_low():
-    # Uncapped this would be 58: one strong signal plus several middling ones.
-    bd = score_detection("social", {"name": 1.0, "logo": 0.45, "claims": 0.45, "behaviour": 0.5})
+    # Uncapped this would be 55: one strong signal plus several middling ones.
+    bd = score_detection("social", {"name": 1.0, "logo": 0.45, "claims": 0.45, "behaviour": 0.35})
     assert bd.score == 39 and bd.cap
+
+
+def test_brand_lookalike_with_scam_behaviour_is_flagged():
+    # e.g. "Zentra Rewards: spin and win cashback" from a 2-week-old account
+    bd = score_detection("social", {"name": 0.95, "logo": 0.07, "behaviour": 0.4})
+    assert bd.severity == "medium"
+    assert "Brand look-alike name with scam behaviour" in {b["label"] for b in bd.boosts}
+    # ... but an openly labelled fan or news account is still capped
+    assert score_detection("social", {"name": 0.95, "behaviour": 0.4}, context_label="fan").score == 39
 
 
 def test_publisher_mismatch_alone_does_not_lift_a_name_match():

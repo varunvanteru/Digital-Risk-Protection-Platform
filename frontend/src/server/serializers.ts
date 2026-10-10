@@ -5,6 +5,9 @@ import { scoreDetection } from "./detection/scoring";
 import type { Asset, Brand } from "./repo";
 import { iso } from "./util";
 
+/** Sources that search live; everything else is curated sample data. */
+const LIVE_SOURCE_IDS = new Set(["src_play", "src_appstore"]);
+
 const assetOut = (a: Asset) => ({
   id: a.id, platform: a.platform, handle: a.handle, canonicalId: a.canonicalId,
   displayName: a.displayName, status: a.status, verified: a.verified,
@@ -50,6 +53,7 @@ export function detectionOut(d: any) {
   return {
     id: d.id,
     sourceId: d.source_id,
+    sample: !LIVE_SOURCE_IDS.has(d.source_id),
     channel: d.channel,
     platform: d.platform,
     cls: d.cls,

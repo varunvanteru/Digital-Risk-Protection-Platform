@@ -221,6 +221,7 @@ export async function runSearch(raw: string, platforms: string[]) {
     results.push({
       status: ev.status,
       riskScore: ev.breakdown!.score,
+      sample: !LIVE_STORE_SOURCES.has(c.sourceId),
       excluded: false,
       platform: c.platform,
       channel: c.channel,

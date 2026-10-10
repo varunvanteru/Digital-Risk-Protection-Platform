@@ -52,10 +52,19 @@ describe("scoring", () => {
   });
 
   it("a single strong signal is capped Low", () => {
-    // Uncapped this would be 58: one strong signal plus several middling ones.
-    const bd = scoreDetection("social", { name: 1.0, logo: 0.45, claims: 0.45, behaviour: 0.5 });
+    // Uncapped this would be 55: one strong signal plus several middling ones.
+    const bd = scoreDetection("social", { name: 1.0, logo: 0.45, claims: 0.45, behaviour: 0.35 });
     expect(bd.score).toBe(39);
     expect(bd.cap).toBeTruthy();
+  });
+
+  it("a brand look-alike name with scam behaviour is flagged", () => {
+    // e.g. "Zentra Rewards: spin and win cashback" from a 2-week-old account
+    const bd = scoreDetection("social", { name: 0.95, logo: 0.07, behaviour: 0.4 });
+    expect(bd.severity).toBe("medium");
+    expect(bd.boosts.map((b) => b.label)).toContain("Brand look-alike name with scam behaviour");
+    // ... but an openly labelled fan or news account is still capped
+    expect(scoreDetection("social", { name: 0.95, behaviour: 0.4 }, false, "fan").score).toBe(39);
   });
 
   it("a publisher mismatch alone does not lift a name match", () => {

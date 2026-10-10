@@ -117,7 +117,21 @@ export function verifyOfficial(
   const pub = normalizePublisher(c.publisher);
   if (pub && ctx.publisherNames.has(pub) && !scamIndicators) {
     const contradicted = knownIds.size > 0 && !!c.publisherId && !knownIds.has(c.publisherId);
-    if (contradicted) return null; // copied publisher name under another developer account
+    if (contradicted) {
+      // On the App Store the seller is the legal entity Apple verifies for organisation accounts,
+      // so the official company name there means another account of the same company.
+      // On Google Play the developer name is free text: a copy there is impersonation.
+      if (c.platform !== "app_store") return null;
+      return {
+        status: "LIKELY_OFFICIAL", level: 4, confidence: 0.75,
+        evidence: [
+          `App Store seller “${c.publisher}” is the official company (seller names are verified by Apple)`,
+          `Published from another developer account of the same company (ID ${c.publisherId})`,
+          "Excluded before risk scoring; confirm and add to the profile",
+        ],
+        inProfile: false,
+      };
+    }
     const support: string[] = [];
     const ns = c.platform === "google_play" ? packageNamespace(c.identifier) : null;
     if (ns && ctx.officialNamespaces.has(ns)) support.push(`App ID shares the official namespace ${ns}`);

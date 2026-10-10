@@ -91,6 +91,13 @@ def _pct(x: float) -> int:
     return round(x * 100)
 
 
+def companion_title(title: str, alias: str) -> bool:
+    """'Reels Maker for Instagram', 'Stickers for WhatsApp': a tool made for the brand's platform."""
+    if not alias.strip():
+        return False
+    return re.search(rf"(?:^|\s)(?:for|with)\s+{re.escape(alias.strip())}(?![^\W_])", title, re.I) is not None
+
+
 def _name_reason(r, label: str) -> str | None:
     if r.score < 0.6:
         return None
@@ -223,7 +230,15 @@ def evaluate(c: Candidate, ctx: BrandContext, today: date) -> Evaluation:
     reasons.extend(extra)
 
     # Fan / news / review labels: profile bios, but only app titles (store descriptions mention "reviews").
-    label = context_label(c.display_name if is_app else c.bio)
+    # An app titled "... for <brand>" announces a third-party companion tool, unless it also claims to
+    # be an official channel or shows scam behaviour ("Refund helpline for PhonePe" stays scored).
+    companion = (
+        is_app
+        and sig["claims"] < 0.5
+        and sig["behaviour"] < 0.4
+        and any(companion_title(c.display_name, a) for a in ctx.aliases)
+    )
+    label = context_label(c.display_name if is_app else c.bio) or ("third-party" if companion else None)
     if label and not reasons:
         reasons.append(f"Mentions the brand but is labelled as {label}")
     elif label:

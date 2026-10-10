@@ -122,7 +122,19 @@ def verify_official(
     if pub and pub in ctx.publisher_names and not scam_indicators:
         contradicted = bool(known_ids) and bool(c.publisher_id) and c.publisher_id not in known_ids
         if contradicted:
-            return None  # copied publisher name under another developer account
+            # On the App Store the seller is the legal entity Apple verifies for organisation accounts,
+            # so the official company name there means another account of the same company.
+            # On Google Play the developer name is free text: a copy there is impersonation.
+            if c.platform != "app_store":
+                return None
+            return OfficialMatch(
+                "LIKELY_OFFICIAL", 4, 0.75,
+                [
+                    f"App Store seller “{c.publisher}” is the official company (seller names are verified by Apple)",
+                    f"Published from another developer account of the same company (ID {c.publisher_id})",
+                    "Excluded before risk scoring; confirm and add to the profile",
+                ],
+            )
         support: list[str] = []
         ns = package_namespace(c.identifier) if c.platform == "google_play" else None
         if ns and ns in ctx.official_namespaces:

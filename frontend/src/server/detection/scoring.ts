@@ -67,6 +67,14 @@ export function scoreDetection(
     boosts.push({ label: "Uses the brand name to run a scam", amount: 0.1 });
     total += 0.1;
   }
+  // A strong brand look-alike name together with clear scam behaviour (money lures, fees,
+  // urgency, a brand-new account) is a scam even without a copied logo: count it as a second
+  // strong signal. Fan, news and review accounts are still capped by their label below.
+  const brandLure = channel === "social" && get("name") >= 0.85 && get("behaviour") >= 0.4 && get("behaviour") < 0.8;
+  if (brandLure) {
+    boosts.push({ label: "Brand look-alike name with scam behaviour", amount: 0.1 });
+    total += 0.1;
+  }
   if (lookalikeDomain) {
     boosts.push({ label: "Links to a look-alike of an official domain", amount: 0.1 });
     total += 0.1;
@@ -81,7 +89,8 @@ export function scoreDetection(
   let score = pyRound(100 * Math.max(0.0, capped));
   let cap: string | null = null;
   // Linking to a look-alike of the official domain is strong evidence on its own.
-  const strong = parts.filter((p) => p.value > 0.5 && !CONTEXT_ONLY.has(p.key)).length + (lookalikeDomain ? 1 : 0);
+  const strong =
+    parts.filter((p) => p.value > 0.5 && !CONTEXT_ONLY.has(p.key)).length + (lookalikeDomain ? 1 : 0) + (brandLure && get("behaviour") <= 0.5 ? 1 : 0);
   if (strong <= 1 && score > 39) {
     score = 39;
     cap = "Only one signal is strong, so the score is capped at Low";
