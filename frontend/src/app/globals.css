@@ -36,32 +36,58 @@
   --ok-bg: #11241a;
 }
 
-/* ---------- Shape and type: the classic look, which Crimson overrides ---------- */
+/* ---------- Shared design system: every theme ----------
+ * The rfentity.com look for all palettes: frosted glass cards over a softly
+ * tinted page, 20px radii, pill buttons and chips, icon orbs, uppercase
+ * Archivo titles with one word in the theme's brand colour, small brand-
+ * coloured labels. Values derive from each palette's own colours; Crimson
+ * (below) sets its tuned values explicitly.
+ */
 :root {
-  --radius-control: 6px;
-  --shadow-card: none;
-  --card-border: var(--border);
-  --brand: var(--ink);
-  --font-heading: var(--font-plex-sans), system-ui, sans-serif;
-  --font-body: var(--font-plex-sans), system-ui, sans-serif;
-  --title-case: none;
-  --title-tracking: -0.01em;
-  --title-size: 20px;
-  --title-weight: 600;
-  --label-color: var(--ink-3);
-  --nav-active-bg: var(--surface-2);
-  --nav-active-ink: var(--ink);
-  --nav-active-icon: var(--accent);
-  --page-bg: var(--bg);
-  --card-bg: var(--surface);
-  --glass-blur: none;
-  --panel-bg: var(--bg);
-  --orb-bg: var(--surface-2);
-  --orb-shadow: inset 0 0 0 1px var(--border);
-  --float-bg: var(--surface);
-  --float-shadow: inset 0 0 0 1px var(--border-strong);
-}
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-control: 999px;
+  --brand: var(--accent);
+  --font-heading: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-montserrat), system-ui, sans-serif;
+  --title-case: uppercase;
+  --title-tracking: 0.025em;
+  --title-size: 30px;
+  --title-weight: 700;
+  --label-color: var(--brand);
+  --nav-active-bg: var(--accent);
+  --nav-active-ink: var(--accent-ink);
+  --nav-active-icon: var(--accent-ink);
 
+  --page-bg:
+    radial-gradient(900px 600px at 8% -5%, color-mix(in srgb, var(--brand) 9%, transparent), transparent 60%),
+    radial-gradient(900px 700px at 100% 0%, rgb(99 130 190 / 0.12), transparent 60%),
+    radial-gradient(1100px 800px at 50% 110%, color-mix(in srgb, var(--ink-3) 22%, transparent), transparent 65%),
+    var(--bg);
+  --card-bg: color-mix(in srgb, var(--surface) 58%, transparent);
+  --glass-blur: blur(18px) saturate(160%);
+  --card-border: color-mix(in srgb, var(--surface) 80%, transparent);
+  --shadow-card: 0 10px 30px rgb(31 45 61 / 0.09), 0 2px 6px rgb(31 45 61 / 0.04), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --panel-bg: color-mix(in srgb, var(--surface) 55%, transparent);
+  --orb-bg: radial-gradient(circle at 32% 26%, var(--surface) 0%, var(--surface-2) 42%, color-mix(in srgb, var(--surface-2) 72%, var(--ink-3)) 100%);
+  --orb-shadow: inset 2px 2px 5px color-mix(in srgb, var(--ink-3) 45%, transparent), inset -2px -2px 5px var(--surface), 0 4px 12px color-mix(in srgb, var(--ink-3) 28%, transparent);
+  --float-bg: var(--surface);
+  --float-shadow: 0 6px 16px rgb(16 20 26 / 0.16), inset -1px -1px 2px rgb(163 177 198 / 0.2);
+}
+[data-mode="dark"] {
+  --card-border: rgb(255 255 255 / 0.07);
+  --shadow-card: 0 14px 34px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --page-bg:
+    radial-gradient(900px 600px at 8% -5%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 60%),
+    radial-gradient(900px 700px at 100% 0%, rgb(80 110 170 / 0.14), transparent 60%),
+    var(--bg);
+  --card-bg: color-mix(in srgb, var(--surface-2) 60%, transparent);
+  --panel-bg: color-mix(in srgb, var(--surface) 62%, transparent);
+  --orb-bg: radial-gradient(circle at 32% 26%, color-mix(in srgb, var(--surface-2) 80%, white 12%) 0%, var(--surface-2) 55%, var(--bg) 100%);
+  --orb-shadow: inset 1px 1px 2px rgb(255 255 255 / 0.08), 0 4px 12px rgb(0 0 0 / 0.4);
+  --float-bg: var(--surface-2);
+  --float-shadow: 0 6px 16px rgb(0 0 0 / 0.45);
+}
 /* ---------- Graphite: warm neutral, black accent ---------- */
 :root,
 [data-palette="graphite"] {
@@ -426,7 +452,7 @@ body {
 .card-title {
   font-family: var(--font-heading);
 }
-[data-palette="crimson"] .card-title {
+.card-title {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 13px;
@@ -437,7 +463,7 @@ body {
 .eyebrow {
   color: var(--label-color);
 }
-[data-palette="crimson"] .eyebrow {
+.eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 10.5px;
@@ -445,7 +471,7 @@ body {
 }
 
 /* Chips and tags: small spaced capitals with a pressed-in look in Crimson. */
-[data-palette="crimson"] .chip {
+.chip {
   border-color: transparent;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -453,11 +479,11 @@ body {
   font-weight: 600;
   box-shadow: inset 0 0 0 1px rgb(163 177 198 / 0.35), inset 0 2px 5px rgb(163 177 198 / 0.3);
 }
-[data-palette="crimson"][data-mode="dark"] .chip {
+[data-mode="dark"] .chip {
   box-shadow: inset 0 0 0 1px var(--border-strong);
 }
-[data-palette="crimson"] th,
-[data-palette="crimson"] th button {
+th,
+th button {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 10.5px;
