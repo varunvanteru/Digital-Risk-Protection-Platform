@@ -280,7 +280,7 @@ const EXPLANATION = {
   no_match: "Not a look-alike of the brand name.",
 };
 
-function match(raw: string, cand: Candidate, alias: string): LookalikeResult {
+function match(raw: string, cand: Candidate, alias: string, fullName = ""): LookalikeResult {
   const core = cand.core;
   const variations = [...cand.variations];
   const guards: string[] = [];
@@ -318,6 +318,12 @@ function match(raw: string, cand: Candidate, alias: string): LookalikeResult {
     if (aliasLen < 5 && dist > 0) {
       guards.push(`"${alias}" is shorter than 5 letters, so only an exact match counts`);
       score = Math.min(score, 0.3);
+    }
+    // A shortened form of the brand name ("zentra" from "zentrapay") is often an ordinary word that
+    // other companies use too; a misspelling of it ("zenvra") is not a copy of the brand.
+    if (fullName && alias !== fullName && fullName.includes(alias) && score > 0.6) {
+      guards.push(`"${alias}" is a shortened form of the brand name, so only an exact spelling counts as a strong match`);
+      score = 0.6;
     }
   }
 
@@ -362,7 +368,7 @@ export function analyseName(raw: string, aliases: string[]): LookalikeResult {
   let best: LookalikeResult | null = null;
   for (const cand of candidates) {
     for (const alias of aliasCores) {
-      const r = match(raw, cand, alias);
+      const r = match(raw, cand, alias, aliasCores[0]);
       if (best === null || r.score > best.score) best = r;
     }
   }

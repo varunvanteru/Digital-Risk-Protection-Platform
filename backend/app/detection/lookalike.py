@@ -260,7 +260,7 @@ def _normalise(raw: str, brand_tokens: set[str], one_as: str, multi: bool, strip
     return _Candidate(steps, core, variations)
 
 
-def _match(raw: str, cand: _Candidate, alias: str) -> LookalikeResult:
+def _match(raw: str, cand: _Candidate, alias: str, full_name: str = "") -> LookalikeResult:
     core = cand.core
     variations = list(cand.variations)
     guards: list[str] = []
@@ -296,6 +296,11 @@ def _match(raw: str, cand: _Candidate, alias: str) -> LookalikeResult:
         if len(alias) < 5 and dist > 0:
             guards.append(f'"{alias}" is shorter than 5 letters, so only an exact match counts')
             score = min(score, 0.3)
+        # A shortened form of the brand name ("zentra" from "zentrapay") is often an ordinary word that
+        # other companies use too; a misspelling of it ("zenvra") is not a copy of the brand.
+        if full_name and alias != full_name and alias in full_name and score > 0.6:
+            guards.append(f'"{alias}" is a shortened form of the brand name, so only an exact spelling counts as a strong match')
+            score = 0.6
 
     if core != alias and is_ordinary_word(core):
         guards.append(f'"{core}" is an ordinary word or name, so name similarity alone stays Low')
@@ -343,7 +348,7 @@ def analyse_name(raw: str, aliases: list[str]) -> LookalikeResult:
     best: LookalikeResult | None = None
     for cand in candidates:
         for alias in alias_cores:
-            r = _match(raw, cand, alias)
+            r = _match(raw, cand, alias, alias_cores[0])
             if best is None or r.score > best.score:
                 best = r
     assert best is not None

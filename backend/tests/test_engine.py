@@ -43,6 +43,15 @@ def test_unrelated_words_are_only_partial():
     assert r.guards
 
 
+def test_misspelt_short_brand_name_is_only_partial():
+    # "Zenvra: The Real Debt Tracker", a real unrelated Play Store app: one letter off "Zentra", not "ZentraPay".
+    assert name_similarity(["Zenvra: The Real Debt Tracker", "com.wantok.zenvra"], ALIASES)[0] < 0.85
+    assert analyse_name("zenvra", ALIASES).verdict == "partial"
+    # The exact short name and misspellings of the full name still match.
+    assert name_similarity(["Zentra Lite"], ALIASES)[0] >= 0.85
+    assert analyse_name("zentrpay", ALIASES).verdict == "match"
+
+
 def test_brand_inside_long_app_title():
     score, r = name_similarity(["ZentraPay Wallet - UPI & Bills"], ALIASES)
     assert score == 0.85

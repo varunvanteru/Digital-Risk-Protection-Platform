@@ -39,6 +39,15 @@ describe("look-alike names", () => {
     expect(r.guards.length).toBeGreaterThan(0);
   });
 
+  it("a misspelling of a shortened brand name is only partial", () => {
+    // "Zenvra: The Real Debt Tracker", a real unrelated Play Store app: one letter off "Zentra", not "ZentraPay".
+    expect(nameSimilarity(["Zenvra: The Real Debt Tracker", "com.wantok.zenvra"], ALIASES)[0]).toBeLessThan(0.85);
+    expect(analyseName("zenvra", ALIASES).verdict).toBe("partial");
+    // The exact short name and misspellings of the full name still match.
+    expect(nameSimilarity(["Zentra Lite"], ALIASES)[0]).toBeGreaterThanOrEqual(0.85);
+    expect(analyseName("zentrpay", ALIASES).verdict).toBe("match");
+  });
+
   it("finds the brand inside a long app title", () => {
     const [score, r] = nameSimilarity(["ZentraPay Wallet - UPI & Bills"], ALIASES);
     expect(score).toBe(0.85);
