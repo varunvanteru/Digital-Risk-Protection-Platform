@@ -5,17 +5,57 @@ import { ArrowLeft, Check, ImageUp, LoaderCircle, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PlatformLabel } from "@/components/marks";
-import { Button, Card, Hint, Input, Label, Mono, PageHeader, Select, Tag, Textarea } from "@/components/ui";
+import { SeverityBadge } from "@/components/badges";
+import { Button, Card, CardHeader, Hint, Input, Label, Mono, PageHeader, Select, Tag, Textarea } from "@/components/ui";
 import { handleDisplay } from "@/lib/format";
 import { api, mediaUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
-import type { Platform } from "@/lib/types";
+import type { Platform, Severity } from "@/lib/types";
 
 type DraftAccount = { platform: Platform; handle: string; status: "official" | "partner" };
 type DraftApp = { platform: Platform; packageId: string; name: string };
 import { SOCIAL_PLATFORMS, validateBrandName, validateDomain, validateHandle, validatePackageId } from "@/lib/validation";
 
 const STEPS = ["Brand identity", "Official assets", "Review"];
+
+// Mirrors the severity bands in backend/app/detection/scoring.py.
+const SCORE_BANDS: { range: string; severity: Severity; outcome: string }[] = [
+  { range: "80–100", severity: "critical", outcome: "Flagged; takedown recommended" },
+  { range: "60–79", severity: "high", outcome: "Flagged; review today" },
+  { range: "40–59", severity: "medium", outcome: "Flagged as a look-alike" },
+  { range: "0–39", severity: "low", outcome: "Not flagged; shown only as a mention" },
+];
+
+function ScoreGuide() {
+  return (
+    <Card>
+      <CardHeader title="How results are scored" description="Every app or page found gets a risk score from 0 to 100" />
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="text-[12px] text-ink-3">
+            <th className="h-8 px-4 text-left font-medium">Score</th>
+            <th className="h-8 px-2 text-left font-medium">Severity</th>
+            <th className="h-8 px-4 text-left font-medium">What happens</th>
+          </tr>
+        </thead>
+        <tbody>
+          {SCORE_BANDS.map((b) => (
+            <tr key={b.severity} className="border-t border-line align-top">
+              <td className="tabular whitespace-nowrap px-4 py-2.5 font-medium text-ink">{b.range}</td>
+              <td className="px-2 py-2.5">
+                <SeverityBadge severity={b.severity} />
+              </td>
+              <td className="px-4 py-2.5 text-ink-2">{b.outcome}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="border-t border-line px-4 py-3 text-[12.5px] leading-relaxed text-ink-3">
+        Assets you add here are never scored. Apps with only one warning sign, or that say they are fan or third-party apps, are held at 39.
+      </p>
+    </Card>
+  );
+}
 
 function TagInput({
   id,
@@ -255,7 +295,8 @@ export default function SetupPage() {
         ))}
       </ol>
 
-      <Card className="max-w-3xl">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,48rem)_minmax(20rem,26rem)]">
+      <Card>
         <div className="space-y-5 px-5 py-5">
           {step === 0 && (
             <>
@@ -482,6 +523,10 @@ export default function SetupPage() {
           )}
         </footer>
       </Card>
+      <aside className="xl:sticky xl:top-4">
+        <ScoreGuide />
+      </aside>
+      </div>
     </>
   );
 }
