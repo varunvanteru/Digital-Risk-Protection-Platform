@@ -105,7 +105,7 @@ export default function DetectionsPage() {
           aria-label="Platform"
           value={platform}
           onChange={(e) => setPlatform(e.target.value as Platform | "all")}
-          className="w-auto min-w-36"
+          className="min-w-0 flex-1 basis-36 sm:w-auto sm:flex-none"
         >
           <option value="all">All platforms</option>
           {platforms.map((p) => (
@@ -118,7 +118,7 @@ export default function DetectionsPage() {
           aria-label="Status"
           value={status}
           onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          className="w-auto min-w-36"
+          className="min-w-0 flex-1 basis-36 sm:w-auto sm:flex-none"
         >
           <option value="active">Active (hide dismissed)</option>
           <option value="all">All statuses</option>
@@ -129,7 +129,7 @@ export default function DetectionsPage() {
           ))}
         </Select>
 
-        <div className="flex items-center gap-1" role="group" aria-label="Severity">
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Severity">
           {SEVERITY_ORDER.map((s) => {
             const on = severities.includes(s);
             return (
@@ -138,7 +138,7 @@ export default function DetectionsPage() {
                 aria-pressed={on}
                 onClick={() => toggleSeverity(s)}
                 className={clsx(
-                  "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium transition-colors",
+                  "inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] border px-3 text-[12px] font-medium transition-colors",
                   on ? "border-line-strong bg-surface text-ink" : "border-dashed border-line-strong text-ink-3 hover:text-ink-2",
                 )}
               >

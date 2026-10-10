@@ -11,6 +11,7 @@ import { useLoadState, useStore } from "@/lib/store";
 import { BrandSwitcher } from "./brand-switcher";
 import { ProductMark } from "./marks";
 import { AppearanceMenu, ThemeToggle } from "./appearance";
+import { InstallButton } from "./install";
 import { UnlockDialog } from "./unlock";
 import { Button, FloatLink } from "./ui";
 
@@ -59,7 +60,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={clsx(
-                "group flex h-9 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[13px] transition-colors",
+                "group flex h-8 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[12.5px] transition-colors",
                 active ? "bg-[var(--nav-active-bg)] font-semibold text-[var(--nav-active-ink)]" : "text-ink-2 hover:bg-surface-2 hover:text-ink",
               )}
             >
@@ -85,7 +86,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           href="/setup"
           onClick={onNavigate}
           className={clsx(
-            "flex h-9 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[13px]",
+            "flex h-8 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[12.5px]",
             pathname.startsWith("/setup") ? "bg-[var(--nav-active-bg)] font-semibold text-[var(--nav-active-ink)]" : "text-ink-2 hover:bg-surface-2 hover:text-ink",
           )}
         >
@@ -125,7 +126,7 @@ function ScanStatus() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="hidden text-[12.5px] text-ink-3 sm:inline" role="status">
+      <span className="hidden text-[12px] text-ink-3 md:inline" role="status">
         {error ? (
           <span className="text-crit">{error}</span>
         ) : scanning ? (
@@ -150,9 +151,10 @@ function ScanStatus() {
           </>
         )}
       </span>
-      <Button variant="primary" onClick={start} disabled={scanning}>
+      <Button variant="primary" onClick={start} disabled={scanning} aria-label={scanning ? "Scanning" : "Run scan"} className="max-[400px]:w-8 max-[400px]:px-0">
         {scanning ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
-        {scanning ? "Scanning" : "Run scan"}
+        {/* Icon only on the narrowest phones */}
+        <span className="max-[400px]:sr-only">{scanning ? "Scanning" : "Run scan"}</span>
       </Button>
     </div>
   );
@@ -211,7 +213,7 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[232px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[224px_1fr]">
       <aside className="glass-panel sticky top-0 hidden h-dvh border-r border-line lg:block">
         <Sidebar />
       </aside>
@@ -219,16 +221,16 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button aria-label="Close menu" className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-[260px] border-r border-line bg-surface">
+          <aside className="absolute inset-y-0 left-0 w-[min(260px,85vw)] overflow-y-auto border-r border-line bg-surface">
             <Sidebar onNavigate={() => setOpen(false)} />
           </aside>
         </div>
       )}
 
       <div className="min-w-0">
-        <header className="glass-panel sticky top-0 z-30 flex h-[60px] items-center justify-between gap-3 border-b border-line px-4 sm:px-6">
+        <header className="glass-panel sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line pl-2 pr-3 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
-            <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-1.5 text-ink-2 hover:bg-surface-2">
+            <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-2 text-ink-2 hover:bg-surface-2">
               {open ? <X className="size-4" /> : <Menu className="size-4" />}
             </button>
             <span className="page-title !text-[15px] !leading-none text-ink">
@@ -236,16 +238,17 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="hidden lg:block" />
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ScanStatus />
+            <InstallButton />
             {/* Round icon buttons, as in rfentity's header */}
-            <FloatLink href="/check" label="Quick check" className="hidden sm:inline-flex">
+            <FloatLink href="/check" label="Quick check" className="hidden size-8 sm:inline-flex [&_svg]:size-[15px]">
               <ScanSearch />
             </FloatLink>
             <ThemeToggle />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1680px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1600px] px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">{children}</main>
       </div>
       <UnlockDialog />
     </div>

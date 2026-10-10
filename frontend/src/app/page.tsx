@@ -101,13 +101,13 @@ export default function OverviewPage() {
             description={`Top ${bySource.length} of ${sources.length}, most critical first`}
             actions={<FloatLink href="/sources" label="All sources" />}
           />
-          <table className="w-full text-[13px]">
+          <table className="w-full table-fixed text-[12.5px]">
             <thead>
               <tr className="text-[12px] text-ink-3">
-                <th className="h-8 px-4 text-left font-medium">Source</th>
-                <th className="h-8 px-2 text-right font-medium">Flagged</th>
-                <th className="h-8 px-2 text-right font-medium">Critical</th>
-                <th className="h-8 w-10 px-4 text-right font-medium">
+                <th className="h-8 px-3.5 text-left font-medium">Source</th>
+                <th className="h-8 w-[68px] px-1.5 text-right font-medium">Flagged</th>
+                <th className="h-8 w-[64px] px-1.5 text-right font-medium">Critical</th>
+                <th className="h-8 w-9 pr-3.5 text-right font-medium">
                   <span className="sr-only">Health</span>
                 </th>
               </tr>
@@ -115,15 +115,15 @@ export default function OverviewPage() {
             <tbody>
               {bySource.map((s) => (
                 <tr key={s.id} className="border-t border-line">
-                  <td className="px-4 py-2">
-                    <span className="flex items-center gap-2 text-ink">
+                  <td className="px-3.5 py-2">
+                    <span className="flex min-w-0 items-center gap-2 text-ink">
                       <PlatformGlyph platform={s.platform} />
-                      {s.name}
+                      <span className="truncate">{s.name}</span>
                     </span>
                   </td>
-                  <td className="tabular px-2 py-2 text-right text-ink">{s.flagged}</td>
-                  <td className="tabular px-2 py-2 text-right text-ink-2">{s.critical}</td>
-                  <td className="px-4 py-2 text-right" title={s.note ?? undefined}>
+                  <td className="tabular px-1.5 py-2 text-right text-ink">{s.flagged}</td>
+                  <td className="tabular px-1.5 py-2 text-right text-ink-2">{s.critical}</td>
+                  <td className="pr-3.5 py-2 text-right" title={s.note ?? undefined}>
                     <HealthBadge health={s.health} compact />
                   </td>
                 </tr>

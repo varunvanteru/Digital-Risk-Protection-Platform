@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Montserrat } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Inter } from "next/font/google";
 import { AppShell } from "@/components/shell";
 import { StoreProvider } from "@/lib/store";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
@@ -17,13 +17,27 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
-// Crimson theme: Archivo for titles, Montserrat for text.
+// Archivo for titles, Inter for interface text.
 const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], weight: ["600", "700"] });
-const montserrat = Montserrat({ variable: "--font-montserrat", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: { default: "BrandShield", template: "%s · BrandShield" },
   description: "Find fake social profiles, brand pages and apps impersonating your brand.",
+  applicationName: "BrandShield",
+  // iPhone / iPad home-screen app (Safari ignores the web manifest's icons).
+  appleWebApp: { capable: true, title: "BrandShield", statusBarStyle: "default" },
+  icons: {
+    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // use the full screen on phones with a notch
+  themeColor: "#111111",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -32,7 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plexSans.variable} ${plexMono.variable} ${archivo.variable} ${montserrat.variable}`}
+      className={`${plexSans.variable} ${plexMono.variable} ${archivo.variable} ${inter.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />

@@ -27,7 +27,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     window.dispatchEvent(new Event(THEME_EVENT));
   }
   return (
-    <button onClick={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} title={dark ? "Light mode" : "Dark mode"} className={clsx("float-btn size-9 [&_svg]:size-4", className)}>
+    <button onClick={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} title={dark ? "Light mode" : "Dark mode"} className={clsx("float-btn size-8 [&_svg]:size-[15px]", className)}>
       {dark ? <Sun /> : <Moon />}
     </button>
   );

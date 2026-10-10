@@ -17,8 +17,8 @@ const buttonVariant: Record<ButtonVariant, string> = {
 };
 
 const buttonSize: Record<ButtonSize, string> = {
-  sm: "h-7 px-3 text-[12.5px]",
-  md: "h-9 px-4 text-[13px]",
+  sm: "h-7 px-3 text-[12px] [&_svg]:!size-3.5",
+  md: "h-8 px-3.5 text-[12.5px] [&_svg]:!size-[15px]",
 };
 
 export function buttonClass(variant: ButtonVariant = "secondary", size: ButtonSize = "md", className?: string) {
@@ -63,12 +63,12 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <header className={clsx("flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3", className)}>
-      <div className="flex min-w-0 flex-1 basis-56 items-center gap-3">
+    <header className={clsx("flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-3.5 py-2.5 sm:px-4", className)}>
+      <div className="flex min-w-0 flex-1 basis-48 items-center gap-2.5">
         {icon && <Orb size="sm">{icon}</Orb>}
         <div className="min-w-0">
-          <h2 className="card-title text-[13.5px] font-semibold text-ink">{title}</h2>
-          {description && <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{description}</p>}
+          <h2 className="card-title text-[13px] font-semibold text-ink">{title}</h2>
+          {description && <p className="mt-0.5 text-[12px] leading-snug text-ink-3">{description}</p>}
         </div>
       </div>
       {actions && <div className="ml-auto flex max-w-full shrink-0 items-center gap-2">{actions}</div>}
@@ -78,7 +78,8 @@ export function CardHeader({
 
 // ---------- rfentity-style icon pieces ----------
 
-const ORB_SIZE = { sm: "size-9 text-[12px] [&_svg]:size-4", md: "size-11 text-[14px] [&_svg]:size-[18px]", lg: "size-14 text-[17px] [&_svg]:size-6" };
+// Compact: 28 / 34 / 44 px circles with 14 / 16 / 20 px icons.
+const ORB_SIZE = { sm: "size-7 text-[10.5px] [&_svg]:size-3.5", md: "size-[34px] text-[12px] [&_svg]:size-4", lg: "size-11 text-[15px] [&_svg]:size-5" };
 
 /** Round, sphere-shaded badge holding an icon or a step number ("01"). */
 export function Orb({
@@ -109,7 +110,7 @@ export const StepOrb = ({ n, size = "md" }: { n: number; size?: keyof typeof ORB
 /** Floating round button for a card corner; an arrow unless children say otherwise. */
 export function FloatLink({ href, label, children, className }: { href: string; label: string; children?: ReactNode; className?: string }) {
   return (
-    <Link href={href} aria-label={label} title={label} className={clsx("float-btn size-9 [&_svg]:size-4", className)}>
+    <Link href={href} aria-label={label} title={label} className={clsx("float-btn size-7 [&_svg]:size-3.5", className)}>
       {children ?? <ArrowRight />}
     </Link>
   );
@@ -140,15 +141,15 @@ export function StatCard({
   hrefLabel?: string;
 }) {
   return (
-    <Card className="relative flex flex-col gap-3 p-5">
+    <Card className="relative flex flex-col gap-2.5 p-3.5 sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <Orb tone={tone}>{icon}</Orb>
         {href && <FloatLink href={href} label={hrefLabel ?? `Open ${typeof label === "string" ? label : "details"}`} />}
       </div>
       <div>
-        <div className="eyebrow text-[12px]">{label}</div>
-        <div className="tabular mt-1 font-[family-name:var(--font-heading)] text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">{value}</div>
-        {sub && <div className="mt-2 text-[12.5px] leading-snug text-ink-3">{sub}</div>}
+        <div className="eyebrow truncate text-[11px]">{label}</div>
+        <div className="tabular mt-1 font-[family-name:var(--font-heading)] text-[22px] font-bold leading-none tracking-[-0.01em] text-ink sm:text-[24px]">{value}</div>
+        {sub && <div className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-ink-3">{sub}</div>}
       </div>
     </Card>
   );
@@ -179,11 +180,11 @@ export function PageHeader({
   eyebrow?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 sm:mb-6">
       <div className="min-w-0 flex-1 basis-72">
-        {eyebrow && <div className="eyebrow mb-2 text-[12.5px]">{eyebrow}</div>}
+        {eyebrow && <div className="eyebrow mb-1.5 text-[12px]">{eyebrow}</div>}
         <h1 className="page-title text-ink">{accentLast(title)}</h1>
-        {description && <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-ink-2">{description}</p>}
+        {description && <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-ink-2">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2 sm:pt-0.5">{actions}</div>}
     </div>
@@ -296,7 +297,7 @@ export function Mono({ children, className }: { children: ReactNode; className?:
 export function EmptyState({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-      <Orb size="lg" className="mb-4">
+      <Orb size="lg" className="mb-3">
         {icon}
       </Orb>
       <p className="text-[13.5px] font-medium text-ink">{title}</p>

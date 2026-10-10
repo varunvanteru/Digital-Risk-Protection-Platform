@@ -44,15 +44,15 @@
  * (below) sets its tuned values explicitly.
  */
 :root {
-  --radius-lg: 20px;
-  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-md: 10px;
   --radius-control: 999px;
   --brand: var(--accent);
   --font-heading: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
-  --font-body: var(--font-montserrat), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
   --title-case: uppercase;
-  --title-tracking: 0.025em;
-  --title-size: 30px;
+  --title-tracking: 0.02em;
+  --title-size: 20px;
   --title-weight: 700;
   --label-color: var(--brand);
   --nav-active-bg: var(--accent);
@@ -249,18 +249,8 @@
   --chart-grid: #eceff4;
   --brand: #d40000;
 
-  --radius-lg: 20px;
-  --radius-md: 12px;
-  --radius-control: 999px;
   --shadow-card: 8px 8px 20px rgb(163 177 198 / 0.42), -8px -8px 20px rgb(255 255 255 / 0.95);
   --card-border: transparent;
-  --font-heading: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
-  --font-body: var(--font-montserrat), system-ui, sans-serif;
-  --title-case: uppercase;
-  --title-tracking: 0.025em;
-  --title-size: 30px;
-  --title-weight: 700;
-  --label-color: var(--brand);
   --nav-active-bg: #111111;
   --nav-active-ink: #ffffff;
   --nav-active-icon: #ff4d4d;
@@ -454,8 +444,8 @@ body {
 }
 .card-title {
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 13px;
+  letter-spacing: 0.045em;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -465,8 +455,8 @@ body {
 }
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -485,8 +475,25 @@ body {
 th,
 th button {
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  font-size: 10px;
+}
+
+/* Page titles grow a little on larger screens. */
+@media (min-width: 640px) {
+  :root {
+    --title-size: 24px;
+  }
+}
+
+/* Very narrow phones (320-359 px): tighter type so nothing wraps awkwardly. */
+@media (max-width: 359px) {
+  :root {
+    --title-size: 18px;
+  }
+  body {
+    font-size: 13px;
+  }
 }
 
 ::selection {
