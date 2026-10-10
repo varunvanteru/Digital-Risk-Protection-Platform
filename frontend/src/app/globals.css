@@ -22,10 +22,6 @@
   --low-bg: #f1f1ee;
   --ok: #067647;
   --ok-bg: #edf7f0;
-  /* Severity colours for charts: one clear hue each, red / orange / amber. */
-  --chart-crit: #c62828;
-  --chart-high: #ef6c00;
-  --chart-med: #f2b300;
 }
 [data-mode="dark"] {
   --crit: #f97066;
@@ -38,9 +34,6 @@
   --low-bg: #1f1f1d;
   --ok: #47cd89;
   --ok-bg: #11241a;
-  --chart-crit: #ef5350;
-  --chart-high: #ff9800;
-  --chart-med: #ffd54f;
 }
 
 /* ---------- Shared design system: every theme ----------
@@ -312,6 +305,13 @@
 }
 
 /* Light by default: dark only when the user picks it (Appearance). */
+/* Severity in charts: three shades of the theme's chart colour (one hue), darkest = most severe. */
+:root {
+  --chart-crit: var(--chart-bar);
+  --chart-high: color-mix(in srgb, var(--chart-bar) 55%, var(--surface));
+  --chart-med: color-mix(in srgb, var(--chart-bar) 25%, var(--surface));
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
