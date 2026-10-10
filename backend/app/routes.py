@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -116,6 +116,14 @@ def put_brand(body: BrandIn, db: Session = Depends(get_db)):
         bad_request("publisher", "Required when apps are listed")
 
     brand = current_brand(db)
+    # A different brand name means a different brand: start its monitoring from a clean slate,
+    # so detections found for the previous brand never appear under the new one.
+    if brand.name.strip().lower() != body.name.strip().lower():
+        db.execute(delete(Detection).where(Detection.brand_id == brand.id))
+        db.execute(delete(Scan).where(Scan.brand_id == brand.id))
+        from .detection.images import _cached
+
+        _cached.cache_clear()
     brand.name = body.name.strip()
     brand.aliases = [a.strip() for a in body.aliases if a.strip() and a.strip() != brand.name]
     brand.keywords = [k.strip() for k in body.keywords if k.strip()]

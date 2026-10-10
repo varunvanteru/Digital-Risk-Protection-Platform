@@ -107,3 +107,43 @@ def test_quick_check(client):
 def test_brand_update_validation(client):
     r = client.put("/api/brand", json={"name": "Z", "description": "short", "accounts": []})
     assert r.status_code == 422
+
+
+def test_switching_brand_starts_clean_and_restores(client):
+    original = client.get("/api/brand").json()
+    assert client.get("/api/detections").json()
+
+    r = client.put(
+        "/api/brand",
+        json={
+            "name": "Fourcrest Solutions",
+            "aliases": ["Fourcrest"],
+            "keywords": ["fourcrest"],
+            "domains": ["fourcrestsolutions.in"],
+            "description": "Fourcrest Solutions builds software products and digital services for businesses in India.",
+            "accounts": [{"platform": "linkedin", "handle": "fourcrest-solutions", "status": "official"}],
+            "apps": [],
+        },
+    )
+    assert r.status_code == 200 and r.json()["name"] == "Fourcrest Solutions"
+    # Detections and scans of the previous brand are gone
+    assert client.get("/api/detections").json() == []
+    assert client.get("/api/scans/latest").json()["last"] is None
+
+    # Restore the demo brand for the remaining tests
+    body = {
+        "name": original["name"],
+        "aliases": [a for a in original["aliases"] if a != original["name"]],
+        "keywords": original["keywords"],
+        "domains": original["domains"],
+        "description": original["description"],
+        "publisher": original["publishers"][0]["name"],
+        "accounts": [{"platform": a["platform"], "handle": a["handle"], "status": a["status"], "verified": a["verified"]} for a in original["accounts"]],
+        "apps": [{"platform": a["platform"], "packageId": a["packageId"], "name": a["name"], "publisherId": a["publisherId"]} for a in original["apps"]],
+    }
+    assert client.put("/api/brand", json=body).status_code == 200
+    scan = client.post("/api/scans").json()
+    from conftest import wait_for_scan
+
+    assert wait_for_scan(client, scan["id"])["officialFlagged"] == 0
+    assert client.get("/api/detections").json()
