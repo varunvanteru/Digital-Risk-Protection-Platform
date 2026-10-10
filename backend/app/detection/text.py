@@ -101,6 +101,16 @@ def domain_of(link: str) -> str:
     return (urlparse(link).hostname or "").lower().removeprefix("www.")
 
 
+def domain_cores(official_domains: list[str], brand_cores: list[str]) -> list[str]:
+    """The full brand names a look-alike domain would borrow: the official domains' names (zentrapay
+    from zentrapay.com) and the brand aliases, minus any alias that is only a fragment of a longer
+    one ("zentra" inside "zentrapay"). A fragment is often an ordinary word that other companies
+    use for their own sites (zentra.co, zentrapos.com), so it is not evidence of copying."""
+    all_cores = brand_cores + [re.sub(r"[^a-z0-9]", "", d.split(".")[0]) for d in official_domains]
+    long = list(dict.fromkeys(c for c in all_cores if len(c) >= 5))
+    return [c for c in long if not any(o != c and c in o for o in long)]
+
+
 def is_lookalike_domain(domain: str, official_domains: list[str], brand_cores: list[str]) -> bool:
     """A domain that is not official but borrows or misspells the brand name. Needs known official domains."""
     if not official_domains:
@@ -110,13 +120,13 @@ def is_lookalike_domain(domain: str, official_domains: list[str], brand_cores: l
     # Undo look-alike characters first, so ph0nepe-rewards.top reads as phonepe...
     first = "".join("l" if ch == "1" else HOMOGLYPHS.get(ch, ch) for ch in domain.split(".")[0])
     label = re.sub(r"[^a-z0-9]", "", first)
-    for core in brand_cores:
-        if len(core) < 5:
-            continue
-        if core in label or damerau(label, core) <= 2:
+    for core in domain_cores(official_domains, brand_cores):
+        # One typo for a short name (zentrapaay), two for a long one; more reads as a different name (zentrapos).
+        typos = 2 if len(core) >= 10 else 1
+        if core in label or damerau(label, core) <= typos:
             return True
     for od in official_domains:
-        if damerau(domain, od) <= 2:
+        if damerau(domain, od) <= 1:
             return True
     return False
 

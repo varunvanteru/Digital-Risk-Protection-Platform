@@ -136,6 +136,18 @@ export function domainOf(link: string): string {
   return host.startsWith("www.") ? host.slice(4) : host;
 }
 
+/**
+ * The full brand names a look-alike domain would borrow: the official domains' names (zentrapay
+ * from zentrapay.com) and the brand aliases, minus any alias that is only a fragment of a longer
+ * one ("zentra" inside "zentrapay"). A fragment is often an ordinary word that other companies
+ * use for their own sites (zentra.co, zentrapos.com), so it is not evidence of copying.
+ */
+export function domainCores(officialDomains: string[], brandCores: string[]): string[] {
+  const all = [...brandCores, ...officialDomains.map((d) => d.split(".")[0].replace(/[^a-z0-9]/g, ""))];
+  const long = [...new Set(all.filter((c) => Array.from(c).length >= 5))];
+  return long.filter((c) => !long.some((o) => o !== c && o.includes(c)));
+}
+
 /** A domain that is not official but borrows or misspells the brand name. Needs known official domains. */
 export function isLookalikeDomain(domain: string, officialDomains: string[], brandCores: string[]): boolean {
   if (!officialDomains.length) return false; // without the real domain on record, the brand's own site would look like a copy
@@ -144,11 +156,12 @@ export function isLookalikeDomain(domain: string, officialDomains: string[], bra
   let first = "";
   for (const ch of domain.split(".")[0]) first += ch === "1" ? "l" : (HOMOGLYPHS[ch] ?? ch);
   const label = first.replace(/[^a-z0-9]/g, "");
-  for (const core of brandCores) {
-    if (Array.from(core).length < 5) continue;
-    if (label.includes(core) || damerau(label, core) <= 2) return true;
+  for (const core of domainCores(officialDomains, brandCores)) {
+    // One typo for a short name (zentrapaay), two for a long one; more reads as a different name (zentrapos).
+    const typos = Array.from(core).length >= 10 ? 2 : 1;
+    if (label.includes(core) || damerau(label, core) <= typos) return true;
   }
-  for (const od of officialDomains) if (damerau(domain, od) <= 2) return true;
+  for (const od of officialDomains) if (damerau(domain, od) <= 1) return true;
   return false;
 }
 

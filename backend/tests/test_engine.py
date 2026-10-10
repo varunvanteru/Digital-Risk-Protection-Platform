@@ -120,6 +120,17 @@ def test_lookalike_domains():
     assert not is_lookalike_domain("anydesk.com", official, ["zentrapay"])
 
 
+def test_other_companies_sites_are_not_lookalikes():
+    # Real developer sites of unrelated "Zentra ..." apps found in a live Play / App Store scan.
+    official = ["zentrapay.com", "zentrapay.in"]
+    aliases = ["zentrapay", "zentra", "zentrapay"]
+    for d in ["zentra.co", "zentrapos.com", "energyzentra.com", "tryzentra.com", "zenta.in", "zentra.ar", "myzentra.com", "zentravpn.com"]:
+        assert not is_lookalike_domain(d, official, aliases), d
+    for d in ["zentrapay-refund.xyz", "zentrapaay.in", "z3ntrapay-kyc.top", "zentrapay.co", "my-zentrapay.help"]:
+        assert is_lookalike_domain(d, official, aliases), d
+    assert is_lookalike_domain("ph0nepe-rewards.top", ["phonepe.com"], ["phonepe", "phonepe"])
+
+
 def test_logo_similarity_on_pixels(tmp_path, monkeypatch):
     monkeypatch.setattr(images, "settings", SimpleNamespace(media_dir=tmp_path, source_timeout_s=5))
     for name, img in {

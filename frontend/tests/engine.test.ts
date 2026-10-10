@@ -123,6 +123,17 @@ describe("text signals", () => {
     expect(isLookalikeDomain("zentrapay.in", official, ["zentrapay"])).toBe(false);
     expect(isLookalikeDomain("anydesk.com", official, ["zentrapay"])).toBe(false);
   });
+
+  it("other companies' own sites that share a word with the brand are not look-alikes", () => {
+    // Real developer sites of unrelated "Zentra ..." apps found in a live Play / App Store scan.
+    const official = ["zentrapay.com", "zentrapay.in"];
+    const aliases = ["zentrapay", "zentra", "zentrapay"];
+    for (const d of ["zentra.co", "zentrapos.com", "energyzentra.com", "tryzentra.com", "zenta.in", "zentra.ar", "myzentra.com", "zentravpn.com"])
+      expect(isLookalikeDomain(d, official, aliases), d).toBe(false);
+    for (const d of ["zentrapay-refund.xyz", "zentrapaay.in", "z3ntrapay-kyc.top", "zentrapay.co", "my-zentrapay.help"])
+      expect(isLookalikeDomain(d, official, aliases), d).toBe(true);
+    expect(isLookalikeDomain("ph0nepe-rewards.top", ["phonepe.com"], ["phonepe", "phonepe"])).toBe(true);
+  });
 });
 
 describe("logo similarity on pixels", () => {
