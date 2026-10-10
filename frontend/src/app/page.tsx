@@ -17,7 +17,7 @@ function istDate(iso: string) {
 }
 
 export default function OverviewPage() {
-  const { brand, detections, sources, lastScan } = useStore();
+  const { brand, detections, sources, lastScan, scanning } = useStore();
   const possiblyOfficial = (lastScan?.possiblyOfficial ?? []).filter((p) => !brand.apps.some((a) => a.packageId === p.packageId));
 
   const flagged = detections.filter((d) => d.breakdown.severity !== "low");
@@ -72,7 +72,7 @@ export default function OverviewPage() {
           icon={<Radar />}
           label="Open detections"
           value={open.length}
-          sub={lastScan ? `From ${lastScan.candidates} candidates in the last scan` : "No scan yet"}
+          sub={lastScan ? `From ${lastScan.candidates} candidates in the last scan` : scanning ? "First scan running…" : "No scan yet"}
           href="/detections"
           hrefLabel="All detections"
         />

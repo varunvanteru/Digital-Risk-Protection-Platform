@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { LoaderCircle, Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SeverityIcon, severityLabel } from "@/components/badges";
 import { DetectionTable, type SortKey } from "@/components/detection-table";
@@ -17,7 +17,7 @@ type StatusFilter = "active" | "all" | DetectionStatus;
 const DEFAULT_SEVERITIES: Severity[] = ["critical", "high", "medium"];
 
 export default function DetectionsPage() {
-  const { detections } = useStore();
+  const { detections, scanning } = useStore();
   const [query, setQuery] = useState("");
   const [channel, setChannel] = useState<ChannelFilter>("all");
   const [platform, setPlatform] = useState<"all" | Platform>("all");
@@ -169,6 +169,10 @@ export default function DetectionsPage() {
         </div>
         {rows.length ? (
           <DetectionTable rows={rows} sort={sort} onSort={onSort} />
+        ) : !detections.length && scanning ? (
+          <EmptyState icon={<LoaderCircle className="animate-spin" />} title="Scanning sources">
+            <p>The first scan of this workspace is running. Detections appear here in a few seconds.</p>
+          </EmptyState>
         ) : (
           <EmptyState icon={<SlidersHorizontal />} title="No detections match these filters">
             <p>
