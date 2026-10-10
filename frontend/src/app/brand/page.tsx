@@ -249,7 +249,7 @@ export default function BrandPage() {
                       </td>
                       <td className="px-4 py-2.5">
                         <div className="text-ink">{a.name}</div>
-                        <div className="text-[12px] text-ink-3">Same developer ID, not in profile. Not flagged.</div>
+                        <div className="text-[12px] text-ink-3">{a.status === "LIKELY_OFFICIAL" ? "Likely official (publisher matches)" : "Verified official (same developer account)"}, not in profile. Not flagged.</div>
                       </td>
                       <td className="px-4 py-2.5">
                         <Mono>{a.packageId}</Mono>

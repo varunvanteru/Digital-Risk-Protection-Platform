@@ -8,6 +8,7 @@ import { DetectionTable } from "@/components/detection-table";
 import { PlatformGlyph } from "@/components/marks";
 import { TrendChart, type DayCount } from "@/components/trend-chart";
 import { ButtonLink, Card, CardHeader, PageHeader } from "@/components/ui";
+import { PLATFORM_LABEL } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Severity } from "@/lib/types";
 
@@ -157,11 +158,22 @@ export default function OverviewPage() {
         <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-[13px]">
           <Info className="size-4 shrink-0 text-ink-3" />
           <p className="flex-1 text-ink-2">
-            <span className="font-medium text-ink">{possiblyOfficial[0].name}</span> is published under your official
-            developer ID but is not in the brand profile. It was not flagged.
+            {possiblyOfficial.length === 1 ? (
+              <>
+                <span className="font-medium text-ink">{possiblyOfficial[0].name}</span> ({PLATFORM_LABEL[possiblyOfficial[0].platform]} ·{" "}
+                <span className="font-mono text-[12px]">{possiblyOfficial[0].packageId}</span>) was verified as official but is not in the brand profile.
+              </>
+            ) : (
+              <>
+                <span className="font-medium text-ink">{possiblyOfficial.length} apps</span> were verified as official but are not in the brand profile, e.g.{" "}
+                <span className="font-medium text-ink">{possiblyOfficial[0].name}</span> ({PLATFORM_LABEL[possiblyOfficial[0].platform]} ·{" "}
+                <span className="font-mono text-[12px]">{possiblyOfficial[0].packageId}</span>).
+              </>
+            )}{" "}
+            None were flagged. Add them so they are matched by ID.
           </p>
           <ButtonLink href="/brand#apps" size="sm">
-            Review
+            Review and add
           </ButtonLink>
         </div>
       )}

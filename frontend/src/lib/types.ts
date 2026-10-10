@@ -225,7 +225,7 @@ export interface ScanSummary {
   officialFlagged: number;
   newDetections: number;
   sources: Record<string, { ok: boolean; error?: string; items?: number; kept?: number; latencyMs?: number; retries?: number }>;
-  possiblyOfficial: { platform: Platform; name: string; packageId: string; publisher: string; publisherId: string }[];
+  possiblyOfficial: { platform: Platform; name: string; packageId: string; publisher: string; publisherId: string; status?: "OFFICIAL" | "LIKELY_OFFICIAL" }[];
 }
 
 export interface LookalikeStep {
