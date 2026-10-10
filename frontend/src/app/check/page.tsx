@@ -61,13 +61,14 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
         </span>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-[repeat(4,auto)] lg:justify-start lg:gap-x-6">
+      {/* One shared column grid for every group, so chips line up across rows. */}
+      <div className="space-y-3">
         {PLATFORM_GROUPS.map((g) => (
           <div key={g.label} role="group" aria-label={g.label}>
             <button onClick={() => toggleGroup(g.platforms)} className="mb-1.5 text-[11.5px] font-medium uppercase tracking-wide text-ink-3 hover:text-ink">
               {g.label}
             </button>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-2">
               {g.platforms.map((p) => {
                 const on = !all && isOn(p);
                 return (
@@ -77,7 +78,7 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
                     onClick={() => toggle(p)}
                     title={PLATFORM_LABEL[p]}
                     className={clsx(
-                      "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium transition-colors",
+                      "flex h-9 w-full min-w-0 items-center gap-2 rounded-md border px-3 text-left text-[12.5px] font-medium transition-colors",
                       on
                         ? "border-accent bg-accent-soft text-ink"
                         : all
@@ -85,8 +86,8 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
                           : "border-line bg-surface text-ink-3 hover:border-line-strong hover:text-ink",
                     )}
                   >
-                    <PlatformLogo platform={p} size={16} className={clsx(!all && !on && "opacity-45 grayscale")} />
-                    {PLATFORM_LABEL[p]}
+                    <PlatformLogo platform={p} size={16} className={clsx("shrink-0", !all && !on && "opacity-45 grayscale")} />
+                    <span className="truncate">{PLATFORM_LABEL[p]}</span>
                   </button>
                 );
               })}
@@ -321,7 +322,7 @@ export default function QuickCheckPage() {
               e.preventDefault();
               run();
             }}
-            className="flex flex-col gap-2 sm:flex-row"
+            className="flex flex-col gap-2 border-t border-line pt-4 sm:flex-row"
           >
             <label htmlFor="check-input" className="sr-only">
               Brand name or profile URL
