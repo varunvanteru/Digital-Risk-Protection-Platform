@@ -15,7 +15,8 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: CORS_ORIGINS
-        value: https://impostr.live,https://www.impostr.live
+        # The hostingersite.com address is the Hostinger app's temporary domain.
+        value: https://impostr.live,https://www.impostr.live,https://mediumspringgreen-sardine-361504.hostingersite.com
       - key: MYSQL_HOST
         sync: false
       - key: MYSQL_PORT
