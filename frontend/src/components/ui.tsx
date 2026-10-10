@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -51,21 +52,105 @@ export function CardHeader({
   title,
   description,
   actions,
+  icon,
   className,
 }: {
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
+  /** Shown in an orb before the title. */
+  icon?: ReactNode;
   className?: string;
 }) {
   return (
-    <header className={clsx("flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3", className)}>
-      <div className="min-w-0 flex-1 basis-56">
-        <h2 className="card-title text-[13.5px] font-semibold text-ink">{title}</h2>
-        {description && <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{description}</p>}
+    <header className={clsx("flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3", className)}>
+      <div className="flex min-w-0 flex-1 basis-56 items-center gap-3">
+        {icon && <Orb size="sm">{icon}</Orb>}
+        <div className="min-w-0">
+          <h2 className="card-title text-[13.5px] font-semibold text-ink">{title}</h2>
+          {description && <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{description}</p>}
+        </div>
       </div>
       {actions && <div className="ml-auto flex max-w-full shrink-0 items-center gap-2">{actions}</div>}
     </header>
+  );
+}
+
+// ---------- rfentity-style icon pieces ----------
+
+const ORB_SIZE = { sm: "size-9 text-[12px] [&_svg]:size-4", md: "size-11 text-[14px] [&_svg]:size-[18px]", lg: "size-14 text-[17px] [&_svg]:size-6" };
+
+/** Round, sphere-shaded badge holding an icon or a step number ("01"). */
+export function Orb({
+  children,
+  size = "md",
+  tone,
+  className,
+}: {
+  children: ReactNode;
+  size?: keyof typeof ORB_SIZE;
+  /** Colour of the icon; the brand colour by default. */
+  tone?: "crit" | "high" | "med" | "ok" | "ink";
+  className?: string;
+}) {
+  const color = tone ? { crit: "text-crit", high: "text-high", med: "text-med", ok: "text-ok", ink: "text-ink" }[tone] : undefined;
+  return (
+    <span aria-hidden className={clsx("orb", ORB_SIZE[size], color, className)}>
+      {children}
+    </span>
+  );
+}
+
+/** Two-digit step number in an orb, as in "01 Choose your car". */
+export const StepOrb = ({ n, size = "md" }: { n: number; size?: keyof typeof ORB_SIZE }) => (
+  <Orb size={size}>{String(n).padStart(2, "0")}</Orb>
+);
+
+/** Floating round button for a card corner; an arrow unless children say otherwise. */
+export function FloatLink({ href, label, children, className }: { href: string; label: string; children?: ReactNode; className?: string }) {
+  return (
+    <Link href={href} aria-label={label} title={label} className={clsx("float-btn size-9 [&_svg]:size-4", className)}>
+      {children ?? <ArrowRight />}
+    </Link>
+  );
+}
+
+/** "• 13 Critical": status pill with a dot, in the given colour. */
+export function DotPill({ children, tone = "brand", className }: { children: ReactNode; tone?: "brand" | "crit" | "high" | "ok" | "ink"; className?: string }) {
+  const color = { brand: "text-[var(--brand)]", crit: "text-crit", high: "text-high", ok: "text-ok", ink: "text-ink-2" }[tone];
+  return <span className={clsx("dot-pill", color, className)}>{children}</span>;
+}
+
+/** Glass stat card: icon orb, figure, label and an optional arrow to the detail. */
+export function StatCard({
+  icon,
+  tone,
+  label,
+  value,
+  sub,
+  href,
+  hrefLabel,
+}: {
+  icon: ReactNode;
+  tone?: "crit" | "high" | "med" | "ok" | "ink";
+  label: ReactNode;
+  value: ReactNode;
+  sub?: ReactNode;
+  href?: string;
+  hrefLabel?: string;
+}) {
+  return (
+    <Card className="relative flex flex-col gap-3 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <Orb tone={tone}>{icon}</Orb>
+        {href && <FloatLink href={href} label={hrefLabel ?? `Open ${typeof label === "string" ? label : "details"}`} />}
+      </div>
+      <div>
+        <div className="eyebrow text-[12px]">{label}</div>
+        <div className="tabular mt-1 font-[family-name:var(--font-heading)] text-[30px] font-bold leading-none tracking-[-0.02em] text-ink">{value}</div>
+        {sub && <div className="mt-2 text-[12.5px] leading-snug text-ink-3">{sub}</div>}
+      </div>
+    </Card>
   );
 }
 
@@ -211,9 +296,9 @@ export function Mono({ children, className }: { children: ReactNode; className?:
 export function EmptyState({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-      <div className="mb-3 flex size-9 items-center justify-center rounded-md border border-line bg-surface-2 text-ink-3 [&_svg]:size-4">
+      <Orb size="lg" className="mb-4">
         {icon}
-      </div>
+      </Orb>
       <p className="text-[13.5px] font-medium text-ink">{title}</p>
       {children && <div className="mt-1 max-w-sm text-[12.5px] text-ink-3">{children}</div>}
     </div>

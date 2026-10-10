@@ -1,13 +1,12 @@
 "use client";
 
-import { ArrowUpRight, Info, ShieldCheck } from "lucide-react";
-import Link from "next/link";
+import { Database, Info, Radar, ShieldCheck, Siren, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { HealthBadge, SeverityIcon } from "@/components/badges";
 import { DetectionTable } from "@/components/detection-table";
 import { PlatformGlyph } from "@/components/marks";
 import { TrendChart, type DayCount } from "@/components/trend-chart";
-import { ButtonLink, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
+import { ButtonLink, Card, CardHeader, DotPill, EmptyState, FloatLink, Orb, PageHeader, StatCard } from "@/components/ui";
 import { PLATFORM_LABEL } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Severity } from "@/lib/types";
@@ -15,29 +14,6 @@ import type { Severity } from "@/lib/types";
 
 function istDate(iso: string) {
   return new Date(Date.parse(iso) + 5.5 * 3600e3).toISOString().slice(0, 10);
-}
-
-function Stat({
-  label,
-  value,
-  sub,
-  icon,
-}: {
-  label: string;
-  value: number | string;
-  sub: React.ReactNode;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <div className="px-5 py-4">
-      <div className="flex items-center gap-1.5 text-[12.5px] text-ink-3">
-        {icon}
-        {label}
-      </div>
-      <div className="tabular mt-1.5 text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink">{value}</div>
-      <div className="mt-2 text-[12.5px] text-ink-3">{sub}</div>
-    </div>
-  );
 }
 
 export default function OverviewPage() {
@@ -88,26 +64,31 @@ export default function OverviewPage() {
         description={`Impersonation risk for ${brand.name} across social platforms and app stores.`}
       />
 
-      <Card className="grid grid-cols-2 gap-px overflow-hidden bg-line lg:grid-cols-4 [&>*]:bg-surface">
-        <Stat label="Open detections" value={open.length} sub={lastScan ? `From ${lastScan.candidates} candidates in the last scan` : "No scan yet"} />
-        <Stat
-          label="Critical"
-          icon={<SeverityIcon severity="critical" />}
-          value={bySev("critical")}
-          sub="Takedown recommended"
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          icon={<Radar />}
+          label="Open detections"
+          value={open.length}
+          sub={lastScan ? `From ${lastScan.candidates} candidates in the last scan` : "No scan yet"}
+          href="/detections"
+          hrefLabel="All detections"
         />
-        <Stat label="High" icon={<SeverityIcon severity="high" />} value={bySev("high")} sub="Review today" />
-        <Stat
+        <StatCard icon={<SeverityIcon severity="critical" />} tone="crit" label="Critical" value={bySev("critical")} sub="Takedown recommended" href="/detections" hrefLabel="Critical detections" />
+        <StatCard icon={<SeverityIcon severity="high" />} tone="high" label="High" value={bySev("high")} sub="Review today" href="/detections" hrefLabel="High detections" />
+        <StatCard
+          icon={<ShieldCheck />}
+          tone="ok"
           label="Official assets flagged"
-          icon={<ShieldCheck className="size-3.5 text-ok" strokeWidth={2.2} />}
           value={lastScan?.officialFlagged ?? 0}
           sub={`${protectedCount} assets on the allowlist`}
+          href="/brand"
+          hrefLabel="Brand profile"
         />
-      </Card>
+      </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Card className="flex flex-col">
-          <CardHeader title="New detections" description="Medium severity and above, by day first seen · last 14 days" />
+          <CardHeader icon={<TrendingUp />} title="New detections" description="Medium severity and above, by day first seen · last 14 days" />
           <div className="flex-1 px-4 pb-3 pt-4">
             <TrendChart data={trend} />
           </div>
@@ -115,13 +96,10 @@ export default function OverviewPage() {
 
         <Card>
           <CardHeader
+            icon={<Database />}
             title="By source"
             description={`Top ${bySource.length} of ${sources.length}, most critical first`}
-            actions={
-              <Link href="/sources" className="text-[12.5px] text-ink-2 hover:text-ink">
-                All sources
-              </Link>
-            }
+            actions={<FloatLink href="/sources" label="All sources" />}
           />
           <table className="w-full text-[13px]">
             <thead>
@@ -157,7 +135,9 @@ export default function OverviewPage() {
 
       {possiblyOfficial.length > 0 && (
         <div className="mt-4 flex flex-col gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-[13px] sm:flex-row sm:items-center">
-          <Info className="hidden size-4 shrink-0 text-ink-3 sm:block" />
+          <Orb size="sm" className="hidden sm:inline-flex">
+            <Info />
+          </Orb>
           <p className="flex-1 leading-relaxed text-ink-2">
             {possiblyOfficial.length === 1 ? (
               <>
@@ -181,13 +161,14 @@ export default function OverviewPage() {
 
       <Card className="mt-4">
         <CardHeader
+          icon={<Siren />}
           title="Needs attention"
           description="Open Critical and High detections, highest score first"
           actions={
-            <ButtonLink href="/detections" size="sm" variant="ghost">
-              All detections
-              <ArrowUpRight />
-            </ButtonLink>
+            <>
+              {bySev("critical") > 0 && <DotPill tone="crit">{bySev("critical")} critical</DotPill>}
+              <FloatLink href="/detections" label="All detections" />
+            </>
           }
         />
         {attention.length ? (

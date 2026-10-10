@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CLASS_LABEL, formatShortDate, handleDisplay } from "@/lib/format";
 import { mediaUrl } from "@/lib/api";
@@ -98,6 +98,9 @@ export function DetectionTable({
                 <span className="flex items-center gap-3">
                   {!compact && <StatusBadge status={d.status} />}
                   <span className="tabular">{formatShortDate(d.firstSeen)}</span>
+                  <span aria-hidden className="float-btn size-7 [&_svg]:size-3.5">
+                    <ArrowRight />
+                  </span>
                 </span>
               </div>
             </button>

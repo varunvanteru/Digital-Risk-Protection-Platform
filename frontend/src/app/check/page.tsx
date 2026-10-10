@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowUpRight, Check, ChevronRight, ExternalLink, LayoutGrid, LoaderCircle, Plus, Search, SearchX, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Check, ChevronRight, ExternalLink, LayoutGrid, LoaderCircle, Plus, Search, SearchX, ShieldCheck, ScanSearch } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ScoreCell } from "@/components/badges";
@@ -9,7 +9,7 @@ import { initialsOf } from "@/components/detection-table";
 import { EvidenceStrip, VerdictChip } from "@/components/evidence";
 import { BrandMark } from "@/components/marks";
 import { PlatformLogo } from "@/components/platform-logo";
-import { Button, Card, CardHeader, EmptyState, PageHeader, Tag } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, PageHeader, Tag, Orb } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/api";
 import { ALL_PLATFORMS, CLASS_LABEL, PLATFORM_GROUPS, PLATFORM_LABEL, handleDisplay } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -217,15 +217,19 @@ function OfficialAssets({ data }: { data: SearchResponse }) {
 
   return (
     <Card className="mt-4 overflow-hidden">
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-ok-bg/60 px-4 py-3">
-        <div>
-          <h2 className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
-            <ShieldCheck className="size-4 text-ok" />
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Orb size="sm" tone="ok">
+            <ShieldCheck />
+          </Orb>
+          <div>
+          <h2 className="card-title flex items-center gap-2 text-[13.5px] font-semibold text-ink">
             {data.official.length} official {data.official.length === 1 ? "asset" : "assets"} · excluded before risk scoring
           </h2>
           <p className="mt-0.5 text-[12.5px] text-ink-2">
             Verified as {data.reference.name}&apos;s own. They never enter risk scoring, so their risk is 0.
           </p>
+          </div>
         </div>
       </header>
       <ul>
@@ -367,6 +371,7 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
       {data.suggestedOfficial && <SuggestedOfficialCard data={data} onRegistered={onRerun} />}
       <Card className="mt-4">
         <CardHeader
+          icon={<ScanSearch />}
           title={
             n ? (
               <>

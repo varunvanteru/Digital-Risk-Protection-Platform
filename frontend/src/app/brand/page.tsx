@@ -1,9 +1,9 @@
 "use client";
 
-import { Check, CircleAlert, CircleX, LoaderCircle, Plus, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
+import { BookOpen, Building2, Check, CircleAlert, CircleX, Fingerprint, LoaderCircle, Plus, RefreshCw, ShieldCheck, Smartphone, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { BrandMark, PlatformLabel } from "@/components/marks";
-import { Button, ButtonLink, Card, CardHeader, Hint, Input, KeyValue, Label, Mono, PageHeader, Select, Tag } from "@/components/ui";
+import { Button, ButtonLink, Card, CardHeader, Hint, Input, KeyValue, Label, Mono, Orb, PageHeader, Select, StepOrb, Tag } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/api";
 import { formatDateTime, handleDisplay } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -136,7 +136,7 @@ export default function BrandPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0 space-y-4">
           <Card>
-            <CardHeader title="Identity" description={`Last updated ${formatDateTime(brand.updatedAt)}`} />
+            <CardHeader icon={<Fingerprint />} title="Identity" description={`Last updated ${formatDateTime(brand.updatedAt)}`} />
             <div className="flex flex-col gap-6 px-4 py-4 sm:flex-row">
               <div className="flex shrink-0 flex-col items-center gap-2">
                 <BrandMark size={72} src={mediaUrl(brand.logoUrl)} />
@@ -158,7 +158,7 @@ export default function BrandPage() {
           </Card>
 
           <Card>
-            <CardHeader title="Official social accounts" description={`${brand.accounts.length} accounts on the allowlist`} />
+            <CardHeader icon={<Users />} title="Official social accounts" description={`${brand.accounts.length} accounts on the allowlist`} />
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-[13px]">
                 <thead className="border-b border-line bg-surface-2/50 text-[12px] text-ink-3">
@@ -204,6 +204,7 @@ export default function BrandPage() {
 
           <Card id="apps">
             <CardHeader
+              icon={<Smartphone />}
               title="Official apps"
               description="Validated on each store. The developer account behind them identifies official variants; names alone never do."
               actions={
@@ -279,7 +280,7 @@ export default function BrandPage() {
 
         <aside className="space-y-4">
           <Card>
-            <CardHeader title="Official publishers" />
+            <CardHeader icon={<Building2 />} title="Official publishers" />
             <ul className="px-4 py-3 text-[13px]">
               {brand.publishers.map((p) => (
                 <li key={p.name}>
@@ -292,8 +293,8 @@ export default function BrandPage() {
           </Card>
 
           <Card>
-            <CardHeader title="How this profile is used" />
-            <ul className="space-y-3 px-4 py-3 text-[12.5px] leading-relaxed text-ink-2">
+            <CardHeader icon={<BookOpen />} title="How this profile is used" />
+            <ul className="space-y-3.5 px-4 py-4 text-[12.5px] leading-relaxed text-ink-2">
               {[
                 ["Name and aliases", "Reference for look-alike name matching"],
                 ["Keywords", "Search queries sent to each source"],
@@ -301,23 +302,28 @@ export default function BrandPage() {
                 ["Description", "Compared with bios and app descriptions"],
                 ["Accounts, apps, publishers", "Allowlist, checked by ID before scoring and before alerting"],
                 ["Domains", "Links to other or look-alike domains raise the score"],
-              ].map(([k, v]) => (
-                <li key={k}>
-                  <span className="font-medium text-ink">{k}</span>
-                  <br />
-                  {v}
+              ].map(([k, v], i) => (
+                <li key={k} className="flex items-start gap-3">
+                  <StepOrb n={i + 1} size="sm" />
+                  <span className="pt-0.5">
+                    <span className="font-medium text-ink">{k}</span>
+                    <br />
+                    {v}
+                  </span>
                 </li>
               ))}
             </ul>
           </Card>
 
-          <div className="flex gap-2.5 rounded-lg border border-line bg-surface px-4 py-3 text-[12.5px] text-ink-2">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-ok" />
+          <Card className="flex items-center gap-3 px-4 py-3 text-[12.5px] text-ink-2">
+            <Orb size="sm" tone="ok">
+              <ShieldCheck />
+            </Orb>
             <p>
               <span className="font-medium text-ink">{lastScan?.officialFlagged ?? 0} official assets flagged</span> in the last scan. Every asset above is
               also planted in the test data to prove it.
             </p>
-          </div>
+          </Card>
         </aside>
       </div>
     </>

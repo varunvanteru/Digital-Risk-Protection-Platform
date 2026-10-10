@@ -3,7 +3,8 @@
 import clsx from "clsx";
 import { HealthBadge } from "@/components/badges";
 import { PlatformGlyph } from "@/components/marks";
-import { Button, Card, CardHeader, PageHeader } from "@/components/ui";
+import { Share2, Store } from "lucide-react";
+import { Button, Card, CardHeader, PageHeader, StepOrb } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
@@ -28,8 +29,8 @@ export default function SourcesPage() {
     }
   }
   const groups = [
-    { title: "App stores", rows: sources.filter((s) => s.channel === "app") },
-    { title: "Social platforms", rows: sources.filter((s) => s.channel === "social") },
+    { title: "App stores", icon: <Store />, rows: sources.filter((s) => s.channel === "app") },
+    { title: "Social platforms", icon: <Share2 />, rows: sources.filter((s) => s.channel === "social") },
   ];
 
   return (
@@ -43,7 +44,7 @@ export default function SourcesPage() {
       <div className="space-y-4">
         {groups.map((g) => (
           <Card key={g.title}>
-            <CardHeader title={g.title} />
+            <CardHeader icon={g.icon} title={g.title} description={`${g.rows.length} sources · ${g.rows.filter((s) => s.mode === "live").length} live`} />
             {/* Phones: stacked rows */}
             <ul className="divide-y divide-line md:hidden">
               {g.rows.map((s) => (
@@ -144,21 +145,27 @@ export default function SourcesPage() {
           </Card>
         ))}
 
-        <Card>
-          <CardHeader title="When a source fails" />
-          <ul className="grid gap-px overflow-hidden bg-line sm:grid-cols-3 [&>li]:bg-surface">
+        <div>
+          <div className="eyebrow mb-1 mt-4 text-[12px]">Graceful degradation</div>
+          <h2 className="page-title mb-4 !text-[22px] text-ink">
+            When a source <em>fails</em>
+          </h2>
+          <ul className="grid gap-4 sm:grid-cols-3">
             {[
               ["Scan continues", "Other sources run as normal. The top bar shows how many sources need attention."],
               ["Last results stay", "Detections from the last good run stay visible, marked with their scan time."],
               ["Signals degrade", "A missing logo or description only switches off that signal; the score uses the rest."],
-            ].map(([t, d]) => (
-              <li key={t} className="px-4 py-3">
-                <div className="text-[13px] font-medium text-ink">{t}</div>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">{d}</p>
+            ].map(([t, d], i) => (
+              <li key={t}>
+                <Card className="h-full p-5">
+                  <StepOrb n={i + 1} />
+                  <div className="card-title mt-4 text-[13.5px] font-semibold text-ink">{t}</div>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">{d}</p>
+                </Card>
               </li>
             ))}
           </ul>
-        </Card>
+        </div>
       </div>
     </>
   );

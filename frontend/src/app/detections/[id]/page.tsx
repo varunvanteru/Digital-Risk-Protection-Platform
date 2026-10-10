@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, Ban, CircleX, ExternalLink, FileDown, Flag, LoaderCircle, ShieldCheck, Undo2 } from "lucide-react";
+import { ArrowLeft, Ban, Calculator, CircleX, ExternalLink, FileDown, Flag, GitCompare, History, Info, Link2, ListChecks, LoaderCircle, ShieldCheck, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -9,7 +9,7 @@ import { SeverityBadge, StatusBadge } from "@/components/badges";
 import { EvidenceTable, VerdictChip } from "@/components/evidence";
 import { initialsOf } from "@/components/detection-table";
 import { BrandMark, PlatformLabel } from "@/components/marks";
-import { Button, Card, CardHeader, EmptyState, KeyValue, Mono, Tag } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, KeyValue, Mono, Orb, Tag } from "@/components/ui";
 import { api, ApiError, mediaUrl } from "@/lib/api";
 import { CLASS_LABEL, PLATFORM_LABEL, STATUS_LABEL, ageInDays, formatCount, formatDate, formatDateTime, handleDisplay } from "@/lib/format";
 import { SEVERITY_ACTION, signalLabel } from "@/lib/scoring";
@@ -25,7 +25,7 @@ function Breakdown({ d }: { d: Detection }) {
   const { parts, boosts, cap, score } = d.breakdown;
   return (
     <Card>
-      <CardHeader title="Score breakdown" description="Each signal is scored 0 to 1, then weighted. Boosts and caps follow fixed rules." />
+      <CardHeader icon={<Calculator />} title="Score breakdown" description="Each signal is scored 0 to 1, then weighted. Boosts and caps follow fixed rules." />
       <div className="px-4 py-3">
         <table className="w-full text-[13px]">
           <thead>
@@ -126,7 +126,7 @@ function Compare({ d }: { d: Detection }) {
 
   return (
     <Card>
-      <CardHeader title="Compared with the official asset" description={`Official counterpart on ${PLATFORM_LABEL[official.platform]}`} />
+      <CardHeader icon={<GitCompare />} title="Compared with the official asset" description={`Official counterpart on ${PLATFORM_LABEL[official.platform]}`} />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[520px] text-[13px]">
           <thead>
@@ -374,10 +374,10 @@ export default function DetectionPage() {
               <h2 className="mb-2 text-[12.5px] font-medium text-ink-3">Why this was flagged</h2>
               <ol className="space-y-2">
                 {d.reasons.map((r, i) => (
-                  <li key={r} className="flex gap-3 text-[13.5px] leading-relaxed text-ink">
-                    <span className="tabular mt-[3px] flex size-[18px] shrink-0 items-center justify-center rounded border border-line text-[10.5px] font-medium text-ink-3">
-                      {i + 1}
-                    </span>
+                  <li key={r} className="flex items-center gap-3 text-[13.5px] leading-relaxed text-ink">
+                    <Orb size="sm" className="!size-7 !text-[10.5px]">
+                      {String(i + 1).padStart(2, "0")}
+                    </Orb>
                     {r}
                   </li>
                 ))}
@@ -388,6 +388,7 @@ export default function DetectionPage() {
           {d.checks && Object.keys(d.checks).length > 0 && (
             <Card>
               <CardHeader
+                icon={<ListChecks />}
                 title="Evidence checks"
                 description="Identity checks ran first; this item did not match any official asset, so it was scored."
                 actions={<VerdictChip verdict={d.verdict} />}
@@ -403,7 +404,7 @@ export default function DetectionPage() {
 
         <aside className="space-y-4">
           <Card>
-            <CardHeader title="Details" />
+            <CardHeader icon={<Info />} title="Details" />
             <div className="px-4 py-3">
               <KeyValue
                 items={[
@@ -437,7 +438,7 @@ export default function DetectionPage() {
 
           {d.links.length > 0 && (
             <Card>
-              <CardHeader title="Links in profile" />
+              <CardHeader icon={<Link2 />} title="Links in profile" />
               <ul className="space-y-1.5 px-4 py-3">
                 {d.links.map((l) => (
                   <li key={l} className="flex items-center justify-between gap-2">
@@ -450,7 +451,7 @@ export default function DetectionPage() {
           )}
 
           <Card>
-            <CardHeader title="Activity" />
+            <CardHeader icon={<History />} title="Activity" />
             <ol className="space-y-2.5 px-4 py-3 text-[12.5px]">
               <li className="flex justify-between gap-3">
                 <span className="text-ink">First detected</span>

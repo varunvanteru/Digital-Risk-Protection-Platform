@@ -1,11 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, LoaderCircle, RefreshCw, ShieldCheck, X } from "lucide-react";
+import { Check, CheckCheck, Crosshair, Grid3x3, ListChecks, LoaderCircle, Radar, RefreshCw, ShieldCheck, Sigma, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { severityLabel } from "@/components/badges";
 import { PlatformLogo } from "@/components/platform-logo";
-import { Button, Card, CardHeader, PageHeader, Segmented } from "@/components/ui";
+import { Button, Card, CardHeader, DotPill, Orb, PageHeader, Segmented, StatCard } from "@/components/ui";
 import { api } from "@/lib/api";
 import { ALL_PLATFORMS } from "@/lib/format";
 import type { AccuracyReport, Platform } from "@/lib/types";
@@ -18,16 +18,6 @@ const LABEL: Record<AccuracyReport["rows"][number]["label"], string> = {
   mention: "Mention",
   unrelated: "Unrelated",
 };
-
-function Metric({ label, value, sub, strong }: { label: string; value: string; sub: string; strong?: boolean }) {
-  return (
-    <div className="px-5 py-4">
-      <div className="text-[12.5px] text-ink-3">{label}</div>
-      <div className={clsx("tabular mt-1.5 text-[28px] font-semibold leading-none tracking-[-0.02em]", strong ? "text-ok" : "text-ink")}>{value}</div>
-      <div className="mt-2 text-[12.5px] text-ink-3">{sub}</div>
-    </div>
-  );
-}
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 
@@ -79,12 +69,12 @@ export default function AccuracyPage() {
       ) : (
         <>
           <Card className="overflow-hidden">
-            <div className="flex flex-wrap items-center gap-4 border-b border-line bg-ok-bg/60 px-5 py-4">
-              <span className="flex size-10 items-center justify-center rounded-full bg-surface text-ok">
-                <ShieldCheck className="size-5" />
-              </span>
-              <div>
-                <div className="tabular text-[22px] font-semibold tracking-[-0.01em] text-ink">
+            <div className="flex flex-wrap items-center gap-4 px-5 py-5">
+              <Orb size="lg" tone="ok">
+                <ShieldCheck />
+              </Orb>
+              <div className="min-w-0 flex-1">
+                <div className="tabular font-[family-name:var(--font-heading)] text-[22px] font-bold tracking-[-0.01em] text-ink">
                   {report.officialFlagged} of {report.officialTested} official assets flagged
                 </div>
                 <p className="text-[13px] text-ink-2">
@@ -92,18 +82,24 @@ export default function AccuracyPage() {
                   through their developer account. {report.mentionsFlagged} legitimate mentions or unrelated names flagged.
                 </p>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4 [&>*]:bg-surface">
-              <Metric label="Precision" value={pct(report.precision)} sub={`${report.falsePositives} false positives`} />
-              <Metric label="Recall" value={pct(report.recall)} sub={`${report.falseNegatives} fakes missed`} />
-              <Metric label="F1" value={report.f1.toFixed(3)} sub={`${report.cases} labelled cases`} />
-              <Metric label="Correct" value={`${report.rows.filter((r) => r.correct).length}/${report.cases}`} sub={Object.entries(report.byBrand).map(([b, v]) => `${b} ${v.correct}/${v.cases}`).join(" · ")} />
+              {report.officialFlagged === 0 && <DotPill tone="ok">Official assets safe</DotPill>}
             </div>
           </Card>
+          <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard icon={<Crosshair />} label="Precision" value={pct(report.precision)} sub={`${report.falsePositives} false positives`} />
+            <StatCard icon={<Radar />} label="Recall" value={pct(report.recall)} sub={`${report.falseNegatives} fakes missed`} />
+            <StatCard icon={<Sigma />} label="F1" value={report.f1.toFixed(3)} sub={`${report.cases} labelled cases`} />
+            <StatCard
+              icon={<CheckCheck />}
+              label="Correct"
+              value={`${report.rows.filter((r) => r.correct).length}/${report.cases}`}
+              sub={Object.entries(report.byBrand).map(([b, v]) => `${b} ${v.correct}/${v.cases}`).join(" · ")}
+            />
+          </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[320px_1fr]">
             <Card>
-              <CardHeader title="Confusion matrix" description="Positive class = fake" />
+              <CardHeader icon={<Grid3x3 />} title="Confusion matrix" description="Positive class = fake" />
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="text-[12px] text-ink-3">
@@ -130,6 +126,7 @@ export default function AccuracyPage() {
 
             <Card>
               <CardHeader
+                icon={<ListChecks />}
                 title="Labelled cases"
                 description="Official, fake, legitimate mentions and unrelated names, with the engine's outcome"
                 actions={

@@ -11,13 +11,41 @@ const MODES: { id: Mode; label: string; Icon: typeof Sun }[] = [
   { id: "dark", label: "Dark", Icon: Moon },
 ];
 
+const THEME_EVENT = "brandshield-theme-change";
+
+/** Round light/dark switch for the header. */
+export function ThemeToggle({ className }: { className?: string }) {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const sync = () => setDark(document.documentElement.dataset.mode === "dark");
+    sync();
+    window.addEventListener(THEME_EVENT, sync);
+    return () => window.removeEventListener(THEME_EVENT, sync);
+  }, []);
+  function toggle() {
+    applyTheme({ ...readTheme(), mode: dark ? "light" : "dark" });
+    window.dispatchEvent(new Event(THEME_EVENT));
+  }
+  return (
+    <button onClick={toggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} title={dark ? "Light mode" : "Dark mode"} className={clsx("float-btn size-9 [&_svg]:size-4", className)}>
+      {dark ? <Sun /> : <Moon />}
+    </button>
+  );
+}
+
 /** Palette + light/dark picker, opened from the sidebar footer. */
 export function AppearanceMenu() {
   const [open, setOpen] = useState(false);
   const [pref, setPref] = useState<ThemePref>(DEFAULT_THEME);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setPref(readTheme()), []);
+  useEffect(() => {
+    setPref(readTheme());
+    // Keep in step with the header's light/dark button.
+    const onChange = () => setPref(readTheme());
+    window.addEventListener(THEME_EVENT, onChange);
+    return () => window.removeEventListener(THEME_EVENT, onChange);
+  }, []);
 
   // Follow the OS when set to System.
   useEffect(() => {
@@ -44,6 +72,7 @@ export function AppearanceMenu() {
     const p = { ...pref, ...next };
     setPref(p);
     applyTheme(p);
+    window.dispatchEvent(new Event(THEME_EVENT));
   }
 
   return (
@@ -66,7 +95,7 @@ export function AppearanceMenu() {
         <div
           role="dialog"
           aria-label="Appearance"
-          className="absolute bottom-full left-0 z-50 mb-2 w-[264px] rounded-lg border border-line bg-surface p-3 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)]"
+          className="card-surface absolute bottom-full left-0 z-50 mb-2 w-[264px] rounded-lg border bg-surface p-3"
         >
           <div className="mb-2 text-[12px] font-medium text-ink-3">Palette</div>
           <div role="radiogroup" aria-label="Palette" className="space-y-1">

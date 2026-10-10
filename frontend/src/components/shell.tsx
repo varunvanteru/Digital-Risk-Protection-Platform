@@ -10,9 +10,9 @@ import { API_URL } from "@/lib/api";
 import { useLoadState, useStore } from "@/lib/store";
 import { BrandSwitcher } from "./brand-switcher";
 import { ProductMark } from "./marks";
-import { AppearanceMenu } from "./appearance";
+import { AppearanceMenu, ThemeToggle } from "./appearance";
 import { UnlockDialog } from "./unlock";
-import { Button } from "./ui";
+import { Button, FloatLink } from "./ui";
 
 const NAV = [
   { href: "/", label: "Overview", Icon: LayoutGrid },
@@ -212,7 +212,7 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_1fr]">
-      <aside className="sticky top-0 hidden h-dvh border-r border-line bg-surface lg:block">
+      <aside className="glass-panel sticky top-0 hidden h-dvh border-r border-line lg:block">
         <Sidebar />
       </aside>
 
@@ -226,7 +226,7 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-[52px] items-center justify-between gap-3 border-b border-line bg-bg/90 px-4 backdrop-blur sm:px-6">
+        <header className="glass-panel sticky top-0 z-30 flex h-[60px] items-center justify-between gap-3 border-b border-line px-4 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
             <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-1.5 text-ink-2 hover:bg-surface-2">
               {open ? <X className="size-4" /> : <Menu className="size-4" />}
@@ -236,7 +236,14 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="hidden lg:block" />
-          <ScanStatus />
+          <div className="flex items-center gap-2.5">
+            <ScanStatus />
+            {/* Round icon buttons, as in rfentity's header */}
+            <FloatLink href="/check" label="Quick check" className="hidden sm:inline-flex">
+              <ScanSearch />
+            </FloatLink>
+            <ThemeToggle />
+          </div>
         </header>
         <main className="mx-auto w-full max-w-[1680px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>

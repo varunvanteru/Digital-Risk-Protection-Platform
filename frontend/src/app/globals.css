@@ -52,6 +52,14 @@
   --nav-active-bg: var(--surface-2);
   --nav-active-ink: var(--ink);
   --nav-active-icon: var(--accent);
+  --page-bg: var(--bg);
+  --card-bg: var(--surface);
+  --glass-blur: none;
+  --panel-bg: var(--bg);
+  --orb-bg: var(--surface-2);
+  --orb-shadow: inset 0 0 0 1px var(--border);
+  --float-bg: var(--surface);
+  --float-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 /* ---------- Graphite: warm neutral, black accent ---------- */
@@ -230,6 +238,22 @@
   --nav-active-bg: #111111;
   --nav-active-ink: #ffffff;
   --nav-active-icon: #ff4d4d;
+
+  /* Glass: frosted white panels over a soft tinted backdrop. */
+  --page-bg:
+    radial-gradient(900px 600px at 8% -5%, rgb(212 0 0 / 0.07), transparent 60%),
+    radial-gradient(900px 700px at 100% 0%, rgb(99 130 190 / 0.14), transparent 60%),
+    radial-gradient(1100px 800px at 50% 110%, rgb(163 177 198 / 0.35), transparent 65%),
+    #edf0f5;
+  --card-bg: rgb(255 255 255 / 0.62);
+  --glass-blur: blur(18px) saturate(160%);
+  --card-border: rgb(255 255 255 / 0.8);
+  --shadow-card: 0 10px 30px rgb(31 45 61 / 0.09), 0 2px 6px rgb(31 45 61 / 0.04), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --panel-bg: rgb(255 255 255 / 0.55);
+  --orb-bg: radial-gradient(circle at 32% 26%, #ffffff 0%, #f4f6fa 42%, #d6dde8 100%);
+  --orb-shadow: inset 2px 2px 5px rgb(163 177 198 / 0.55), inset -2px -2px 5px #ffffff, 0 4px 12px rgb(163 177 198 / 0.3);
+  --float-bg: #ffffff;
+  --float-shadow: 0 6px 16px rgb(16 20 26 / 0.18), inset -1px -1px 2px rgb(163 177 198 / 0.2);
 }
 [data-palette="crimson"][data-mode="dark"] {
   --bg: #0b0c0e;
@@ -247,32 +271,24 @@
   --chart-bar: #e4e4e4;
   --chart-grid: #20242a;
   --brand: #ff4040;
-  --shadow-card: 0 12px 28px rgb(0 0 0 / 0.45);
-  --card-border: #22262b;
+  --page-bg:
+    radial-gradient(900px 600px at 8% -5%, rgb(255 64 64 / 0.10), transparent 60%),
+    radial-gradient(900px 700px at 100% 0%, rgb(80 110 170 / 0.16), transparent 60%),
+    #0b0c0e;
+  --card-bg: rgb(28 31 36 / 0.55);
+  --shadow-card: 0 14px 34px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --card-border: rgb(255 255 255 / 0.07);
+  --panel-bg: rgb(18 20 24 / 0.6);
+  --orb-bg: radial-gradient(circle at 32% 26%, #3a3f47 0%, #24282e 55%, #16191d 100%);
+  --orb-shadow: inset 1px 1px 2px rgb(255 255 255 / 0.08), 0 4px 12px rgb(0 0 0 / 0.4);
+  --float-bg: #23272d;
+  --float-shadow: 0 6px 16px rgb(0 0 0 / 0.45);
   --nav-active-bg: #f2f2f2;
   --nav-active-ink: #0b0c0e;
   --nav-active-icon: #d40000;
 }
 
-/* No script yet (first paint without JS): follow the system setting. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-mode]) {
-    --bg: #0f0f0e;
-    --surface: #171716;
-    --surface-2: #1f1f1d;
-    --border: #2b2b28;
-    --border-strong: #3b3b37;
-    --ink: #ededea;
-    --ink-2: #a9a9a2;
-    --ink-3: #74746e;
-    --inverse: #0f0f0e;
-    --accent: #ededea;
-    --accent-ink: #0f0f0e;
-    --accent-soft: #252523;
-    --chart-bar: #c9c9c3;
-    --chart-grid: #252523;
-  }
-}
+/* Light by default: dark only when the user picks it (Appearance). */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -311,7 +327,8 @@ html {
 }
 
 body {
-  background: var(--bg);
+  background: var(--page-bg);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);
   font-feature-settings: "ss02" on;
@@ -319,10 +336,77 @@ body {
 
 /* ---------- Shared component styles that follow the theme ---------- */
 
-/* Raised card: flat with a hairline in classic themes, soft shadow in Crimson. */
+/* Card: flat with a hairline in classic themes; frosted glass in Crimson. */
 .card-surface {
+  background: var(--card-bg);
   border-color: var(--card-border);
   box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* Sidebar and top bar: the same glass, a little lighter. */
+.glass-panel {
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* Orbs, floating buttons and pills sit in the components layer, so colour utilities (text-ok) win. */
+@layer components {
+/* Icon orb: a round, sphere-shaded badge for an icon or a step number (rfentity "01"). */
+.orb {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--orb-bg);
+  box-shadow: var(--orb-shadow);
+  color: var(--brand);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+/* Floating round button in a card corner (rfentity's arrow on each car card). */
+.float-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--float-bg);
+  box-shadow: var(--float-shadow);
+  color: var(--ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.float-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Status pill with a dot, e.g. "• 13 CRITICAL" (rfentity's "• FOR RENT"). */
+.dot-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--float-bg);
+  box-shadow: var(--float-shadow);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dot-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
 }
 
 .page-title {

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, Check, ImageUp, LoaderCircle, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, ImageUp, LoaderCircle, Plus, X, Gauge } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PlatformLabel } from "@/components/marks";
@@ -29,7 +29,7 @@ const SCORE_BANDS: { range: string; severity: Severity; outcome: string }[] = [
 function ScoreGuide() {
   return (
     <Card>
-      <CardHeader title="How results are scored" description="Every app or page found gets a risk score from 0 to 100" />
+      <CardHeader icon={<Gauge />} title="How results are scored" description="Every app or page found gets a risk score from 0 to 100" />
       <table className="w-full text-[13px]">
         <thead>
           <tr className="text-[12px] text-ink-3">
