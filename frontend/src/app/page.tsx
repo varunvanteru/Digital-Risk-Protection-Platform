@@ -33,12 +33,15 @@ export default function OverviewPage() {
       return {
         date,
         label: `${d.getUTCDate()} ${d.toLocaleString("en", { month: "short", timeZone: "UTC" })}`,
-        count: 0,
+        critical: 0,
+        high: 0,
+        medium: 0,
       };
     });
     for (const d of flagged) {
       const day = days.find((x) => x.date === istDate(d.firstSeen));
-      if (day) day.count++;
+      const sev = d.breakdown.severity;
+      if (day && (sev === "critical" || sev === "high" || sev === "medium")) day[sev]++;
     }
     return days;
   }, [flagged]);
