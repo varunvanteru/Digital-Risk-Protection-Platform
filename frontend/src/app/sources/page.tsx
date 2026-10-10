@@ -43,7 +43,45 @@ export default function SourcesPage() {
         {groups.map((g) => (
           <Card key={g.title}>
             <CardHeader title={g.title} />
-            <div className="overflow-x-auto">
+            {/* Phones: stacked rows */}
+            <ul className="divide-y divide-line md:hidden">
+              {g.rows.map((s) => (
+                <li key={s.id} className="px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2 font-medium text-ink">
+                      <PlatformGlyph platform={s.platform} />
+                      <span className="truncate">{s.name}</span>
+                    </div>
+                    <span
+                      className={clsx("inline-flex h-5 shrink-0 items-center rounded px-1.5 text-[11px] font-semibold uppercase tracking-wide", STATE[s.state].className)}
+                      title={STATE[s.state].note}
+                    >
+                      {STATE[s.state].label}
+                    </span>
+                  </div>
+                  {s.note && (
+                    <p className={clsx("mt-1 text-[12px]", s.health === "unavailable" ? "text-crit" : "text-high")}>{s.note}</p>
+                  )}
+                  <div className="mt-2 flex items-center justify-between gap-3 text-[12px] text-ink-2">
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <HealthBadge health={s.health} />
+                      <span className="tabular">{s.health === "operational" ? `${s.itemsLastScan} items` : "—"}</span>
+                      {s.health === "operational" && s.latencyMs !== null && <span className="tabular font-mono text-ink-3">{s.latencyMs} ms</span>}
+                    </span>
+                    {!s.simulateOutage ? (
+                      <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)}>
+                        Simulate outage
+                      </Button>
+                    ) : (
+                      <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)}>
+                        End outage
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[860px] table-fixed text-[13px]">
                 <thead className="border-b border-line bg-surface-2/50 text-[12px] text-ink-3">
                   <tr>
@@ -58,7 +96,7 @@ export default function SourcesPage() {
                 </thead>
                 <tbody>
                   {g.rows.map((s) => (
-                    <tr key={s.id} className="border-b border-line align-top last:border-0">
+                    <tr key={s.id} className="border-b border-line align-middle last:border-0">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 font-medium text-ink">
                           <PlatformGlyph platform={s.platform} />
@@ -71,10 +109,12 @@ export default function SourcesPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={clsx("inline-flex h-5 items-center rounded px-1.5 text-[11px] font-semibold uppercase tracking-wide", STATE[s.state].className)} title={STATE[s.state].note}>
+                        <span
+                          className={clsx("inline-flex h-5 items-center rounded px-1.5 text-[11px] font-semibold uppercase tracking-wide", STATE[s.state].className)}
+                          title={`${STATE[s.state].note} · ${s.mode === "live" ? "Live connector" : "Curated dataset"}`}
+                        >
                           {STATE[s.state].label}
                         </span>
-                        <div className="mt-1 text-[11.5px] text-ink-3">{s.mode === "live" ? "Live connector" : "Curated dataset"}</div>
                       </td>
                       <td className="px-4 py-3">
                         <HealthBadge health={s.health} />

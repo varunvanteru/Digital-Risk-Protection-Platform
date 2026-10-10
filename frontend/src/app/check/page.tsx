@@ -63,17 +63,18 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
       </div>
 
       {/*
-        One shared column grid for every group, so chips line up across rows.
-        Groups of up to 4 platforms span 4 columns (subgrid), so two of them sit
-        side by side when 8 columns fit; larger groups take the full width.
+        One shared column grid for every group, so chips line up across rows:
+        2 columns on phones, 4 on tablets and laptops, 8 on wide screens. Groups of
+        up to 4 platforms span 4 columns (subgrid), so two of them sit side by side
+        at 8 columns; the 8 social platforms fill whole rows at every size.
       */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(max(132px,calc((100%_-_56px)/8)),1fr))] gap-x-2 gap-y-4">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-4 sm:grid-cols-4 2xl:grid-cols-8">
         {PLATFORM_GROUPS.map((g) => (
           <div
             key={g.label}
             role="group"
             aria-label={g.label}
-            className={clsx("grid grid-cols-subgrid content-start gap-y-2", g.platforms.length <= 4 ? "col-span-full sm:col-span-4" : "col-span-full")}
+            className={clsx("grid grid-cols-subgrid content-start gap-y-2", g.platforms.length <= 4 ? "col-span-full 2xl:col-span-4" : "col-span-full")}
           >
             <button
               onClick={() => toggleGroup(g.platforms)}

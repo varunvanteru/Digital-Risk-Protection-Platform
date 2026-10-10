@@ -14,18 +14,24 @@ export interface DayCount {
  */
 export function TrendChart({ data, height = 220 }: { data: DayCount[]; height?: number }) {
   const [hover, setHover] = useState<number | null>(null);
-  // Draw at the container's real pixel width so text and bars keep their size on wide screens.
+  // Draw at the container's real pixel size so text and bars keep their size, and the chart
+  // fills the card when the card is taller than the minimum height.
   const box = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(640);
+  const [size, setSize] = useState({ w: 640, h: height });
   useEffect(() => {
     const el = box.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setWidth(Math.max(280, Math.round(entry.contentRect.width))));
+    const ro = new ResizeObserver(([entry]) =>
+      setSize({
+        w: Math.max(260, Math.round(entry.contentRect.width)),
+        h: Math.max(height, Math.round(entry.contentRect.height)),
+      }),
+    );
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-  const W = width;
-  const H = height;
+  }, [height]);
+  const W = size.w;
+  const H = size.h;
   const pad = { l: 28, r: 8, t: 12, b: 24 };
   const max = Math.max(4, ...data.map((d) => d.count));
   const step = max <= 4 ? 1 : 2;
@@ -36,10 +42,15 @@ export function TrendChart({ data, height = 220 }: { data: DayCount[]; height?: 
   const slot = innerW / data.length;
   const barW = Math.min(28, slot * 0.56);
   const y = (v: number) => pad.t + innerH - (v / top) * innerH;
+  // Label every n-th day so labels (~44 px wide) never touch; the last day is labelled when it fits.
+  const every = Math.max(1, Math.ceil(48 / slot));
+  const last = data.length - 1;
+  const lastRegular = Math.floor(last / every) * every;
+  const showLabel = (i: number) => i % every === 0 || (i === last && (last - lastRegular) * slot >= 48);
 
   return (
-    <div ref={box} className="relative">
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block max-w-full" role="img" aria-label="New detections per day, last 14 days">
+    <div ref={box} className="relative h-full" style={{ minHeight: height }}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 block max-w-full" role="img" aria-label="New detections per day, last 14 days">
         {ticks.map((t) => (
           <g key={t}>
             <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--chart-grid)" strokeWidth={1} />
@@ -71,7 +82,7 @@ export function TrendChart({ data, height = 220 }: { data: DayCount[]; height?: 
                   opacity={hover === null || hover === i ? 1 : 0.45}
                 />
               )}
-              {(i % 2 === 0 || i === data.length - 1) && (
+              {showLabel(i) && (
                 <text x={cx} y={H - 6} textAnchor="middle" fontSize={10.5} fill="var(--ink-3)">
                   {d.label}
                 </text>

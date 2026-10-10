@@ -43,7 +43,8 @@ export function ButtonLink({
 }
 
 export function Card({ className, ...props }: ComponentProps<"section">) {
-  return <section className={clsx("rounded-lg border border-line bg-surface", className)} {...props} />;
+  // min-w-0: inside a grid, a wide table scrolls within the card instead of widening the page.
+  return <section className={clsx("min-w-0 rounded-lg border border-line bg-surface", className)} {...props} />;
 }
 
 export function CardHeader({
@@ -58,12 +59,12 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <header className={clsx("flex items-start justify-between gap-4 border-b border-line px-4 py-3", className)}>
-      <div className="min-w-0">
+    <header className={clsx("flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3", className)}>
+      <div className="min-w-0 flex-1 basis-56">
         <h2 className="text-[13.5px] font-semibold text-ink">{title}</h2>
-        {description && <p className="mt-0.5 text-[12.5px] text-ink-3">{description}</p>}
+        {description && <p className="mt-0.5 text-[12.5px] leading-snug text-ink-3">{description}</p>}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="ml-auto flex max-w-full shrink-0 items-center gap-2">{actions}</div>}
     </header>
   );
 }
@@ -80,13 +81,13 @@ export function PageHeader({
   eyebrow?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+      <div className="min-w-0 flex-1 basis-72">
         {eyebrow && <div className="mb-2 text-[12.5px] text-ink-3">{eyebrow}</div>}
         <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-ink">{title}</h1>
-        {description && <p className="mt-1 max-w-2xl text-[13.5px] text-ink-2">{description}</p>}
+        {description && <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-ink-2">{description}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 sm:pt-0.5">{actions}</div>}
     </div>
   );
 }
@@ -153,7 +154,11 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex h-8 items-center rounded-md border border-line-strong bg-surface-2 p-0.5">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className="inline-flex h-8 max-w-full items-center overflow-x-auto rounded-md border border-line-strong bg-surface-2 p-0.5 [scrollbar-width:none]"
+    >
       {options.map((o) => (
         <button
           key={o.value}
@@ -161,7 +166,7 @@ export function Segmented<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
-            "flex h-full items-center gap-1.5 rounded-[5px] px-2.5 text-[12.5px] font-medium transition-colors",
+            "flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[5px] px-2.5 text-[12.5px] font-medium transition-colors",
             value === o.value ? "bg-surface text-ink shadow-[0_0_0_1px_var(--border)]" : "text-ink-2 hover:text-ink",
           )}
         >

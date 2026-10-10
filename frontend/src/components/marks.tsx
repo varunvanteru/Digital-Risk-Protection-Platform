@@ -1,4 +1,7 @@
+"use client";
+
 import clsx from "clsx";
+import { useState } from "react";
 import { PLATFORM_LABEL } from "@/lib/format";
 import { PlatformLogo } from "./platform-logo";
 import type { MarkVariant, Platform } from "@/lib/types";
@@ -23,7 +26,9 @@ export function BrandMark({
   src?: string;
   className?: string;
 }) {
-  if (src) {
+  // Store CDNs sometimes refuse hot-linked icons; fall back to initials instead of a broken image.
+  const [failed, setFailed] = useState<string | null>(null);
+  if (src && failed !== src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
@@ -32,11 +37,14 @@ export function BrandMark({
         width={size}
         height={size}
         loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(src)}
         style={{ width: size, height: size }}
         className={clsx("shrink-0 rounded-md border border-line bg-surface object-cover", className)}
       />
     );
   }
+  if (src) variant = "unrelated";
   if (variant === "monogram" || variant === "unrelated" || variant === "similar") {
     return (
       <span

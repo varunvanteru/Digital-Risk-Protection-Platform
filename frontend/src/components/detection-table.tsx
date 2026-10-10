@@ -71,8 +71,40 @@ export function DetectionTable({
   const router = useRouter();
   const th = "h-9 px-4 text-left text-[12px] font-medium text-ink-3 whitespace-nowrap";
 
+  const open = (id: string) => router.push(`/detections/${id}`);
+
   return (
-    <div className="overflow-x-auto">
+    <>
+      {/* Phones: one stacked row per detection, nothing cut off at the edge */}
+      <ul className="divide-y divide-line md:hidden">
+        {rows.map((d) => (
+          <li key={d.id}>
+            <button
+              onClick={() => open(d.id)}
+              className={clsx(
+                "flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-surface-2/60 focus-visible:bg-surface-2",
+                d.status === "false_positive" && "opacity-60",
+              )}
+            >
+              <div className="flex w-full items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <Identity d={d} />
+                </div>
+                <PlatformGlyph platform={d.platform} />
+              </div>
+              <p className="line-clamp-2 text-[12.5px] leading-snug text-ink-2">{d.reasons[0]}</p>
+              <div className="flex w-full items-center justify-between gap-3 text-[12px] text-ink-3">
+                <ScoreCell score={d.breakdown.score} severity={d.breakdown.severity} />
+                <span className="flex items-center gap-3">
+                  {!compact && <StatusBadge status={d.status} />}
+                  <span className="tabular">{formatShortDate(d.firstSeen)}</span>
+                </span>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    <div className="hidden overflow-x-auto md:block">
       <table className="w-full min-w-[760px] border-collapse">
         <thead className="border-b border-line bg-surface-2/50">
           <tr>
@@ -90,8 +122,8 @@ export function DetectionTable({
             <tr
               key={d.id}
               tabIndex={0}
-              onClick={() => router.push(`/detections/${d.id}`)}
-              onKeyDown={(e) => e.key === "Enter" && router.push(`/detections/${d.id}`)}
+              onClick={() => open(d.id)}
+              onKeyDown={(e) => e.key === "Enter" && open(d.id)}
               className={clsx(
                 "cursor-pointer border-b border-line last:border-0 transition-colors hover:bg-surface-2/60 focus-visible:bg-surface-2",
                 d.status === "false_positive" && "opacity-60",
@@ -121,5 +153,6 @@ export function DetectionTable({
         </tbody>
       </table>
     </div>
+    </>
   );
 }

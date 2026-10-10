@@ -105,9 +105,9 @@ export default function OverviewPage() {
       </Card>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader title="New detections" description="Medium severity and above, by day first seen · last 14 days" />
-          <div className="px-4 pb-3 pt-4">
+          <div className="flex-1 px-4 pb-3 pt-4">
             <TrendChart data={trend} />
           </div>
         </Card>
@@ -155,9 +155,9 @@ export default function OverviewPage() {
       </div>
 
       {possiblyOfficial.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-[13px]">
-          <Info className="size-4 shrink-0 text-ink-3" />
-          <p className="flex-1 text-ink-2">
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-[13px] sm:flex-row sm:items-center">
+          <Info className="hidden size-4 shrink-0 text-ink-3 sm:block" />
+          <p className="flex-1 leading-relaxed text-ink-2">
             {possiblyOfficial.length === 1 ? (
               <>
                 <span className="font-medium text-ink">{possiblyOfficial[0].name}</span> ({PLATFORM_LABEL[possiblyOfficial[0].platform]} ·{" "}
