@@ -1,5 +1,5 @@
 /** Fresh test schema before the run, dropped afterwards. */
-import { testEnv } from "./env";
+import { testEnv } from "./env.mts";
 
 export async function setup() {
   Object.assign(process.env, testEnv());

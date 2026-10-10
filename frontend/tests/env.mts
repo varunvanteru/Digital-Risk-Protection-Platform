@@ -4,7 +4,7 @@ import path from "node:path";
 
 export function testEnv(): Record<string, string> {
   const env: Record<string, string> = {};
-  const file = path.join(__dirname, "..", ".env.local");
+  const file = path.join(import.meta.dirname, "..", ".env.local");
   if (fs.existsSync(file)) {
     for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
       const m = line.match(/^\s*(MYSQL_[A-Z_]+)\s*=\s*(.*)$/);
