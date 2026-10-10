@@ -208,14 +208,14 @@
  */
 [data-palette="crimson"] {
   --bg: #eef1f5;
-  --surface: #ffffff;
+  --surface: #f9fafb; /* soft white rather than pure white */
   --surface-2: #f4f6f9;
   --border: #e4e9ef;
   --border-strong: #cfd6e0;
   --ink: #111111;
   --ink-2: #4a4a4a;
   --ink-3: #868c95;
-  --inverse: #ffffff;
+  --inverse: #f9fafb;
   --accent: #111111;
   --accent-ink: #ffffff;
   --accent-soft: #e7ebf1;
@@ -245,14 +245,14 @@
     radial-gradient(900px 700px at 100% 0%, rgb(99 130 190 / 0.14), transparent 60%),
     radial-gradient(1100px 800px at 50% 110%, rgb(163 177 198 / 0.35), transparent 65%),
     #edf0f5;
-  --card-bg: rgb(255 255 255 / 0.62);
+  --card-bg: rgb(255 255 255 / 0.55);
   --glass-blur: blur(18px) saturate(160%);
   --card-border: rgb(255 255 255 / 0.8);
   --shadow-card: 0 10px 30px rgb(31 45 61 / 0.09), 0 2px 6px rgb(31 45 61 / 0.04), inset 0 1px 0 rgb(255 255 255 / 0.9);
   --panel-bg: rgb(255 255 255 / 0.55);
-  --orb-bg: radial-gradient(circle at 32% 26%, #ffffff 0%, #f4f6fa 42%, #d6dde8 100%);
+  --orb-bg: radial-gradient(circle at 32% 26%, #fbfcfd 0%, #f1f4f8 42%, #d6dde8 100%);
   --orb-shadow: inset 2px 2px 5px rgb(163 177 198 / 0.55), inset -2px -2px 5px #ffffff, 0 4px 12px rgb(163 177 198 / 0.3);
-  --float-bg: #ffffff;
+  --float-bg: #f8f9fb;
   --float-shadow: 0 6px 16px rgb(16 20 26 / 0.18), inset -1px -1px 2px rgb(163 177 198 / 0.2);
 }
 [data-palette="crimson"][data-mode="dark"] {
