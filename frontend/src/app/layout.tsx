@@ -23,7 +23,19 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["40
 
 export const metadata: Metadata = {
   title: { default: "IMPOSTR", template: "%s · IMPOSTR" },
-  description: "Find fake social profiles, brand pages and apps impersonating your brand.",
+  description:
+    "IMPOSTR finds fake social-media profiles, fake brand pages, scam accounts and look-alike apps impersonating a brand. Official assets are excluded first; everything else is scored 0 to 100 with evidence.",
+  metadataBase: new URL("https://impostr.live"),
+  openGraph: {
+    type: "website",
+    url: "https://impostr.live",
+    siteName: "IMPOSTR",
+    title: "IMPOSTR: Digital Risk Protection for Social & App Monitoring",
+    description:
+      "Finds fake profiles, fake brand pages, scam accounts and look-alike apps, without ever flagging the brand's own accounts and apps. Demo video, guide and architecture under How to use.",
+    images: [{ url: "/icons/impostr-512.png", width: 512, height: 512, alt: "IMPOSTR logo" }],
+  },
+  twitter: { card: "summary", title: "IMPOSTR: Digital Risk Protection", images: ["/icons/impostr-512.png"] },
   applicationName: "IMPOSTR",
   // iPhone / iPad home-screen app (Safari ignores the web manifest's icons).
   appleWebApp: { capable: true, title: "IMPOSTR", statusBarStyle: "default" },

@@ -537,3 +537,7 @@ th button {
     animation: none;
   }
 }
+/* Project summary for readers without JavaScript (crawlers, AI reviewers); browsers hide it before painting. */
+html[data-js] .nojs-summary {
+  display: none;
+}

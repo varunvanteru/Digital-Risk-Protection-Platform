@@ -15,6 +15,21 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 
 **Try it in two minutes:** open https://impostr.live, wait a few seconds for the first scan, then open **Detections** and click the top row. In **Quick check**, search `PhonePe` (a real brand, searched live on Google Play and the App Store), then `Paytm` (an unregistered brand, which IMPOSTR offers to register from its real store apps).
 
+**Verify without a browser.** These live links return JSON:
+- [`/api/accuracy`](https://impostr.live/api/accuracy) runs the labelled test set: 82/82 correct, 0 of 19 official assets flagged.
+- [`/api/search?query=PhonePe&platforms=google_play,app_store`](https://impostr.live/api/search?query=PhonePe&platforms=google_play,app_store) is a live app-store search. Official apps appear under `official` with risk 0, and look-alikes appear under `results` with reasons, signals and evidence checks.
+- [`/api/search?query=zentrapay&platforms=instagram,facebook,whatsapp,telegram,x`](https://impostr.live/api/search?query=zentrapay&platforms=instagram,facebook,whatsapp,telegram,x) covers social impersonation and scam accounts, with official accounts excluded.
+- [`/api/search?query=z3ntra.pay_official`](https://impostr.live/api/search?query=z3ntra.pay_official) shows the look-alike name analysis, step by step, in `nameAnalysis`.
+- [`/api/sources`](https://impostr.live/api/sources) lists all 20 sources, their mode (live or sample data) and their health.
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Overview](frontend/public/help/overview.webp) **Overview:** risk at a glance, with 0 official assets flagged | ![Detection](frontend/public/help/detection-detail.webp) **A detection:** score, plain-language reasons, details |
+| ![Quick check, official apps](frontend/public/help/check-official.webp) **Quick check (live stores):** PhonePe's own apps recognised and excluded | ![Score breakdown](frontend/public/help/detection-breakdown.webp) **Score breakdown:** signals × weights + boosts |
+| ![Setup Brand Profile](frontend/public/help/setup-identity.webp) **Setup Brand Profile:** the legitimate assets | ![Accuracy](frontend/public/help/accuracy.webp) **Accuracy:** 82/82 correct, 0 of 19 official assets flagged |
+
 ## How it meets the challenge
 
 | Criterion | What IMPOSTR does |

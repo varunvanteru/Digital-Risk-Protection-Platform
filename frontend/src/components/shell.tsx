@@ -10,6 +10,7 @@ import { API_URL } from "@/lib/api";
 import { useLoadState, useStore } from "@/lib/store";
 import { BrandSwitcher } from "./brand-switcher";
 import { ProductMark } from "./marks";
+import { ProjectSummary } from "./project-summary";
 import { AppearanceMenu, ThemeToggle } from "./appearance";
 import { InstallButton } from "./install";
 import { UnlockDialog } from "./unlock";
@@ -181,6 +182,7 @@ function LoadingFrame({ error, waking, onRetry }: { error?: string; waking?: boo
           </div>
         )}
       </main>
+      <ProjectSummary />
     </div>
   );
 }

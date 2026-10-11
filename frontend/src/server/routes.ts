@@ -552,6 +552,17 @@ const ROUTES: [string, RegExp, Handler, number?][] = [
   ["DELETE", /^detections\/([^/]+)\/allowlist$/, ([id]) => undoAllowlist(id)],
   ["POST", /^check$/, async (_, r) => quickCheck(await body(r))],
   ["POST", /^search$/, async (_, r) => search(await body(r))],
+  // The same Quick check as a plain link, so results can be verified by any tool that can fetch a URL:
+  // /api/search?query=PhonePe&platforms=google_play,app_store
+  [
+    "GET",
+    /^search$/,
+    (_, r) => {
+      const u = new URL(r.url);
+      const p = u.searchParams.get("platforms");
+      return search({ query: u.searchParams.get("query") ?? u.searchParams.get("q") ?? "", platforms: p ? p.split(",").map((s) => s.trim()).filter(Boolean) : undefined });
+    },
+  ],
   ["GET", /^sources$/, () => listSources()],
   ["PATCH", /^sources\/([^/]+)$/, async ([id], r) => patchSource(id, await body(r))],
   ["POST", /^scans$/, () => createScan(), 202],
