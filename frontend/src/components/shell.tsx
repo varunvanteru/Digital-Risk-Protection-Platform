@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Building2, CloudOff, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, Target, X } from "lucide-react";
+import { BookOpen, Building2, CloudOff, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, Target, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,6 +23,7 @@ const NAV = [
   { href: "/brand", label: "Brand profile", Icon: Building2 },
   { href: "/sources", label: "Sources", Icon: PlugZap },
   { href: "/accuracy", label: "Accuracy", Icon: Target },
+  { href: "/how-to-use", label: "How to use", Icon: BookOpen },
 ];
 
 function isActive(pathname: string, href: string) {
