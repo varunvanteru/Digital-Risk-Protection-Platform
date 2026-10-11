@@ -281,7 +281,7 @@ export function Tag({ children, className }: { children: ReactNode; className?: 
   return (
     <span
       className={clsx(
-        "chip inline-flex h-5 items-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-2 text-[11.5px] font-medium text-ink-2",
+        "chip inline-flex h-5 shrink-0 items-center whitespace-nowrap rounded-[var(--radius-control)] border border-line bg-surface-2 px-2 text-[11.5px] font-medium text-ink-2",
         className,
       )}
     >
