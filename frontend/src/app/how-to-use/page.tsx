@@ -1,4 +1,4 @@
-import { ArrowDown, Network } from "lucide-react";
+import { ArrowDown, BookOpen, Network } from "lucide-react";
 import type { Metadata } from "next";
 import { Architecture } from "@/components/architecture";
 import { DemoVideo } from "@/components/demo-video";
@@ -15,15 +15,16 @@ export default function HowToUsePage() {
         title="How to use"
         description="Start with the demo video, then step through the guide: every tab and feature of IMPOSTR, with screenshots of the real app."
         actions={
-          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+          <div className="flex flex-col items-start gap-2 sm:items-stretch">
             <a href="#architecture" className={buttonClass("secondary", "md")}>
               <Network />
               Architecture
               <ArrowDown />
             </a>
-            <a href="#guide" className="inline-flex items-center gap-1 px-1 text-[12px] font-medium text-ink-2 hover:text-ink hover:underline">
+            <a href="#guide" className={buttonClass("secondary", "md")}>
+              <BookOpen />
               Skip to the written guide
-              <ArrowDown className="size-3.5" />
+              <ArrowDown />
             </a>
           </div>
         }
