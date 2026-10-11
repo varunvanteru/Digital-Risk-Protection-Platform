@@ -1,7 +1,9 @@
+import { ArrowDown, Network } from "lucide-react";
 import type { Metadata } from "next";
+import { Architecture } from "@/components/architecture";
 import { DemoVideo } from "@/components/demo-video";
 import { GuideSlides } from "@/components/guide-slides";
-import { PageHeader } from "@/components/ui";
+import { PageHeader, buttonClass } from "@/components/ui";
 
 export const metadata: Metadata = { title: "How to use" };
 
@@ -12,6 +14,13 @@ export default function HowToUsePage() {
         eyebrow="Guide"
         title="How to use"
         description="Start with the demo video, then step through the guide: every tab and feature of IMPOSTR, with screenshots of the real app."
+        actions={
+          <a href="#architecture" className={buttonClass("secondary", "md")}>
+            <Network />
+            Architecture
+            <ArrowDown />
+          </a>
+        }
       />
 
       <DemoVideo guideId="guide" />
@@ -20,6 +29,8 @@ export default function HowToUsePage() {
       <div id="guide" className="scroll-mt-20" />
 
       <GuideSlides />
+
+      <Architecture />
     </>
   );
 }
