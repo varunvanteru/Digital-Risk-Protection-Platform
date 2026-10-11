@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Card, CardHeader } from "./ui";
 
@@ -26,12 +26,6 @@ export function DemoVideo({ guideId }: { guideId: string }) {
         icon={<PlayCircle />}
         title="Watch first: the 6-minute demo"
         description="Every feature, in the order of the challenge brief. The written guide follows below."
-        actions={
-          <button onClick={toGuide} className="inline-flex items-center gap-1 text-[12px] font-medium text-ink-2 hover:text-ink hover:underline">
-            Skip to the written guide
-            <ArrowDown className="size-3.5" />
-          </button>
-        }
       />
       <video
         ref={ref}

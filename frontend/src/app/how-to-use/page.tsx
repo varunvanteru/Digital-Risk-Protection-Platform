@@ -15,11 +15,17 @@ export default function HowToUsePage() {
         title="How to use"
         description="Start with the demo video, then step through the guide: every tab and feature of IMPOSTR, with screenshots of the real app."
         actions={
-          <a href="#architecture" className={buttonClass("secondary", "md")}>
-            <Network />
-            Architecture
-            <ArrowDown />
-          </a>
+          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+            <a href="#architecture" className={buttonClass("secondary", "md")}>
+              <Network />
+              Architecture
+              <ArrowDown />
+            </a>
+            <a href="#guide" className="inline-flex items-center gap-1 px-1 text-[12px] font-medium text-ink-2 hover:text-ink hover:underline">
+              Skip to the written guide
+              <ArrowDown className="size-3.5" />
+            </a>
+          </div>
         }
       />
 
