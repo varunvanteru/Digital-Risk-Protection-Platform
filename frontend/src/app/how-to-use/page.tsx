@@ -21,7 +21,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Card, CardHeader, Orb, PageHeader, StepOrb } from "@/components/ui";
 
-export const metadata: Metadata = { title: "How to use · BrandShield" };
+export const metadata: Metadata = { title: "How to use" };
 
 /* ---------- small building blocks ---------- */
 
@@ -146,7 +146,7 @@ function Section({
 
 const TOC: { id: string; label: string }[] = [
   { id: "start", label: "Start here" },
-  { id: "flow", label: "How BrandShield works" },
+  { id: "flow", label: "How IMPOSTR works" },
   { id: "setup", label: "Setup Brand Profile" },
   { id: "overview", label: "Overview" },
   { id: "detections", label: "Detections" },
@@ -170,7 +170,7 @@ export default function HowToUsePage() {
       <PageHeader
         eyebrow="Guide"
         title="How to use"
-        description="Every tab and feature of BrandShield, with screenshots of the real app. Read it top to bottom once, or jump to a tab from the contents."
+        description="Every tab and feature of IMPOSTR, with screenshots of the real app. Read it top to bottom once, or jump to a tab from the contents."
       />
 
       {/* Contents: chips on phones, sticky list on wide screens */}
@@ -185,9 +185,9 @@ export default function HowToUsePage() {
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_15rem]">
         <div className="min-w-0 space-y-4">
           {/* ---------------- start ---------------- */}
-          <Section id="start" icon={BookOpen} title="Start here" lead="What BrandShield is for, and a five-minute tour">
+          <Section id="start" icon={BookOpen} title="Start here" lead="What IMPOSTR is for, and a five-minute tour">
             <p className="text-[13px] leading-relaxed text-ink-2">
-              Fraudsters copy a brand&apos;s name and logo to make fake apps, fake customer-care pages and scam accounts. BrandShield finds them. You tell
+              Fraudsters copy a brand&apos;s name and logo to make fake apps, fake customer-care pages and scam accounts. IMPOSTR finds them. You tell
               it what genuinely belongs to the brand, it searches 20 sources, sets aside everything verified as official, and gives every other
               look-alike a risk score from 0 to 100 with the evidence behind it. Two demo brands are ready to explore: <b>ZentraPay</b>, a fictional
               payments app, and <b>PhonePe</b>.
@@ -206,7 +206,7 @@ export default function HowToUsePage() {
                   recognised first, then look-alikes are scored.
                 </>,
                 <>
-                  Search <code className="font-mono text-[12px]">Paytm</code>, a brand that is not registered: BrandShield suggests its real publisher and
+                  Search <code className="font-mono text-[12px]">Paytm</code>, a brand that is not registered: IMPOSTR suggests its real publisher and
                   apps, and you can register it in one click.
                 </>,
                 <>
@@ -217,7 +217,7 @@ export default function HowToUsePage() {
           </Section>
 
           {/* ---------------- flow ---------------- */}
-          <Section id="flow" icon={Workflow} title="How BrandShield works" lead="The same five stages run for a scan and for a Quick check">
+          <Section id="flow" icon={Workflow} title="How IMPOSTR works" lead="The same five stages run for a scan and for a Quick check">
             <div className="grid gap-2.5 sm:grid-cols-5">
               {[
                 ["Register", "Name, logo, official accounts, apps, publisher and domains"],
@@ -240,7 +240,7 @@ export default function HowToUsePage() {
           </Section>
 
           {/* ---------------- setup ---------------- */}
-          <Section id="setup" icon={Settings2} title="Setup Brand Profile" href="/setup" lead="Register a brand: tell BrandShield what is genuinely yours">
+          <Section id="setup" icon={Settings2} title="Setup Brand Profile" href="/setup" lead="Register a brand: tell IMPOSTR what is genuinely yours">
             <p className="text-[13px] leading-relaxed text-ink-2">
               Setup Brand Profile has three steps. It opens on the active brand so you can edit it; choose <b>Add a brand</b> in the brand switcher to start a
               new one. The table on the right of every step explains the score bands.
@@ -376,7 +376,7 @@ export default function HowToUsePage() {
             <Shot src="check-results" alt="Suspicious matches for PhonePe" caption="Suspicious matches, each with its reasons and evidence" tall />
             <Sub>Registering a new brand from a search</Sub>
             <p className="text-[13px] leading-relaxed text-ink-2">
-              For a brand that is not registered, nothing can be verified as official yet, so every result stays Low. BrandShield proposes the live store
+              For a brand that is not registered, nothing can be verified as official yet, so every result stays Low. IMPOSTR proposes the live store
               apps from the developer named like the brand with the most installs. Untick any that are wrong and click <b>Register … and verify</b>: the
               apps are checked on their stores and the brand is ready to scan.
             </p>
@@ -442,7 +442,7 @@ export default function HowToUsePage() {
                 ["Private workspace", "Each browser gets its own workspace, starting with the two demo brands. Brands, scans and results added there are not visible to anyone else."],
                 ["Top bar", "Last scan time and Run scan, Install app, a shortcut to Quick check, and the light / dark switch."],
                 ["Appearance", "At the bottom of the menu: five colour palettes (Crimson, Graphite, Slate, Forest, Sandstone) and System, Light or Dark mode."],
-                ["Install app", "Installs BrandShield like a phone or desktop app. On iPhone it shows how: Share, then Add to Home Screen."],
+                ["Install app", "Installs IMPOSTR like a phone or desktop app. On iPhone it shows how: Share, then Add to Home Screen."],
                 ["Phones", "Every page fits a phone. Open the menu with the button at the top left."],
               ]}
             />

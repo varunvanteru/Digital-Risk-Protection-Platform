@@ -22,14 +22,14 @@ const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], weight
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: { default: "BrandShield", template: "%s · BrandShield" },
+  title: { default: "IMPOSTR", template: "%s · IMPOSTR" },
   description: "Find fake social profiles, brand pages and apps impersonating your brand.",
-  applicationName: "BrandShield",
+  applicationName: "IMPOSTR",
   // iPhone / iPad home-screen app (Safari ignores the web manifest's icons).
-  appleWebApp: { capable: true, title: "BrandShield", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "IMPOSTR", statusBarStyle: "default" },
   icons: {
-    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    icon: [{ url: "/icons/impostr-favicon-32.png", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/icons/impostr-apple-180.png", sizes: "180x180" }],
   },
 };
 

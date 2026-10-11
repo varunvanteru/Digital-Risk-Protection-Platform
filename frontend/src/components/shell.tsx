@@ -43,7 +43,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex h-[52px] items-center gap-2.5 px-4">
         <ProductMark />
         <span className="page-title !text-[15px] !leading-none text-ink">
-          Brand<em>Shield</em>
+          IMPOSTR
         </span>
       </div>
 
@@ -157,7 +157,7 @@ function LoadingFrame({ error, waking, onRetry }: { error?: string; waking?: boo
       <header className="flex h-[52px] items-center gap-2.5 border-b border-line px-4 sm:px-6">
         <ProductMark />
         <span className="page-title !text-[15px] !leading-none text-ink">
-              Brand<em>Shield</em>
+              IMPOSTR
             </span>
       </header>
       <main className="flex flex-1 items-center justify-center px-6">
@@ -224,8 +224,9 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
             <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-2 text-ink-2 hover:bg-surface-2">
               {open ? <X className="size-4" /> : <Menu className="size-4" />}
             </button>
+            <ProductMark size={22} />
             <span className="page-title !text-[15px] !leading-none text-ink">
-              Brand<em>Shield</em>
+              IMPOSTR
             </span>
           </div>
           <div className="hidden lg:block" />

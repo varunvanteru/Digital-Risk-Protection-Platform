@@ -113,12 +113,10 @@ export function PlatformLabel({ platform }: { platform: Platform }) {
 }
 
 /** Product wordmark: a plain shield outline, no gradients. */
-export function ProductMark({ size = 22 }: { size?: number }) {
+/** The IMPOSTR shield logo on its black tile (built by scripts/build-icons.mjs). */
+export function ProductMark({ size = 24 }: { size?: number }) {
   return (
-    <svg aria-hidden width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" className="fill-accent" />
-      <path d="M12 5.5l5 2v4.2c0 3.1-2.1 5.6-5 6.8-2.9-1.2-5-3.7-5-6.8V7.5l5-2z" className="stroke-accent-ink" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M9.6 12l1.7 1.7 3.2-3.4" className="stroke-accent-ink" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/icons/impostr-mark-96.png" alt="" aria-hidden width={size} height={size} className="shrink-0 rounded-[6px]" />
   );
 }

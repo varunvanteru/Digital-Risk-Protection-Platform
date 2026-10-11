@@ -69,7 +69,7 @@ export function InstallButton() {
   if (installed) return null;
   return (
     <>
-      <Button onClick={install} aria-label="Install app" title="Install BrandShield as an app" className="max-sm:w-8 max-sm:px-0">
+      <Button onClick={install} aria-label="Install app" title="Install IMPOSTR as an app" className="max-sm:w-8 max-sm:px-0">
         <Download />
         <span className="max-sm:sr-only">Install app</span>
       </Button>
@@ -108,7 +108,7 @@ const STEPS: Record<Platform, { title: string; steps: React.ReactNode[] }> = {
     steps: [
       <>
         In <b>Chrome</b> or <b>Edge</b>, click the install icon <Download className="inline size-4 align-[-3px]" /> at the right of the address bar,
-        or open the menu and choose <b>Install BrandShield</b>.
+        or open the menu and choose <b>Install IMPOSTR</b>.
       </>,
       <>
         In <b>Safari</b> on a Mac: <b>File → Add to Dock</b>.

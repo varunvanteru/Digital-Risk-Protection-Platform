@@ -1,12 +1,12 @@
 /*
- * BrandShield service worker: makes the app installable and opens it offline.
+ * IMPOSTR service worker: makes the app installable and opens it offline.
  *
  * - Build assets (/_next/static, /icons, /logos) never change once published:
  *   served from cache first.
  * - Pages: network first, falling back to the last cached copy when offline.
  * - The API (/api) and images (/media) are private, per-browser data: never cached.
  */
-const CACHE = "brandshield-v1";
+const CACHE = "impostr-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 
