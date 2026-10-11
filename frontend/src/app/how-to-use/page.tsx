@@ -147,7 +147,7 @@ function Section({
 const TOC: { id: string; label: string }[] = [
   { id: "start", label: "Start here" },
   { id: "flow", label: "How BrandShield works" },
-  { id: "setup", label: "Setup wizard" },
+  { id: "setup", label: "Setup Brand Profile" },
   { id: "overview", label: "Overview" },
   { id: "detections", label: "Detections" },
   { id: "detail", label: "A detection, step by step" },
@@ -240,9 +240,9 @@ export default function HowToUsePage() {
           </Section>
 
           {/* ---------------- setup ---------------- */}
-          <Section id="setup" icon={Settings2} title="Setup wizard" href="/setup" lead="Register a brand: tell BrandShield what is genuinely yours">
+          <Section id="setup" icon={Settings2} title="Setup Brand Profile" href="/setup" lead="Register a brand: tell BrandShield what is genuinely yours">
             <p className="text-[13px] leading-relaxed text-ink-2">
-              The wizard has three steps. It opens on the active brand so you can edit it; choose <b>Add a brand</b> in the brand switcher to start a
+              Setup Brand Profile has three steps. It opens on the active brand so you can edit it; choose <b>Add a brand</b> in the brand switcher to start a
               new one. The table on the right of every step explains the score bands.
             </p>
             <Sub>Step 1 · Brand identity</Sub>
@@ -256,7 +256,7 @@ export default function HowToUsePage() {
                 ["Official description", "Paste the text from your app listing. Copied bios and descriptions are caught with it."],
               ]}
             />
-            <Shot src="setup-identity" alt="Setup wizard, step 1, Brand identity" caption="Step 1: identity fields, with the score table on the right" />
+            <Shot src="setup-identity" alt="Setup Brand Profile, step 1, Brand identity" caption="Step 1: identity fields, with the score table on the right" />
             <Sub>Step 2 · Official assets</Sub>
             <Points
               items={[
@@ -266,13 +266,13 @@ export default function HowToUsePage() {
                 ["Official domains", "Your websites. Links to look-alikes of them (zentrapay-refund.xyz) raise the score."],
               ]}
             />
-            <Shot src="setup-assets" alt="Setup wizard, step 2, Official assets" caption="Step 2: official accounts, apps, publisher and domains" />
+            <Shot src="setup-assets" alt="Setup Brand Profile, step 2, Official assets" caption="Step 2: official accounts, apps, publisher and domains" />
             <Sub>Step 3 · Review</Sub>
             <p className="text-[13px] leading-relaxed text-ink-2">
               Check the counts, then click <b>Save and run scan</b>. Everything you added goes on the allowlist, the scan starts, and you land on
               Overview.
             </p>
-            <Shot src="setup-review" alt="Setup wizard, step 3, Review" caption="Step 3: summary before saving" />
+            <Shot src="setup-review" alt="Setup Brand Profile, step 3, Review" caption="Step 3: summary before saving" />
           </Section>
 
           {/* ---------------- overview ---------------- */}
@@ -387,7 +387,7 @@ export default function HowToUsePage() {
           <Section id="brand" icon={Building2} title="Brand profile" href="/brand" lead="The allowlist every check compares against">
             <Points
               items={[
-                ["Identity", "Name, aliases, keywords, logo, legal name, description and domains. Edit in wizard changes them."],
+                ["Identity", "Name, aliases, keywords, logo, legal name, description and domains. Edit in Setup changes them."],
                 ["Official social accounts", "Every allowlisted account. Add one below the table as Official or Partner; it is skipped from the next scan."],
                 ["Official apps", "Each app is validated on its store: title, publisher, developer ID and icon. Validate now re-checks them."],
                 ["Found in scans", "Apps verified as official through the developer account but not yet in the profile. Add puts them on the allowlist."],
@@ -438,7 +438,7 @@ export default function HowToUsePage() {
           <Section id="workspace" icon={MonitorSmartphone} title="Brands, workspace and app" lead="Switching brands, privacy, themes and installing">
             <Points
               items={[
-                ["Brand switcher", "The box at the top of the menu. Pick a brand to make it active: Overview, Detections and scans follow it. Add a brand opens the wizard."],
+                ["Brand switcher", "The box at the top of the menu. Pick a brand to make it active: Overview, Detections and scans follow it. Add a brand opens Setup Brand Profile."],
                 ["Private workspace", "Each browser gets its own workspace, starting with the two demo brands. Brands, scans and results added there are not visible to anyone else."],
                 ["Top bar", "Last scan time and Run scan, Install app, a shortcut to Quick check, and the light / dark switch."],
                 ["Appearance", "At the bottom of the menu: five colour palettes (Crimson, Graphite, Slate, Forest, Sandstone) and System, Light or Dark mode."],
@@ -561,7 +561,7 @@ export default function HowToUsePage() {
                 ["Why does a result score exactly 39?", "It hit a cap: either only one signal was strong, or it is openly a fan, news, review or third-party item."],
                 ["Can a real official account be flagged?", "Official verification runs first and the accuracy test checks it: 0 of 19 official assets are flagged. If something genuine ever slips through, It's official adds it to the allowlist."],
                 ["Does anyone else see my searches?", "No. Each browser has its own private workspace."],
-                ["How do I protect a new brand?", "Use the Setup wizard, or search it in Quick check and register it from the suggested official apps."],
+                ["How do I protect a new brand?", "Use Setup Brand Profile, or search it in Quick check and register it from the suggested official apps."],
               ]}
             />
           </Section>

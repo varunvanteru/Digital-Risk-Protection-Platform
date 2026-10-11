@@ -28,7 +28,7 @@ def current_brand(db: Session) -> Brand:
     """The active brand (one at a time); falls back to the most recently updated."""
     brand = db.scalar(select(Brand).order_by(Brand.is_active.desc(), Brand.updated_at.desc()).limit(1))
     if brand is None:
-        raise HTTPException(404, "No brand profile yet. Complete the setup wizard.")
+        raise HTTPException(404, "No brand profile yet. Complete Setup Brand Profile.")
     return brand
 
 

@@ -113,6 +113,6 @@ export async function allBrands(order = "is_active DESC, updated_at DESC"): Prom
 /** The workspace's active brand (one at a time); falls back to the most recently updated. */
 export async function currentBrand(): Promise<Brand> {
   const r = await one("SELECT * FROM brands WHERE workspace_id <=> ? ORDER BY is_active DESC, updated_at DESC LIMIT 1", [currentWorkspace()]);
-  if (!r) throw new HttpError(404, "No brand profile yet. Complete the setup wizard.");
+  if (!r) throw new HttpError(404, "No brand profile yet. Complete Setup Brand Profile.");
   return hydrate(r);
 }

@@ -16,7 +16,7 @@ import { UnlockDialog } from "./unlock";
 import { Button, FloatLink } from "./ui";
 
 const NAV = [
-  { href: "/setup", label: "Setup wizard", Icon: Settings2 },
+  { href: "/setup", label: "Setup Brand Profile", Icon: Settings2 },
   { href: "/", label: "Overview", Icon: LayoutGrid },
   { href: "/detections", label: "Detections", Icon: Radar },
   { href: "/check", label: "Quick check", Icon: ScanSearch },

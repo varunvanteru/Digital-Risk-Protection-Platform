@@ -124,7 +124,7 @@ export default function BrandPage() {
         eyebrow="Allowlist"
         title="Brand profile"
         description="Your legitimate assets. Every detector compares against this profile, and everything listed here is on the allowlist, so it is never flagged."
-        actions={<ButtonLink href="/setup">Edit in wizard</ButtonLink>}
+        actions={<ButtonLink href="/setup">Edit in Setup</ButtonLink>}
       />
 
       {error && (
