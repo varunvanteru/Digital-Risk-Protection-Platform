@@ -52,7 +52,7 @@ export default function AccuracyPage() {
       <PageHeader
         eyebrow="Labelled test set"
         title="Detection accuracy"
-        description="Every labelled case runs through the same engine as scans and Quick check: official verification first, then risk scoring. Nothing on this page is typed in by hand."
+        description="Every labelled case runs through the same engine as scans and Quick check: official verification first, then risk scoring. Nothing on this page is typed in by hand. Scope: 82 cases for the two demo brands (ZentraPay, PhonePe), 11 of them written before the rules they test; this shows how the rules behave on these cases, not real-world accuracy."
         actions={
           <Button onClick={load} disabled={loading}>
             {loading ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}

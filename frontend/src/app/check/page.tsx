@@ -227,7 +227,7 @@ function OfficialAssets({ data }: { data: SearchResponse }) {
             {data.official.length} official {data.official.length === 1 ? "asset" : "assets"} · excluded before risk scoring
           </h2>
           <p className="mt-0.5 text-[12.5px] text-ink-2">
-            Verified as {data.reference.name}&apos;s own. They never enter risk scoring, so their risk is 0.
+            Recognised as {data.reference.name}&apos;s own before risk scoring. <b>Verified official</b>: official ID, link or verified developer account. <b>Likely official (unverified)</b>: publisher name or the same app on the other store; not scored but listed for review. Add it to the profile to confirm it.
           </p>
           </div>
         </div>
@@ -375,9 +375,12 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
           title={
             n ? (
               <>
+                {data.reference.type !== "brand" && <span className="text-high">Verification incomplete · </span>}
                 {flagged} suspicious {flagged === 1 ? "match" : "matches"} for &ldquo;{data.searchedFor}&rdquo;
                 {n > flagged && <span className="font-normal text-ink-3"> · {n - flagged} mention{n - flagged === 1 ? "" : "s"}, not flagged</span>}
               </>
+            ) : data.reference.type !== "brand" ? (
+              <>Verification incomplete for &ldquo;{data.searchedFor}&rdquo;</>
             ) : (
               <>No look-alikes for &ldquo;{data.searchedFor}&rdquo;</>
             )
@@ -385,7 +388,7 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
           description={
             data.reference.type === "brand"
               ? `Compared with the registered brand ${data.reference.name}: official IDs, developer accounts, logo, description and allowlist`
-              : `Compared with the name you entered only. Nothing is known to be official, so publisher and domain checks are skipped. Register it as a brand for full verification.`
+              : `${data.searchedFor} is not a registered brand: results are compared with the name only, and publisher, logo and domain checks are skipped. Register the brand to assess these results.`
           }
         />
         <PlatformStatus data={data} />
@@ -396,9 +399,15 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
           </p>
         )}
         {n === 0 ? (
-          <EmptyState icon={<SearchX />} title="Nothing suspicious found">
-            No account or app on the selected platforms resembles &ldquo;{data.searchedFor}&rdquo;.
-          </EmptyState>
+          data.reference.type !== "brand" ? (
+            <EmptyState icon={<SearchX />} title="Verification incomplete">
+              Nothing on the selected platforms closely resembles &ldquo;{data.searchedFor}&rdquo;, but it is not a registered brand, so this is not a full check. Register the brand to assess these results.
+            </EmptyState>
+          ) : (
+            <EmptyState icon={<SearchX />} title="Nothing suspicious found">
+              No account or app on the selected platforms resembles &ldquo;{data.searchedFor}&rdquo;.
+            </EmptyState>
+          )
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[880px] border-collapse">

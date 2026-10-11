@@ -3,8 +3,8 @@ import { Check, Minus, ShieldCheck, X } from "lucide-react";
 import type { EvidenceChecks, Verdict } from "@/lib/types";
 
 const VERDICT: Record<Verdict, { label: string; className: string }> = {
-  OFFICIAL: { label: "Official", className: "bg-ok-bg text-ok" },
-  LIKELY_OFFICIAL: { label: "Likely official", className: "bg-ok-bg text-ok" },
+  OFFICIAL: { label: "Verified official", className: "bg-ok-bg text-ok" },
+  LIKELY_OFFICIAL: { label: "Likely official (unverified)", className: "border border-line-strong bg-surface-2 text-ink-2" },
   SUSPICIOUS: { label: "Suspicious", className: "bg-crit-bg text-crit" },
   LOOKALIKE: { label: "Look-alike", className: "bg-med-bg text-med" },
   MENTION: { label: "Mention", className: "bg-low-bg text-low" },

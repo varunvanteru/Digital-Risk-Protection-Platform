@@ -72,7 +72,7 @@ export default function OverviewPage() {
           icon={<Radar />}
           label="Open detections"
           value={open.length}
-          sub={lastScan ? `From ${lastScan.candidates} candidates in the last scan` : scanning ? "First scan running…" : "No scan yet"}
+          sub={lastScan ? `${open.filter((d) => !d.sample).length} live · ${open.filter((d) => d.sample).length} sample data · from ${lastScan.candidates} candidates` : scanning ? "First scan running…" : "No scan yet"}
           href="/detections"
           hrefLabel="All detections"
         />
