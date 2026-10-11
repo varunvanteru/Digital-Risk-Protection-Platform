@@ -1,81 +1,83 @@
-# BrandShield: Digital Risk Protection
+# IMPOSTR: Digital Risk Protection for Social & App Monitoring
 
-Finds social-media profiles, brand pages and mobile apps that impersonate a registered brand, scores each one 0 to 100, and explains every flag. Official assets are allowlisted by ID and are never flagged.
+IMPOSTR finds fake social-media profiles, fake brand pages, scam accounts and look-alike mobile apps that impersonate a brand. It scores each one from 0 to 100 and explains every flag in plain words. The brand's own accounts and apps are recognised first and are never flagged.
 
-Built for the Bytexl hackathon (Kampus.VC problem statement: Social & App Monitoring). Live at **https://impostr.live**.
+Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk Protection: Social & App Monitoring**.
+
+## Submission
+
+| Deliverable | Where |
+| --- | --- |
+| Working prototype | **https://impostr.live**, live and open to everyone (no login) |
+| Demo video (6 min) | In the app: **https://impostr.live/how-to-use** (plays first). File: [`frontend/public/help/impostr-demo.mp4`](frontend/public/help/impostr-demo.mp4) |
+| Architecture diagram | In the app under How to use → **Architecture**, and below: [`docs/architecture.png`](docs/architecture.png) |
+| Step-by-step guide | How to use tab: 25 slides with screenshots of every feature |
+
+**Try it in two minutes:** open https://impostr.live, wait a few seconds for the first scan, then open **Detections** and click the top row. In **Quick check**, search `PhonePe` (a real brand, searched live on Google Play and the App Store), then `Paytm` (an unregistered brand, which IMPOSTR offers to register from its real store apps).
+
+## How it meets the challenge
+
+| Criterion | What IMPOSTR does |
+| --- | --- |
+| **Brand Profile** (15%) | Three-step **Setup Brand Profile**: name, aliases, official logo, description, keywords, official social accounts, official apps, publisher and domains. Each official app is **validated on its store** (developer ID, store title, icon), and the profile drives every check: names for look-alike matching, the logo for image matching, the description for copied text, and the allowlist before any scoring. |
+| **Social Media Monitoring** (30%) | Impersonation accounts, fake brand pages and scam profiles across 16 social and messaging platforms. Each is detected by look-alike name, copied logo (including mirrored and recoloured copies), copied bio, "official / helpline" claims and scam behaviour (OTP or fee requests, lures, moving to WhatsApp, new accounts). **Official accounts are never flagged.** |
+| **App Store Monitoring** (30%) | Google Play and the App Store are **searched live**. It catches similar names, copied icons, a **different developer or publisher** (including fakes that copy the company name under another developer account) and resembling descriptions. The brand's official apps and their sibling apps are recognised by app ID, verified developer account and publisher, so **official apps are never flagged**. |
+| **User Experience** (15%) | Setup in three steps, or register a brand straight from a search. Detections give plain-language reasons, a score breakdown and evidence checks, with actions to confirm, request a takedown, mark a false positive or mark official. **Unavailable sources are handled gracefully:** each source has its own timeout and retries, falls back to cached results, and otherwise shows as Down while the scan completes (try **Simulate outage** on Sources). Works on any phone and installs as an app. |
+| **Look-alike names** (bonus) | Character swaps, missing or doubled letters, look-alike characters (`0`→`o`, `3`→`e`, Cyrillic letters), added words (`zentrapay_support_india`) and spacing changes (`zentra.pay`). It avoids over-flagging: ordinary words, other companies' names and openly labelled fan, news or third-party pages stay Low. |
+
+**Measured accuracy** (Accuracy tab, recomputed live): 82 hand-labelled cases, including 11 held out from rule-writing. All **82 of 82 are correct**: precision 100%, recall 100%, and **0 of 19 official assets flagged**.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    U[Analyst's browser] -->|https://impostr.live| APP
+![IMPOSTR architecture](docs/architecture.png)
 
-    subgraph APP [Next.js app on Hostinger]
-        UI[Website pages<br/>Overview · Detections · Quick check · Brand · Sources · Accuracy]
-        API[REST API /api<br/>admin password on changes]
-        UI --> API
-        API --> ORCH[Scan / Quick check orchestrator<br/>parallel, 10 s timeout, 2 retries per source]
-    end
+The pipeline is allowlist-first, in `frontend/src/server/services/scan.ts` and `services/search.ts`:
 
-    ORCH --> VAL[Validate official apps on the stores<br/>developer ID, title, icon · cached 24 h]
-    ORCH --> SRC
+1. **Validate the profile.** Each official app is looked up on its store. Its developer account ID, store title and icon become a verified identity, cached for 24 hours.
+2. **Collect candidates** from 20 sources in parallel, each with a 10-second timeout and 2 retries. A failed live store falls back to its last good results (shown as Cached). Any other failed source is shown as Down, and the scan carries on.
+3. **Gate 1: exclude official assets before any scoring** (`detection/official.ts`):
+   - **L1:** the exact official ID or handle.
+   - **L2:** an official URL.
+   - **L3:** a verified developer account.
+   - **L4:** the official publisher name plus supporting details, with no contradicting developer ID.
+   - **L5:** the same app on the other store.
 
-    subgraph SRC [Sources]
-        GP[Google Play · live]
-        AS[Apple App Store · live]
-        DS[16 social platforms, APK sites,<br/>store snapshot · simulated datasets]
-    end
+   Anything official is reported with risk 0 and is never scored.
+4. **Detection logic** for everything else:
+   - **Signals:** look-alike name (`detection/lookalike.ts`), logo perceptual hash with a mirror check and colour histogram (`images.ts`), description similarity, claims, scam behaviour and publisher (`text.ts`, `signals.ts`).
+   - **Score:** the signals are weighted and fixed boosts added, giving 0 to 100 (`scoring.ts`).
+   - **Cap at 39:** a single strong signal on its own, or an openly labelled fan, news or third-party page, is held at 39.
+5. **Gate 2:** the allowlist is re-checked in the database just before a detection is saved.
 
-    SRC --> OFF{Official-asset verification<br/>L1 ID · L2 URL · L3 developer account<br/>L4 publisher name · L5 cross-store twin}
-    VAL --> OFF
-    OFF -->|official| EXC[Excluded · risk 0<br/>listed as official, never scored]
-    OFF -->|not official| SIG[Risk signals<br/>look-alike name · icon pHash · description<br/>claims · scam behaviour · publisher]
-    SIG --> SCORE[Score 0-100<br/>Critical / High / Medium / Low]
-    SCORE --> G2[Gate 2: allowlist re-check]
-    G2 --> DB[(MySQL / MariaDB<br/>brands · assets · detections · scans<br/>source cache · images)]
-    EXC --> DB
-    DB --> API
-```
+No brand is hard-coded: brands are data, and the same rules apply to every brand.
 
-**Private workspaces.** There are no accounts: each browser gets a random workspace ID in an HTTP-only cookie on its first visit, starts with its own copy of the demo brands, and everything it registers, scans or marks is visible only to that browser (`src/server/workspace.ts`). Every API request runs inside its workspace, so no query can skip the filter. Shared across visitors: the source registry and health, cached public store results, and the accuracy test set.
+**Storage** (MySQL / MariaDB, 9 tables, created automatically on first start):
 
-One Next.js app serves the website, the API and the images:
+| Tables | What they hold |
+| --- | --- |
+| `brands`, `official_assets`, `publishers` | The brand profile and allowlist |
+| `detections`, `detection_events` | Scored detections and their status history |
+| `scans`, `sources`, `source_cache` | Scan runs, source health, and the last good live results |
+| `media_files` | Logos and icons |
 
-| Part | Where | Stack |
-| --- | --- | --- |
-| Website | `frontend/src/app` | Next.js 15, TypeScript, Tailwind |
-| API and detection engine | `frontend/src/server`, served at `/api` | Node.js (TypeScript), mysql2, sharp |
-| Images | `/media`, stored in MySQL (`media_files`) | |
-| Database | MySQL 8 or MariaDB; tables created automatically | |
-| Reference engine | `backend/` | FastAPI, Python 3.11 (local only) |
-
-The Python engine in `backend/` is the original implementation. The Node.js engine is a line-by-line port and is what runs in production. A parity check runs the labelled test set through both and compares every row (outcome, status, score, severity, reason). They match on all 71 cases, and live Quick checks return identical official apps and scores. Logo similarity reproduces Pillow's resize and colour conversion exactly, so perceptual hashes are bit-identical.
-
-**Detection pipeline (allowlist-first)** — `src/server/services/scan.ts`, `services/search.ts`:
-
-1. **Validate official assets.** Each official app in the brand profile is looked up on its store (Google Play detail, App Store lookup); its developer account ID, store title, publisher and icon are recorded (cached 24 h).
-2. **Build the allowlist and verified identities:** official IDs/handles, developer account IDs per store, normalised publisher names (`PhonePe Pvt. Ltd.` = `PHONEPE PRIVATE LIMITED` = `PhonePe`), package namespaces, official icons.
-3. **Collect candidates** from every source. Live stores fall back to their last good results when down, labelled CACHED; curated datasets are labelled SIMULATED.
-4. **Official-asset verification before any scoring** (`detection/official.ts`):
-   - L1 exact official ID / handle, L2 official URL → OFFICIAL
-   - L3 published by a verified official developer account → OFFICIAL (finds official variants)
-   - L4 official publisher name + supporting metadata, with no contradicting developer ID and no scam signals → LIKELY_OFFICIAL
-   - L5 same title as a verified official app on the other store, matching icon, established audience → LIKELY_OFFICIAL
-   Official candidates stop here: risk 0, never scored.
-5. **Risk signals and scoring** for everything else: look-alike name, icon (pHash, mirror-aware), description, impersonation claims, scam behaviour, publisher mismatch (only when an official publisher is on record: unknown is not a mismatch). Status: SUSPICIOUS / LOOKALIKE / MENTION.
-6. **Gate 2** re-checks the allowlist before saving. No brand-specific code anywhere: brands are data.
-
-**Accuracy** (`GET /api/accuracy`, Accuracy page): a labelled set of 71 cases (`frontend/data/labelled_cases.json`) run through the same engine. Current result: 0 of 18 official assets flagged, precision 1.00, recall 0.925.
-
-**Sources**
+**Sources:**
 
 | Source | Mode |
 | --- | --- |
 | Google Play | Live (`google-play-scraper`) |
 | Apple App Store | Live (iTunes Search API) |
-| 16 social platforms (Instagram, Facebook, WhatsApp, X, Threads, LinkedIn, Telegram, Snapchat, YouTube, ShareChat, Moj, Josh, Pinterest, Reddit, Quora, Discord) | Simulated: curated dataset (no open search APIs) |
-| APK mirror sites | Simulated: curated dataset |
-| Store snapshot (simulated) | Simulated: curated store fakes for the demo brands (ZentraPay is fictional; PhonePe fakes are made up) |
+| 16 social platforms (Instagram, Facebook, WhatsApp, X, Threads, LinkedIn, Telegram, Snapchat, YouTube, ShareChat, Moj, Josh, Pinterest, Reddit, Quora, Discord), APK mirror sites, store snapshot | Curated sample data: these platforms have no open search API. Results are tagged **SAMPLE** in the app. |
+
+**Private workspaces.** There are no accounts. Each browser gets its own workspace through an HTTP-only cookie, starting with two demo brands: **ZentraPay**, a fictional payments app, and **PhonePe**. Anything a visitor registers, scans or marks is visible only in their own browser.
+
+## Tech stack
+
+| Part | Where | Stack |
+| --- | --- | --- |
+| Web app and API | `frontend/` (screens in `src/app`, engine in `src/server`, served at `/api`) | Next.js 15, React 19, TypeScript, Tailwind CSS, sharp, mysql2 |
+| Database | Hostinger MariaDB (MySQL 8 locally) | |
+| Reference engine | `backend/` | Python 3.11, FastAPI. Gives the same result on every labelled case. |
+| Hosting | Hostinger Node.js app, auto-deployed from this repo's `main` branch | |
 
 ## Run locally
 
@@ -87,32 +89,21 @@ npm install
 npm run dev                       # http://localhost:3000
 ```
 
-On first start the API creates the database and tables, seeds the demo brands and runs a scan.
-
-The Python reference engine is optional: see `backend/.env.example`, then `python -m uvicorn app.main:app --port 8100`. Set `NEXT_PUBLIC_API_URL=http://localhost:8100` to point the website at it.
-
-## Deploy
-
-Hostinger Node.js app from GitHub (root directory `frontend`), database on Hostinger. Step-by-step in [DEPLOY.md](DEPLOY.md).
+On first start the app creates the database tables, seeds the demo brands and runs a scan. Deployment steps are in [`DEPLOY.md`](DEPLOY.md).
 
 ## Tests
 
 ```bash
-cd frontend
-npm test                          # 105 tests (Vitest)
+cd frontend && npm test           # 110 tests (Vitest)
+cd backend && python -m pytest -q # 104 tests (Python reference engine)
 ```
 
-Engine unit tests, allowlist-first regression tests, connector parsing on recorded store responses, and end-to-end API tests against MySQL (separate `brandshield_test_node` schema, dropped afterwards).
+The tests cover:
+- engine unit tests and allowlist-first regression tests;
+- connector parsing on recorded store responses;
+- end-to-end API tests against MySQL;
+- a parity check, `frontend/scripts/parity.ts`, which runs all 82 labelled cases through both engines and compares every row.
 
-Parity with the Python reference engine:
+## Security
 
-```bash
-backend\.venv\Scripts\python backend\eval_dump.py > py.json
-cd frontend && npx tsx scripts/parity.ts ../py.json
-```
-
-The Python suite (`cd backend && .venv\Scripts\python -m pytest -q`, 101 tests) still passes.
-
-## Networks that inspect HTTPS
-
-Some campus and corporate firewalls (for example FortiGate) re-sign HTTPS with their own certificate. The live store sources then fail and show as Unavailable. Get the firewall's CA certificate (PEM) and start Node with `NODE_EXTRA_CA_CERTS=path\to\ca.pem` (Python: `CA_BUNDLE` in `backend/.env`). Certificate verification is never turned off.
+No credentials are stored in the repository. The database settings come from environment variables (hPanel on Hostinger, `.env.local` locally), and `.env` files are ignored by git.
