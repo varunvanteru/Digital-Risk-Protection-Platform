@@ -431,7 +431,10 @@ export default function DetectionPage() {
                   { k: "Scan", v: <Mono>{d.scanId}</Mono> },
                   {
                     k: "Link",
-                    v: (
+                    v: d.sample ? (
+                      // Sample accounts are curated examples; their URLs do not exist on the platform.
+                      <span className="text-ink-3">None, sample data</span>
+                    ) : (
                       <a href={d.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">
                         Open
                         <ExternalLink className="size-3" />

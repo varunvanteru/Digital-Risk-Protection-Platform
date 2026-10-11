@@ -459,6 +459,14 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
                           Details
                           <ArrowUpRight className="size-3.5" />
                         </Link>
+                      ) : r.sample ? (
+                        // Sample accounts are curated examples; their URLs do not exist on the platform.
+                        <span
+                          title="Sample data: a curated example for this demo. It has no real page on the platform."
+                          className="text-[11.5px] text-ink-3"
+                        >
+                          No live page
+                        </span>
                       ) : (
                         <a href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[12.5px] font-medium text-ink hover:underline">
                           Open
