@@ -16,6 +16,7 @@ import { UnlockDialog } from "./unlock";
 import { Button, FloatLink } from "./ui";
 
 const NAV = [
+  { href: "/setup", label: "Setup wizard", Icon: Settings2 },
   { href: "/", label: "Overview", Icon: LayoutGrid },
   { href: "/detections", label: "Detections", Icon: Radar },
   { href: "/check", label: "Quick check", Icon: ScanSearch },
@@ -82,17 +83,6 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="space-y-0.5 border-t border-line px-3 py-3">
-        <Link
-          href="/setup"
-          onClick={onNavigate}
-          className={clsx(
-            "flex h-8 items-center gap-2.5 rounded-[var(--radius-control)] px-3 text-[12.5px]",
-            pathname.startsWith("/setup") ? "bg-[var(--nav-active-bg)] font-semibold text-[var(--nav-active-ink)]" : "text-ink-2 hover:bg-surface-2 hover:text-ink",
-          )}
-        >
-          <Settings2 className="size-4 text-ink-3" />
-          Setup wizard
-        </Link>
         <AppearanceMenu />
         <div className="flex items-center gap-2.5 px-2.5 pt-2">
           <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[10.5px] font-semibold text-ink-2">
