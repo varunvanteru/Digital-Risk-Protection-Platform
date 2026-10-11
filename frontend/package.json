@@ -39,6 +39,7 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
-    "postcss": "^8.5.29"
+    "postcss": "^8.5.29",
+    "cacheable-request": "^10.2.7"
   }
 }
