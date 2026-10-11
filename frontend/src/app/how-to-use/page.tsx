@@ -19,6 +19,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { DemoVideo } from "@/components/demo-video";
 import { Card, CardHeader, Orb, PageHeader, StepOrb } from "@/components/ui";
 
 export const metadata: Metadata = { title: "How to use" };
@@ -145,6 +146,7 @@ function Section({
 /* ---------- table of contents ---------- */
 
 const TOC: { id: string; label: string }[] = [
+  { id: "demo-video", label: "Demo video" },
   { id: "start", label: "Start here" },
   { id: "flow", label: "How IMPOSTR works" },
   { id: "setup", label: "Setup Brand Profile" },
@@ -170,8 +172,13 @@ export default function HowToUsePage() {
       <PageHeader
         eyebrow="Guide"
         title="How to use"
-        description="Every tab and feature of IMPOSTR, with screenshots of the real app. Read it top to bottom once, or jump to a tab from the contents."
+        description="Start with the demo video, then read the guide: every tab and feature of IMPOSTR, with screenshots of the real app."
       />
+
+      <DemoVideo guideId="guide" />
+
+      {/* Where the written guide starts; the video scrolls here when it ends. */}
+      <div id="guide" className="scroll-mt-20" />
 
       {/* Contents: chips on phones, sticky list on wide screens */}
       <nav aria-label="Contents" className="mb-4 flex flex-wrap gap-1.5 xl:hidden">
