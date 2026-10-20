@@ -3,17 +3,19 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+// primary: the main action; tonal: a highlighted extra (Install app); secondary: everything else.
+type ButtonVariant = "primary" | "tonal" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-[background-color,box-shadow,color] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
 const buttonVariant: Record<ButtonVariant, string> = {
-  primary: "bg-accent text-accent-ink hover:bg-accent/85",
-  secondary: "border border-line-strong bg-surface text-ink hover:bg-surface-2",
+  primary: "btn-primary bg-accent text-accent-ink hover:bg-accent/90",
+  tonal: "btn-tonal",
+  secondary: "btn-secondary border border-line-strong bg-surface text-ink hover:bg-surface-2",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-  danger: "border border-line-strong bg-surface text-crit hover:bg-crit-bg",
+  danger: "btn-secondary border border-line-strong bg-surface text-crit hover:bg-crit-bg",
 };
 
 const buttonSize: Record<ButtonSize, string> = {
@@ -96,7 +98,7 @@ export function Orb({
 }) {
   const color = tone ? { crit: "text-crit", high: "text-high", med: "text-med", ok: "text-ok", ink: "text-ink" }[tone] : undefined;
   return (
-    <span aria-hidden className={clsx("orb", ORB_SIZE[size], color, className)}>
+    <span aria-hidden className={clsx("orb", tone && "orb-tone", ORB_SIZE[size], color, className)}>
       {children}
     </span>
   );
@@ -147,7 +149,8 @@ export function StatCard({
         {href && <FloatLink href={href} label={hrefLabel ?? `Open ${typeof label === "string" ? label : "details"}`} />}
       </div>
       <div>
-        <div className="eyebrow truncate text-[11px]">{label}</div>
+        {/* The label takes the card's status colour, so a Critical card reads as Critical at a glance. */}
+        <div className={clsx("eyebrow truncate text-[11px]", tone && { crit: "!text-crit", high: "!text-high", med: "!text-med", ok: "!text-ok", ink: "!text-ink-2" }[tone])}>{label}</div>
         <div className="tabular mt-1 font-[family-name:var(--font-heading)] text-[22px] font-bold leading-none tracking-[-0.01em] text-ink sm:text-[24px]">{value}</div>
         {sub && <div className="mt-1.5 line-clamp-2 text-[12px] leading-snug text-ink-3">{sub}</div>}
       </div>
@@ -199,8 +202,8 @@ export function Hint({ error, children }: { error?: boolean; children: ReactNode
   return <p className={clsx("mt-1.5 text-[12px]", error ? "text-crit" : "text-ink-3")}>{children}</p>;
 }
 
-const fieldBase =
-  "h-8 rounded-md border bg-surface px-2.5 text-[13px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-accent";
+// .field (globals.css): a filled box with a soft shadow and a focus ring, so text boxes stand out from the card.
+const fieldBase = "field h-8 rounded-md border px-2.5 text-[13px] text-ink placeholder:text-ink-3 outline-none focus:border-accent";
 
 /** Fields fill their container unless the caller sets a width. */
 const widthOf = (className?: string) => (/(^|\s)(w-|min-w-)/.test(className ?? "") ? undefined : "w-full");

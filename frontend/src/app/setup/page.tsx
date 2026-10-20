@@ -89,12 +89,12 @@ function TagInput({
     <div>
       <div
         className={clsx(
-          "flex min-h-8 flex-wrap items-center gap-1.5 rounded-md border bg-surface px-1.5 py-1 focus-within:border-accent",
+          "field flex min-h-8 flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1 focus-within:border-accent",
           error ? "border-crit" : "border-line-strong",
         )}
       >
         {values.map((v) => (
-          <span key={v} className={clsx("inline-flex h-6 items-center gap-1 rounded bg-surface-2 pl-2 pr-1 text-[12.5px] text-ink", mono && "font-mono text-[12px]")}>
+          <span key={v} className={clsx("inline-flex h-6 items-center gap-1 rounded border border-line bg-surface pl-2 pr-1 text-[12.5px] text-ink shadow-[0_1px_1px_rgb(16_24_40/0.04)]", mono && "font-mono text-[12px]")}>
             {v}
             <button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(values.filter((x) => x !== v))} className="rounded p-0.5 text-ink-3 hover:text-ink">
               <X className="size-3" />

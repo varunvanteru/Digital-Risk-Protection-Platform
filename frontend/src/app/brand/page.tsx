@@ -256,6 +256,10 @@ export default function BrandPage() {
                       <td className="px-4 py-2.5">
                         <Mono>{a.packageId}</Mono>
                       </td>
+                      <td className="px-4 py-2.5 text-ink-2">
+                        {a.publisher}
+                        {a.publisherId && <div className="font-mono text-[11px] text-ink-3">developer {a.publisherId}</div>}
+                      </td>
                       <td className="px-4 py-2.5">
                         <Button
                           size="sm"

@@ -232,7 +232,84 @@
   --chart-grid: #26211b;
 }
 
-/* ---------- Crimson: soft white, black pills, crimson accent (default) ----------
+/* ---------- Sapphire: clean white, sapphire blue actions (default) ----------
+ * A neutral grey-blue page, solid white cards with a hairline and a soft layered
+ * shadow, one action colour (sapphire blue) for buttons, links, focus and the
+ * active menu item. Red stays reserved for Critical, so an action never looks
+ * like an alarm.
+ */
+[data-palette="sapphire"] {
+  --bg: #f4f6fa;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
+  --ink: #101828;
+  --ink-2: #475467;
+  --ink-3: #667085;
+  --inverse: #ffffff;
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+  --accent-soft: #eef4ff;
+  --chart-bar: #2563eb;
+  --chart-grid: #eef0f4;
+  --brand: #2563eb;
+  --label-color: #2563eb;
+
+  --page-bg:
+    radial-gradient(1000px 520px at 0% -10%, rgb(37 99 235 / 0.07), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgb(99 102 241 / 0.05), transparent 60%),
+    var(--bg);
+  --card-bg: #ffffff;
+  --card-border: #e4e7ec;
+  --glass-blur: none;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 14px -4px rgb(16 24 40 / 0.07);
+  --panel-bg: rgb(255 255 255 / 0.92);
+  --orb-bg: #eef4ff;
+  --orb-shadow: inset 0 0 0 1px #d6e4ff;
+  --float-bg: #ffffff;
+  --float-shadow: 0 1px 2px rgb(16 24 40 / 0.05), inset 0 0 0 1px #d0d5dd;
+  --nav-active-bg: #eef4ff;
+  --nav-active-ink: #1d4ed8;
+  --nav-active-icon: #2563eb;
+  --field-bg: #f5f7fa;
+}
+[data-palette="sapphire"][data-mode="dark"] {
+  --bg: #0b0f17;
+  --surface: #111722;
+  --surface-2: #171e2b;
+  --border: #212a39;
+  --border-strong: #2e394b;
+  --ink: #f0f3f8;
+  --ink-2: #a9b4c5;
+  --ink-3: #7b879a;
+  --inverse: #0b0f17;
+  --accent: #3b82f6;
+  --accent-ink: #ffffff;
+  --accent-soft: #14213a;
+  --chart-bar: #60a5fa;
+  --chart-grid: #1b2331;
+  --brand: #6aa2ff;
+  --label-color: #6aa2ff;
+
+  --page-bg:
+    radial-gradient(1000px 520px at 0% -10%, rgb(59 130 246 / 0.12), transparent 60%),
+    var(--bg);
+  --card-bg: #111722;
+  --card-border: #212a39;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --panel-bg: rgb(13 18 27 / 0.92);
+  --orb-bg: #14213a;
+  --orb-shadow: inset 0 0 0 1px #1f3360;
+  --float-bg: #171e2b;
+  --float-shadow: inset 0 0 0 1px #2e394b;
+  --nav-active-bg: #14213a;
+  --nav-active-ink: #dbe7ff;
+  --nav-active-icon: #6aa2ff;
+  --field-bg: #0c111a;
+}
+
+/* ---------- Crimson: soft white, black pills, crimson accent ----------
  * Modelled on rfentity.com: a pale blue-grey page, white raised cards with large
  * radii and a soft two-way shadow, pill buttons and chips, uppercase Archivo
  * titles with one word in crimson, and small crimson labels above them.
@@ -537,6 +614,83 @@ th button {
     animation: none;
   }
 }
+/* ---------- Controls: the same hierarchy in every palette ---------- */
+@layer components {
+  /* Text boxes: a filled, slightly inset box that turns white with a focus ring, so it never
+     blends into the card. Border colours stay utilities (error state, focus colour). */
+  .field {
+    background-color: var(--field-bg, var(--surface-2));
+    box-shadow: inset 0 1px 2px rgb(16 24 40 / 0.06);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .field:hover {
+    background-color: var(--surface);
+  }
+  .field:focus,
+  .field:focus-within {
+    background-color: var(--surface);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .field[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--crit) 18%, transparent);
+  }
+  .field:disabled {
+    opacity: 0.6;
+  }
+
+  /* Primary: the one main action on screen. */
+  .btn-primary {
+    box-shadow: 0 1px 2px rgb(16 24 40 / 0.12), 0 2px 6px -2px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgb(255 255 255 / 0.14);
+  }
+  /* Tonal: a highlighted extra action, in a tint of the brand colour (e.g. Install app). */
+  .btn-tonal {
+    background-color: color-mix(in srgb, var(--brand) 10%, var(--surface));
+    color: var(--brand);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 22%, transparent);
+  }
+  .btn-tonal:hover {
+    background-color: color-mix(in srgb, var(--brand) 16%, var(--surface));
+  }
+  /* Secondary: white with a hairline and a soft shadow. */
+  .btn-secondary {
+    box-shadow: 0 1px 2px rgb(16 24 40 / 0.05);
+  }
+}
+
+/* Orbs tinted by their status colour (Critical, High, OK...) in Sapphire. */
+@layer components {
+  [data-palette="sapphire"] .orb {
+    box-shadow: var(--orb-shadow);
+  }
+  [data-palette="sapphire"] .orb.orb-tone {
+    background: color-mix(in srgb, currentColor 10%, var(--surface));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+  }
+}
+
+/* Tables: header row on a light band, header labels on one line, cells centred vertically. */
+th {
+  white-space: nowrap;
+}
+[data-palette="sapphire"] .card-surface thead tr {
+  background: var(--surface-2);
+}
+[data-palette="sapphire"] .card-surface tbody tr {
+  transition: background-color 0.12s ease;
+}
+[data-palette="sapphire"] .card-surface tbody tr:hover {
+  background-color: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+/* Chips: a flat hairline pill in Sapphire. */
+[data-palette="sapphire"] .chip {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+/* Card headers: a hairline and a faint top band, so each card's title reads as its label. */
+[data-palette="sapphire"] .card-surface > header:first-child {
+  background: linear-gradient(180deg, var(--surface-2), transparent);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
 /* Project summary for readers without JavaScript (crawlers, AI reviewers); browsers hide it before painting. */
 html[data-js] .nojs-summary {
   display: none;

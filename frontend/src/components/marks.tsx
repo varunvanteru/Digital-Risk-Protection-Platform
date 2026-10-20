@@ -105,7 +105,7 @@ export function PlatformGlyph({ platform, className }: { platform: Platform; cla
 
 export function PlatformLabel({ platform }: { platform: Platform }) {
   return (
-    <span className="inline-flex items-center gap-2 text-[13px] text-ink-2">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-[13px] text-ink-2">
       <PlatformGlyph platform={platform} />
       {PLATFORM_LABEL[platform]}
     </span>

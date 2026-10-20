@@ -503,7 +503,7 @@ const SLIDES: Slide[] = [
           ["Brand switcher", "The box at the top of the menu. Pick a brand to make it active: Overview, Detections and scans follow it. Add a brand opens Setup Brand Profile."],
           ["Private workspace", "Each browser gets its own workspace, starting with the two demo brands. Brands, scans and results added there are not visible to anyone else."],
           ["Top bar", "Last scan time and Run scan, Install app, a shortcut to Quick check, and the light / dark switch."],
-          ["Appearance", "At the bottom of the menu: five colour palettes (Crimson, Graphite, Slate, Forest, Sandstone) and System, Light or Dark mode."],
+          ["Appearance", "At the bottom of the menu: six colour palettes (Sapphire, Crimson, Graphite, Slate, Forest, Sandstone) and System, Light or Dark mode."],
           ["Install app", "Installs IMPOSTR like a phone or desktop app. On iPhone it shows how: Share, then Add to Home Screen."],
         ]}
       />

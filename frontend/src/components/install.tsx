@@ -69,7 +69,7 @@ export function InstallButton() {
   if (installed) return null;
   return (
     <>
-      <Button onClick={install} aria-label="Install app" title="Install IMPOSTR as an app" className="max-sm:w-8 max-sm:px-0">
+      <Button variant="tonal" onClick={install} aria-label="Install app" title="Install IMPOSTR as an app" className="max-sm:w-8 max-sm:px-0">
         <Download />
         <span className="max-sm:sr-only">Install app</span>
       </Button>

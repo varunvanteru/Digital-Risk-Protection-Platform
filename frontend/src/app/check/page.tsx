@@ -565,7 +565,7 @@ export default function QuickCheckPage() {
                   setError(null);
                 }}
                 placeholder={`e.g. ${brand.name} or instagram.com/${brand.name.toLowerCase()}`}
-                className="h-11 w-full rounded-md border border-line-strong bg-surface pl-9 pr-3 font-mono text-[14px] text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-accent"
+                className="field h-11 w-full rounded-md border border-line-strong pl-9 pr-3 font-mono text-[14px] text-ink outline-none placeholder:text-ink-3 focus:border-accent"
                 autoComplete="off"
                 spellCheck={false}
               />
