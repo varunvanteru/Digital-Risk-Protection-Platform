@@ -1,8 +1,9 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { account, ApiError } from "@/lib/api";
-import { isPersonalEmail, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
+import { isPersonalEmail, passwordError, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
 
 /** An error message; the work-email one ends with a button that opens the demo instead. */
 function FormError({ message, onDemo }: { message: string; onDemo?: () => void }) {
@@ -39,12 +40,14 @@ function Chevron() {
 }
 
 function Field(props: { id: string; label: string; type?: string; value: string; onChange: (v: string) => void; autoComplete?: string; autoFocus?: boolean; minLength?: number }) {
+  const isPassword = props.type === "password";
+  const [shown, setShown] = useState(false);
   return (
     <div className="lp-field lp-modal-field">
       <input
         id={props.id}
-        className="lp-input"
-        type={props.type ?? "text"}
+        className={`lp-input${isPassword ? " lp-input-password" : ""}`}
+        type={isPassword && shown ? "text" : (props.type ?? "text")}
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
         autoComplete={props.autoComplete}
@@ -56,6 +59,19 @@ function Field(props: { id: string; label: string; type?: string; value: string;
       <label htmlFor={props.id} className="lp-float">
         {props.label}
       </label>
+      {isPassword && (
+        // Show or hide what was typed; the field keeps its focus and value.
+        <button
+          type="button"
+          className="lp-eye"
+          onClick={() => setShown((s) => !s)}
+          aria-label={shown ? "Hide password" : "Show password"}
+          aria-pressed={shown}
+          title={shown ? "Hide password" : "Show password"}
+        >
+          {shown ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+        </button>
+      )}
     </div>
   );
 }
@@ -152,6 +168,23 @@ function SignInForm({ onSwitch, onDemo }: { onSwitch: () => void; onDemo: () => 
   );
 }
 
+/** The password rules, each ticked as soon as it is met. */
+function PasswordRules({ password }: { password: string }) {
+  const rules: [string, boolean][] = [
+    ["At least 8 characters", password.length >= 8],
+    ["At least one special character (! @ # $ % &)", /[^A-Za-z0-9\s]/.test(password)],
+  ];
+  return (
+    <ul className="lp-rules" aria-label="Password rules">
+      {rules.map(([label, ok]) => (
+        <li key={label} className={ok ? "lp-rule-ok" : undefined}>
+          <span aria-hidden>{ok ? "✓" : "•"}</span> {label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function SignUpForm({
   email: initialEmail,
   onSwitch,
@@ -172,6 +205,8 @@ function SignUpForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (isPersonalEmail(email)) return setError(WORK_EMAIL_MESSAGE);
+    const pe = passwordError(password);
+    if (pe) return setError(pe);
     setBusy(true);
     setError(null);
     try {
@@ -191,7 +226,8 @@ function SignUpForm({
       <form onSubmit={submit}>
         <Field id="su-name" label="Your name" value={name} onChange={setName} autoComplete="name" autoFocus />
         <Field id="su-email" label="Work email" type="email" value={email} onChange={setEmail} autoComplete="email" />
-        <Field id="su-pass" label="Password (at least 8 characters)" type="password" value={password} onChange={setPassword} autoComplete="new-password" minLength={8} />
+        <Field id="su-pass" label="Password" type="password" value={password} onChange={setPassword} autoComplete="new-password" minLength={8} />
+        <PasswordRules password={password} />
         {error && <FormError message={error} onDemo={onDemo} />}
         <button type="submit" className="lp-btn-red lp-btn-block" disabled={busy}>
           {busy ? "Creating account…" : "Create account"}

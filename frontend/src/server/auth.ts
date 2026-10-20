@@ -11,7 +11,7 @@
 import { createHash, randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { resolveMx } from "node:dns/promises";
 import { promisify } from "node:util";
-import { emailDomain, isPersonalEmail, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
+import { emailDomain, isPersonalEmail, passwordError, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
 import { settings } from "./config";
 import { exec, one } from "./db";
 import { utcnow } from "./util";
@@ -66,8 +66,8 @@ export function checkSignUp(raw: unknown): { name: string; email: string; passwo
   if (!EMAIL.test(email) || email.length > 160) return "Enter a valid email address.";
   // Accounts are for companies; anyone can still explore with Continue as demo.
   if (isPersonalEmail(email)) return WORK_EMAIL_MESSAGE;
-  if (password.length < 8) return "Use a password of at least 8 characters.";
-  if (password.length > 128) return "Use a password of at most 128 characters.";
+  const pe = passwordError(password);
+  if (pe) return pe;
   return { name, email, password };
 }
 

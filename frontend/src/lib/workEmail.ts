@@ -27,6 +27,14 @@ const PERSONAL = new Set([
 export const WORK_EMAIL_MESSAGE =
   "Please use your company email (like you@yourcompany.com). Personal addresses such as Gmail, Yahoo or Outlook aren't accepted. Just looking around? Continue as demo.";
 
+/** Password rule for new accounts: 8 to 128 characters with at least one special character. Null when it passes. */
+export function passwordError(password: string): string | null {
+  if (password.length < 8) return "Use a password of at least 8 characters.";
+  if (password.length > 128) return "Use a password of at most 128 characters.";
+  if (!/[^A-Za-z0-9\s]/.test(password)) return "Add at least one special character to your password, such as ! @ # $ % or &.";
+  return null;
+}
+
 /** The domain of an email address, lowercased, or "" when there is none. */
 export const emailDomain = (email: string) => email.trim().toLowerCase().split("@")[1] ?? "";
 

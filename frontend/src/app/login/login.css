@@ -165,15 +165,18 @@
   width: 100%;
   text-align: left;
 }
+/* Oval text boxes; typed text and labels in Inter, a clean interface font (the headings keep Oxanium). */
 .lp-input {
   width: 100%;
   background: var(--lp-input);
   border: 1px solid rgba(128, 128, 128, 0.7);
-  border-radius: 4px;
+  border-radius: 999px;
   color: #fff;
-  font: inherit;
-  font-size: 1rem;
-  padding: 1.35rem 1rem 0.55rem;
+  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.98rem;
+  font-weight: 450;
+  letter-spacing: 0.005em;
+  padding: 1.35rem 1.4rem 0.55rem;
   outline: none;
   backdrop-filter: blur(8px);
   transition: var(--lp-ease);
@@ -181,24 +184,77 @@
 .lp-input:focus {
   border-color: #fff;
   background: rgba(22, 22, 22, 0.95);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+}
+/* Room for the eye button */
+.lp-input-password {
+  padding-right: 3.2rem;
+}
+/* Edge and old IE add their own reveal button; ours replaces it. */
+.lp-input-password::-ms-reveal,
+.lp-input-password::-ms-clear {
+  display: none;
 }
 .lp-float {
   position: absolute;
   top: 50%;
-  left: 1rem;
+  left: 1.4rem;
   transform: translateY(-50%);
   color: var(--lp-muted);
-  font-size: 1rem;
+  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.98rem;
   pointer-events: none;
   transition: all 0.2s ease;
 }
 .lp-input:focus ~ .lp-float,
 .lp-input:not(:placeholder-shown) ~ .lp-float {
-  top: 0.65rem;
+  top: 0.6rem;
   transform: none;
-  font-size: 0.725rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: #fff;
+}
+/* Messages and hints read in the same interface font as the fields */
+.lp-error,
+.lp-modal-hint {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+/* Show / hide password */
+.lp-eye {
+  position: absolute;
+  top: 50%;
+  right: 0.85rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  color: #a3a3a3 !important;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.lp-eye:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+.lp-eye svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+/* Password rules under the field, each ticked when met */
+.lp-rules {
+  list-style: none;
+  margin: -0.35rem 0 0.9rem;
+  padding: 0 1.1rem;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.78rem;
+  color: #8c8c8c;
+  line-height: 1.6;
+}
+.lp-rule-ok {
+  color: #34d399;
 }
 .lp-btn-red {
   display: inline-flex;
@@ -208,7 +264,7 @@
   background: var(--lp-red);
   color: #fff;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 999px; /* oval, like the text boxes */
   white-space: nowrap;
   transition: var(--lp-ease);
 }
@@ -246,8 +302,8 @@
 .lp-demo {
   font-size: 1rem;
   font-weight: 600;
-  padding: 0.6rem 1.1rem;
-  border-radius: 4px;
+  padding: 0.6rem 1.3rem;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.35) !important;
   background: rgba(22, 22, 22, 0.6) !important;
   backdrop-filter: blur(8px);
@@ -681,8 +737,8 @@
 .lp-cta-error {
   max-width: 600px;
   margin: -0.5rem auto 1.25rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 6px;
+  padding: 0.6rem 1.1rem;
+  border-radius: 14px;
   background: rgba(20, 0, 0, 0.72);
   border: 1px solid rgba(248, 113, 113, 0.45);
   text-align: left;

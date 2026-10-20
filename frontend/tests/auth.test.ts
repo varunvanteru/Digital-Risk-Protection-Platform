@@ -56,10 +56,13 @@ describe("passwords and input", () => {
   });
 
   it("validates sign-up fields", () => {
-    expect(checkSignUp({ name: "A", email: "a@b.co", password: "12345678" })).toMatch(/name/);
-    expect(checkSignUp({ name: "Asha", email: "not-an-email", password: "12345678" })).toMatch(/email/);
-    expect(checkSignUp({ name: "Asha", email: "a@b.co", password: "short" })).toMatch(/8 characters/);
-    expect(checkSignUp({ name: " Asha ", email: " A@B.CO ", password: "12345678" })).toEqual({ name: "Asha", email: "a@b.co", password: "12345678" });
+    expect(checkSignUp({ name: "A", email: "a@b.co", password: "1234567!" })).toMatch(/name/);
+    expect(checkSignUp({ name: "Asha", email: "not-an-email", password: "1234567!" })).toMatch(/email/);
+    expect(checkSignUp({ name: "Asha", email: "a@b.co", password: "sh0rt!" })).toMatch(/8 characters/);
+    // at least one special character
+    expect(checkSignUp({ name: "Asha", email: "a@b.co", password: "12345678" })).toMatch(/special character/);
+    expect(checkSignUp({ name: "Asha", email: "a@b.co", password: "Secret pass1" })).toMatch(/special character/); // a space does not count
+    expect(checkSignUp({ name: " Asha ", email: " A@B.CO ", password: "1234567!" })).toEqual({ name: "Asha", email: "a@b.co", password: "1234567!" });
   });
 });
 
