@@ -10,7 +10,7 @@ const buttonBase =
   "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
 const buttonVariant: Record<ButtonVariant, string> = {
-  primary: "btn-primary bg-accent text-accent-ink hover:bg-accent/85",
+  primary: "bg-accent text-accent-ink hover:bg-accent/85",
   secondary: "border border-line-strong bg-surface text-ink hover:bg-surface-2",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
   danger: "border border-line-strong bg-surface text-crit hover:bg-crit-bg",
@@ -63,7 +63,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <header className={clsx("card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-3.5 py-2.5 sm:px-4", className)}>
+    <header className={clsx("flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-3.5 py-2.5 sm:px-4", className)}>
       <div className="flex min-w-0 flex-1 basis-48 items-center gap-2.5">
         {icon && <Orb size="sm">{icon}</Orb>}
         <div className="min-w-0">
@@ -96,7 +96,7 @@ export function Orb({
 }) {
   const color = tone ? { crit: "text-crit", high: "text-high", med: "text-med", ok: "text-ok", ink: "text-ink" }[tone] : undefined;
   return (
-    <span aria-hidden className={clsx("orb", tone && "orb-tone", ORB_SIZE[size], color, className)}>
+    <span aria-hidden className={clsx("orb", ORB_SIZE[size], color, className)}>
       {children}
     </span>
   );
@@ -141,7 +141,7 @@ export function StatCard({
   hrefLabel?: string;
 }) {
   return (
-    <Card className="stat-card relative flex flex-col gap-2.5 overflow-hidden p-3.5 sm:p-4" data-tone={tone ?? "brand"}>
+    <Card className="relative flex flex-col gap-2.5 p-3.5 sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <Orb tone={tone}>{icon}</Orb>
         {href && <FloatLink href={href} label={hrefLabel ?? `Open ${typeof label === "string" ? label : "details"}`} />}
@@ -180,8 +180,7 @@ export function PageHeader({
   eyebrow?: ReactNode;
 }) {
   return (
-    // .page-hero: a banner in the Crimson theme, plain in the others (globals.css).
-    <div className="page-hero mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 sm:mb-6">
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 sm:mb-6">
       <div className="min-w-0 flex-1 basis-72">
         {eyebrow && <div className="eyebrow mb-1.5 text-[12px]">{eyebrow}</div>}
         <h1 className="page-title text-ink">{accentLast(title)}</h1>
