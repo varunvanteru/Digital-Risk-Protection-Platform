@@ -485,11 +485,11 @@ async function patchSource(id: string, raw: Body) {
   if (raw.simulateOutage) {
     // State and health change together, so the row reads "Down · Unavailable" straight away.
     await exec("UPDATE sources SET simulate_outage = 1, health = 'unavailable', state = 'down', note = ? WHERE id = ?", [
-      "Simulated outage. The scan continues with other sources; showing the last good results.", id,
+      "Paused for a test. The scan continues with other sources; showing the last good results.", id,
     ]);
   } else {
     // Clear the state too, so an old "Cached" or "Down" label does not linger next to "Operational".
-    await exec("UPDATE sources SET simulate_outage = 0, health = 'operational', state = NULL, note = ? WHERE id = ?", ["Restored. Results refresh on the next scan.", id]);
+    await exec("UPDATE sources SET simulate_outage = 0, health = 'operational', state = NULL, note = ? WHERE id = ?", ["Resumed. Results refresh on the next scan.", id]);
   }
   return sourceOut(await one("SELECT * FROM sources WHERE id = ?", [id]));
 }

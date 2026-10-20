@@ -200,7 +200,7 @@ export async function fetchWithRetries(
   let lastError: Error | null = null;
   for (let attempt = 0; attempt <= settings.sourceRetries; attempt++) {
     if (source.simulate_outage) {
-      lastError = new SourceUnavailable("Simulated outage");
+      lastError = new SourceUnavailable("Paused for a test");
       break;
     }
     const start = performance.now();

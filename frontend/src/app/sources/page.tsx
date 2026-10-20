@@ -19,7 +19,7 @@ const STATE: Record<SourceState, { label: string; className: string; note: strin
 };
 
 // The outage buttons are a demo of graceful handling, not real data: say so where they are.
-const OUTAGE_TIP = "Test only: pretends this source is down, so the next scan shows the rest carrying on. Nothing is deleted.";
+const OUTAGE_TIP = "Test only: pauses this source as if it were down, so the next scan shows the rest carrying on. Nothing is deleted.";
 
 // A source's note: red when it failed, amber when degraded, grey when it is information only
 // (not connected, or which provider answered).
@@ -80,12 +80,12 @@ export default function SourcesPage() {
                     </span>
                     {s.state === "not_connected" ? null : !s.simulateOutage ? (
                       <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)} title={OUTAGE_TIP}>
-                        Simulate outage
+                        Pause source
                       </Button>
                     ) : (
-                      <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)} title="Switch this source back on; it is searched again on the next scan">
+                      <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)} title="Resume this source; it is searched again on the next scan">
 
-                        End outage
+                        Resume source
                       </Button>
                     )}
                   </div>
@@ -140,12 +140,12 @@ export default function SourcesPage() {
                       <td className="px-4 py-3 text-right">
                         {s.state === "not_connected" ? null : !s.simulateOutage ? (
                           <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)} title={OUTAGE_TIP}>
-                            Simulate outage
+                            Pause source
                           </Button>
                         ) : (
-                          <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)} title="Switch this source back on; it is searched again on the next scan">
+                          <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)} title="Resume this source; it is searched again on the next scan">
 
-                            End outage
+                            Resume source
                           </Button>
                         )}
                       </td>
