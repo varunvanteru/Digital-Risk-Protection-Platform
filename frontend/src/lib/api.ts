@@ -147,7 +147,6 @@ export const api = {
   search: (query: string, platforms: (Platform | "all")[]) => request<SearchResponse>("/api/search", json("POST", { query, platforms })),
 
   sources: () => request<Source[]>("/api/sources"),
-  setOutage: (id: string, simulateOutage: boolean) => request<Source>(`/api/sources/${id}`, json("PATCH", { simulateOutage })),
 
   startScan: () => request<ScanSummary>("/api/scans", { method: "POST" }),
   latestScan: () => request<{ running: ScanSummary | null; last: ScanSummary | null; total: number }>("/api/scans/latest"),

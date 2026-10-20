@@ -457,7 +457,7 @@ const SLIDES: Slide[] = [
             ["State", "Live, Cached, Not connected or Down (see Labels and terms)."],
             ["Health", "Operational, degraded or unavailable."],
             ["Last success · Latency · Items", "When it last answered, how fast, and how many items it returned in the last scan."],
-            ["Simulate outage", "Makes a source fail on purpose to show resilience: the scan still finishes, and a live source falls back to its last good results. End outage restores it."],
+            ["When a source fails", "Each source has its own timeout and retries. If one fails, the scan still finishes, and it shows its last good results marked Cached. A web search that runs out of credit switches to the other provider by itself."],
           ]}
         />
       </>

@@ -74,7 +74,15 @@ describe("web search providers", () => {
     const ig = new WebSearchLive("src_ig", "instagram");
     const found = await ig.fetch(["zomato"]);
     expect(found.map((c) => c.handle)).toEqual(["phonepe.care.help"]);
-    expect(ig.statusNote()).toMatch(/^Searched via Serper \(Brave: Brave Search credits are used up for this month\)$/);
+    expect(ig.statusNote()).toBe("Searched via Serper; Brave: Brave Search credits are used up for this month");
+  });
+
+  it("says plainly when every result came from the shared 12-hour results", async () => {
+    calls.length = 0;
+    const ig = new WebSearchLive("src_ig", "instagram");
+    await ig.fetch(["zomato"]); // same queries as above: all from the shared results
+    expect(calls).toEqual([]);
+    expect(ig.statusNote()).toBe("From a live web search in the last 12 hours, shared by all users to save search credits");
   });
 
   it("is connected with either key, and not connected with neither", () => {

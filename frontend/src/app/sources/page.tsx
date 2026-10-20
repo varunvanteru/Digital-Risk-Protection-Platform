@@ -4,9 +4,8 @@ import clsx from "clsx";
 import { HealthBadge } from "@/components/badges";
 import { PlatformGlyph } from "@/components/marks";
 import { Share2, Store } from "lucide-react";
-import { Button, Card, CardHeader, PageHeader, StepOrb } from "@/components/ui";
+import { Card, CardHeader, PageHeader, StepOrb } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
-import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { SourceState } from "@/lib/types";
 
@@ -18,20 +17,12 @@ const STATE: Record<SourceState, { label: string; className: string; note: strin
   not_connected: { label: "Not connected", className: "bg-surface-2 text-ink-3", note: "Not searched: no public API, or its API key is not set" },
 };
 
-// A source's note: red when it failed, amber when degraded, grey when it is simply not connected.
-const noteColor = (health: string) => (health === "unavailable" ? "text-crit" : health === "not_connected" ? "text-ink-3" : "text-high");
+// A source's note: red when it failed, amber when degraded, grey when it is information only
+// (not connected, or which provider answered).
+const noteColor = (health: string) => (health === "unavailable" ? "text-crit" : health === "degraded" ? "text-high" : "text-ink-3");
 
 export default function SourcesPage() {
-  const { sources, setOutage } = useStore();
-  const [busy, setBusy] = useState<string | null>(null);
-  async function toggle(id: string, on: boolean) {
-    setBusy(id);
-    try {
-      await setOutage(id, on);
-    } finally {
-      setBusy(null);
-    }
-  }
+  const { sources } = useStore();
   const groups = [
     { title: "App stores", icon: <Store />, rows: sources.filter((s) => s.channel === "app") },
     { title: "Social platforms", icon: <Share2 />, rows: sources.filter((s) => s.channel === "social") },
@@ -68,27 +59,16 @@ export default function SourcesPage() {
                   {s.note && (
                     <p className={clsx("mt-1 text-[12px]", noteColor(s.health))}>{s.note}</p>
                   )}
-                  <div className="mt-2 flex items-center justify-between gap-3 text-[12px] text-ink-2">
-                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <HealthBadge health={s.health} />
-                      <span className="tabular">{s.health === "operational" ? `${s.itemsLastScan} items` : "—"}</span>
-                      {s.health === "operational" && s.latencyMs !== null && <span className="tabular font-mono text-ink-3">{s.latencyMs} ms</span>}
-                    </span>
-                    {s.state === "not_connected" ? null : !s.simulateOutage ? (
-                      <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)}>
-                        Simulate outage
-                      </Button>
-                    ) : (
-                      <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)}>
-                        End outage
-                      </Button>
-                    )}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-2">
+                    <HealthBadge health={s.health} />
+                    <span className="tabular">{s.health === "operational" ? `${s.itemsLastScan} items` : "—"}</span>
+                    {s.health === "operational" && s.latencyMs !== null && <span className="tabular font-mono text-ink-3">{s.latencyMs} ms</span>}
                   </div>
                 </li>
               ))}
             </ul>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[860px] table-fixed text-[13px]">
+              <table className="w-full min-w-[720px] table-fixed text-[13px]">
                 <thead className="border-b border-line bg-surface-2/50 text-[12px] text-ink-3">
                   <tr>
                     <th className="h-9 px-4 text-left font-medium">Source</th>
@@ -97,7 +77,6 @@ export default function SourcesPage() {
                     <th className="h-9 w-36 px-4 text-left font-medium">Last success</th>
                     <th className="h-9 w-24 px-4 text-right font-medium">Latency</th>
                     <th className="h-9 w-32 px-4 text-right font-medium">Items, last scan</th>
-                    <th className="h-9 w-40 px-4" />
                   </tr>
                 </thead>
                 <tbody>
@@ -132,17 +111,6 @@ export default function SourcesPage() {
                         {s.health === "operational" && s.latencyMs !== null ? `${s.latencyMs} ms` : "—"}
                       </td>
                       <td className="tabular px-4 py-3 text-right text-ink">{s.health === "operational" ? s.itemsLastScan : "—"}</td>
-                      <td className="px-4 py-3 text-right">
-                        {s.state === "not_connected" ? null : !s.simulateOutage ? (
-                          <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)}>
-                            Simulate outage
-                          </Button>
-                        ) : (
-                          <Button size="sm" disabled={busy === s.id} onClick={() => toggle(s.id, false)}>
-                            End outage
-                          </Button>
-                        )}
-                      </td>
                     </tr>
                   ))}
                 </tbody>

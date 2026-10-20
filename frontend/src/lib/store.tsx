@@ -17,7 +17,6 @@ interface Store {
   refresh: () => Promise<void>;
   setBrand: (b: BrandProfile) => void;
   setStatus: (id: string, status: DetectionStatus) => Promise<DetectionDetail>;
-  setOutage: (id: string, on: boolean) => Promise<void>;
 }
 
 type LoadState = { kind: "loading"; waking?: boolean } | { kind: "error"; message: string } | { kind: "ready" };
@@ -118,11 +117,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [refresh],
   );
 
-  const setOutage = useCallback(async (id: string, on: boolean) => {
-    const s = await api.setOutage(id, on);
-    setSources((list) => list.map((x) => (x.id === id ? s : x)));
-  }, []);
-
   const value = useMemo(
     () => ({
       load,
@@ -138,9 +132,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       refresh,
       setBrand,
       setStatus,
-      setOutage,
     }),
-    [load, initial, brand, brands, switchBrand, detections, sources, lastScan, scanning, runScan, refresh, setStatus, setOutage],
+    [load, initial, brand, brands, switchBrand, detections, sources, lastScan, scanning, runScan, refresh, setStatus],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

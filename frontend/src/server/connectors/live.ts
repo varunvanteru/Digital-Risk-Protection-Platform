@@ -629,8 +629,14 @@ export class WebSearchLive implements Connector {
       used.add(out.provider ?? "shared cache");
       out.skipped.forEach((x) => skipped.add(x));
     }
-    const via = [...used].join(" and ");
-    this.note = skipped.size || used.has("Serper") || used.has("shared cache") ? `Searched via ${via}${skipped.size ? ` (${[...skipped].join("; ")})` : ""}` : null;
+    const providers = [...used].filter((u) => u !== "shared cache");
+    const fromShared = used.has("shared cache");
+    this.note =
+      !providers.length && fromShared
+        ? "From a live web search in the last 12 hours, shared by all users to save search credits"
+        : skipped.size || used.has("Serper") || fromShared
+          ? `Searched via ${providers.join(" and ")}${fromShared ? " (some results from the last 12 hours)" : ""}${skipped.size ? `; ${[...skipped].join("; ")}` : ""}`
+          : null;
     return this.finish(webCandidates(this.platform, results, this.sourceId));
   }
 
