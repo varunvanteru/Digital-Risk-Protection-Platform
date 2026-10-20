@@ -1,24 +1,20 @@
-export type Palette = "sapphire" | "crimson" | "graphite" | "slate" | "forest" | "sandstone";
+export type Palette = "crimson" | "slate";
 export type Mode = "system" | "light" | "dark";
 
 export const PALETTES: { id: Palette; name: string; note: string; swatch: [string, string, string] }[] = [
-  { id: "sapphire", name: "Sapphire", note: "Clean white, sapphire blue actions", swatch: ["#f4f6fa", "#ffffff", "#2563eb"] },
   { id: "crimson", name: "Crimson", note: "Soft white, raised cards, crimson titles", swatch: ["#eef1f5", "#ffffff", "#d40000"] },
-  { id: "graphite", name: "Graphite", note: "Warm neutral, black accent", swatch: ["#f7f7f5", "#d3d3cd", "#1a1a17"] },
   { id: "slate", name: "Slate", note: "Cool grey, deep navy", swatch: ["#f6f7f9", "#cfd4dc", "#1f3a5f"] },
-  { id: "forest", name: "Forest", note: "Paper white, deep green", swatch: ["#f6f6f2", "#cfcfc4", "#23513c"] },
-  { id: "sandstone", name: "Sandstone", note: "Warm parchment, umber", swatch: ["#f7f4ee", "#d4cab9", "#4a3b2a"] },
 ];
 
-// v3: the default changed to Sapphire / light, so earlier saved choices start fresh.
-export const THEME_KEY = "brandshield-theme-v3";
+// v4: Crimson / light is the default again, so earlier saved choices start fresh.
+export const THEME_KEY = "brandshield-theme-v4";
 
 export interface ThemePref {
   palette: Palette;
   mode: Mode;
 }
 
-export const DEFAULT_THEME: ThemePref = { palette: "sapphire", mode: "light" };
+export const DEFAULT_THEME: ThemePref = { palette: "crimson", mode: "light" };
 
 export function readTheme(): ThemePref {
   try {

@@ -256,7 +256,8 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[224px_1fr]">
-      <aside className="glass-panel sticky top-0 hidden h-dvh border-r border-line lg:block">
+      {/* z-40: menus that open from the sidebar (Appearance) sit above the page cards. */}
+      <aside className="glass-panel sticky top-0 z-40 hidden h-dvh border-r border-line lg:block">
         <Sidebar />
       </aside>
 

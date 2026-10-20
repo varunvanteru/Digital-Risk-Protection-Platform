@@ -63,51 +63,64 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
       </div>
 
       {/*
-        One shared column grid for every group, so chips line up across rows:
-        2 columns on phones, 4 on tablets and laptops, 8 on wide screens. Groups of
-        up to 4 platforms span 4 columns (subgrid), so two of them sit side by side
-        at 8 columns; the 8 social platforms fill whole rows at every size.
+        Each category is its own bordered panel, and every platform in it is a bordered
+        tile with a checkbox, so it reads as selectable on its own. Tiles: 2 per row on
+        phones, 4 on tablets and laptops; on wide screens the social panel spans the full
+        width (8 per row) and the smaller panels sit two side by side.
       */}
-      <div className="grid grid-cols-2 gap-x-2 gap-y-4 sm:grid-cols-4 2xl:grid-cols-8">
-        {PLATFORM_GROUPS.map((g) => (
-          <div
-            key={g.label}
-            role="group"
-            aria-label={g.label}
-            className={clsx("grid grid-cols-subgrid content-start gap-y-2", g.platforms.length <= 4 ? "col-span-full 2xl:col-span-4" : "col-span-full")}
-          >
-            <button
-              onClick={() => toggleGroup(g.platforms)}
-              className="col-span-full justify-self-start text-[11.5px] font-medium uppercase tracking-wide text-ink-3 hover:text-ink"
+      <div className="grid gap-3 2xl:grid-cols-2">
+        {PLATFORM_GROUPS.map((g) => {
+          const wide = g.platforms.length > 4;
+          return (
+            <div
+              key={g.label}
+              role="group"
+              aria-label={g.label}
+              className={clsx("rounded-lg border border-line-strong bg-surface-2/40 p-3", wide && "2xl:col-span-2")}
             >
-              {g.label}
-            </button>
-            <div className="contents">
-              {g.platforms.map((p) => {
-                const on = !all && isOn(p);
-                return (
-                  <button
-                    key={p}
-                    aria-pressed={isOn(p)}
-                    onClick={() => toggle(p)}
-                    title={PLATFORM_LABEL[p]}
-                    className={clsx(
-                      "flex h-9 w-full min-w-0 items-center gap-2 rounded-md border px-3 text-left text-[12.5px] font-medium transition-colors",
-                      on
-                        ? "border-accent bg-accent-soft text-ink"
-                        : all
-                          ? "border-line bg-surface text-ink-2 hover:border-line-strong hover:text-ink"
-                          : "border-line bg-surface text-ink-3 hover:border-line-strong hover:text-ink",
-                    )}
-                  >
-                    <PlatformLogo platform={p} size={16} className={clsx("shrink-0", !all && !on && "opacity-45 grayscale")} />
-                    <span className="truncate">{PLATFORM_LABEL[p]}</span>
-                  </button>
-                );
-              })}
+              <button
+                onClick={() => toggleGroup(g.platforms)}
+                className="mb-2.5 block text-[11.5px] font-medium uppercase tracking-wide text-ink-3 hover:text-ink"
+              >
+                {g.label}
+              </button>
+              <div className={clsx("grid grid-cols-2 gap-2 sm:grid-cols-4", wide && "2xl:grid-cols-8")}>
+                {g.platforms.map((p) => {
+                  const on = !all && isOn(p);
+                  return (
+                    <button
+                      key={p}
+                      aria-pressed={isOn(p)}
+                      onClick={() => toggle(p)}
+                      title={PLATFORM_LABEL[p]}
+                      className={clsx(
+                        "flex h-9 w-full min-w-0 items-center gap-2 rounded-md border px-2.5 text-left text-[12.5px] font-medium shadow-[0_1px_2px_rgb(16_24_40/0.05)] transition-colors",
+                        on
+                          ? "border-accent bg-accent-soft text-ink"
+                          : all
+                            ? "border-line-strong bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+                            : "border-line-strong bg-surface text-ink-3 hover:border-ink-3 hover:text-ink",
+                      )}
+                    >
+                      <PlatformLogo platform={p} size={16} className={clsx("shrink-0", !all && !on && "opacity-45 grayscale")} />
+                      <span className="min-w-0 flex-1 truncate">{PLATFORM_LABEL[p]}</span>
+                      {/* Checkbox: ticked when the platform is included in the search. */}
+                      <span
+                        aria-hidden
+                        className={clsx(
+                          "flex size-4 shrink-0 items-center justify-center rounded-[4px] border",
+                          isOn(p) ? "border-accent bg-accent text-accent-ink" : "border-line-strong bg-surface",
+                        )}
+                      >
+                        {isOn(p) && <Check className="size-3" strokeWidth={3} />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
