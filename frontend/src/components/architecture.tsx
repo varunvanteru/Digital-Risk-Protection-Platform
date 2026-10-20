@@ -85,10 +85,10 @@ function Diagram() {
             <b className="text-ink">Social, official APIs:</b> Telegram (public t.me pages), YouTube Data API, Reddit API
           </Li>
           <Li>
-            <b className="text-ink">Social, web search:</b> Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat public pages, through the Brave Search API
+            <b className="text-ink">Social, web search:</b> Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh public pages, through the Brave Search API; Discord invites checked with Discord&apos;s invite lookup
           </Li>
           <Li>
-            <b className="text-ink">Not connected:</b> WhatsApp, Discord, Moj and Josh (no public search). No sample data anywhere.
+            <b className="text-ink">Not connected:</b> a source without its API key, or awaiting the platform&apos;s approval (Reddit). No sample data anywhere.
           </Li>
           <Li>Each source runs on its own: 10-second timeout, 2 retries. A failed live source falls back to its last good results (Cached); otherwise it is marked Down and the scan continues.</Li>
         </Box>

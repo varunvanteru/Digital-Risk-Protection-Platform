@@ -6,11 +6,11 @@
  *   Telegram    public t.me pages for usernames built from the brand name (no key needed)
  *   YouTube     YouTube Data API v3: channel search, then channel details (YOUTUBE_API_KEY)
  *   Reddit      Reddit API, app-only OAuth: user and community search (REDDIT_CLIENT_ID / _SECRET)
- *   Web search  Brave Search API, one site: query per platform, for platforms whose own search
- *               API is closed (Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora,
- *               Snapchat, ShareChat). Finds public, indexed profiles and pages.
- *
- * WhatsApp, Discord, Moj and Josh offer no public search or API: NotConnected.
+ *   Web search  Brave Search API, site: queries per platform, for platforms whose own search is
+ *               closed or missing (Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora,
+ *               Snapchat, ShareChat, WhatsApp Channels and group invites, Moj, Josh). Finds
+ *               public, indexed profiles and pages.
+ *   Discord     invites found by web search, each checked with Discord's public invite lookup.
  */
 
 import { settings } from "../config";
@@ -297,16 +297,24 @@ export function redditCommunity(s: Record<string, any>, sourceId = "src_reddit")
 
 // ---------- Web search (Brave Search API) ----------
 
-export const WEB_SITES: Record<string, string> = {
-  instagram: "instagram.com",
-  facebook: "facebook.com",
-  x: "x.com",
-  linkedin: "linkedin.com",
-  threads: "threads.net",
-  pinterest: "pinterest.com",
-  quora: "quora.com",
-  snapchat: "snapchat.com",
-  sharechat: "sharechat.com",
+// The site(s) searched for each platform. One site: two queries (the brand, and the brand with the
+// words impersonators use). Several sites: one query each.
+export const WEB_SITES: Record<string, string[]> = {
+  instagram: ["instagram.com"],
+  facebook: ["facebook.com"],
+  x: ["x.com"],
+  linkedin: ["linkedin.com"],
+  threads: ["threads.net"],
+  pinterest: ["pinterest.com"],
+  quora: ["quora.com"],
+  snapchat: ["snapchat.com"],
+  sharechat: ["sharechat.com"],
+  // Public WhatsApp Channel pages, and group invite links that are posted publicly.
+  whatsapp: ["whatsapp.com", "chat.whatsapp.com"],
+  // Public invite links; each is then checked with Discord's own invite lookup.
+  discord: ["discord.com", "discord.gg"],
+  moj: ["mojapp.in"],
+  josh: ["myjosh.in"],
 };
 
 // First path segments that are site pages, not accounts.
@@ -355,6 +363,22 @@ export function webProfileHandle(platform: string, url: string): string | null {
       return first.startsWith("@") ? ok(first.slice(1), /^[A-Za-z0-9._\-]{3,15}$/) : null;
     case "sharechat":
       return first === "profile" ? ok(segs[1], /^[A-Za-z0-9._\-]{2,}$/) : null;
+    case "whatsapp":
+      // whatsapp.com/channel/<id> (a channel); chat.whatsapp.com/<code> (a group invite)
+      if (host === "chat.whatsapp.com") return ok(first, /^[A-Za-z0-9]{10,40}$/) && `group:${first}`;
+      return host === "whatsapp.com" && first === "channel" ? ok(segs[1], /^[A-Za-z0-9]{10,40}$/) : null;
+    case "discord":
+      // discord.gg/<code>, discord.com/invite/<code>
+      if (host === "discord.gg") return ok(first, /^[A-Za-z0-9-]{2,32}$/);
+      return host === "discord.com" && first === "invite" ? ok(segs[1], /^[A-Za-z0-9-]{2,32}$/) : null;
+    case "moj":
+      // mojapp.in/@<handle> and its videos, mojapp.in/@<handle>/video/<id>
+      return host === "mojapp.in" && first.startsWith("@") ? ok(first.slice(1), /^[A-Za-z0-9._]{2,40}$/) : null;
+    case "josh":
+      // share.myjosh.in/profile/<id>, myjosh.in/@<handle>
+      if (!host.endsWith("myjosh.in")) return null;
+      if (first === "profile") return ok(segs[1], /^[A-Za-z0-9._\-]{2,60}$/);
+      return first.startsWith("@") ? ok(first.slice(1), /^[A-Za-z0-9._]{2,40}$/) && first : null;
   }
   return null;
 }
@@ -363,6 +387,7 @@ export function webProfileHandle(platform: string, url: string): string | null {
 export function webProfileUrl(platform: string, handle: string): string {
   if (handle.startsWith("groups/")) return `https://www.facebook.com/${handle}`;
   if (platform === "linkedin" && /^(in|showcase)\//.test(handle)) return `https://www.linkedin.com/${handle}`;
+  if (platform === "whatsapp") return handle.startsWith("group:") ? `https://chat.whatsapp.com/${handle.slice(6)}` : `https://whatsapp.com/channel/${handle}`;
   if (handle.startsWith("space:")) return `https://${handle.slice(6)}.quora.com`;
   const urls: Record<string, string> = {
     instagram: `https://www.instagram.com/${handle}/`,
@@ -374,6 +399,9 @@ export function webProfileUrl(platform: string, handle: string): string {
     quora: `https://www.quora.com/profile/${handle}`,
     snapchat: `https://www.snapchat.com/add/${handle}`,
     sharechat: `https://sharechat.com/profile/${handle}`,
+    discord: `https://discord.gg/${handle}`,
+    moj: `https://mojapp.in/@${handle}`,
+    josh: handle.startsWith("@") ? `https://myjosh.in/${handle}` : `https://share.myjosh.in/profile/${handle}`,
   };
   return urls[platform];
 }
@@ -477,15 +505,73 @@ export class WebSearchLive implements Connector {
   async fetch(keywords: string[]): Promise<Candidate[]> {
     const reason = this.notConnected();
     if (reason) throw new SourceNotConnected(reason);
-    const site = WEB_SITES[this.platform];
-    // Two queries per platform: the brand name, and the brand with the words impersonators use.
+    const sites = WEB_SITES[this.platform];
     const name = keywords[0];
-    const results = [
-      ...(await braveSearch(`${name} site:${site}`)),
-      ...(await braveSearch(`${name} (official OR support OR "customer care" OR helpline) site:${site}`)),
-    ];
-    return webCandidates(this.platform, results, this.sourceId);
+    // One site: the brand name, and the brand with the words impersonators use. Several: the brand on each.
+    const queries =
+      sites.length === 1
+        ? [`${name} site:${sites[0]}`, `${name} (official OR support OR "customer care" OR helpline) site:${sites[0]}`]
+        : sites.map((s) => `${name} site:${s}`);
+    const results: WebResult[] = [];
+    for (const query of queries) results.push(...(await braveSearch(query)));
+    return this.finish(webCandidates(this.platform, results, this.sourceId));
   }
+
+  /** Platform-specific checks on the accounts found (Discord: is the invite still valid?). */
+  protected async finish(cands: Candidate[]): Promise<Candidate[]> {
+    return cands;
+  }
+}
+
+/**
+ * Discord: invites found by web search, each checked with Discord's public invite lookup
+ * (discord.com/api/invites/<code>, no key needed). Expired and revoked invites are dropped; for the
+ * rest, the server's real name, description, icon and member count replace the search snippet.
+ * Several invites to the same server count once.
+ */
+export class DiscordLive extends WebSearchLive {
+  constructor() {
+    super("src_discord", "discord");
+  }
+
+  protected async finish(cands: Candidate[]): Promise<Candidate[]> {
+    const servers = new Map<string, Candidate>();
+    await mapLimit(cands.slice(0, 25), 2, async (c) => {
+      let r: Response;
+      try {
+        r = await fetch(`https://discord.com/api/v10/invites/${encodeURIComponent(c.handle)}?with_counts=true`, {
+          headers: { "User-Agent": "IMPOSTR brand monitor (https://impostr.live, 1.0)" },
+          signal: AbortSignal.timeout(8000),
+        });
+      } catch {
+        return; // no answer: leave it out rather than guess
+      }
+      if (!r.ok) return; // 404: the invite expired or was revoked
+      const inv = await r.json().catch(() => null);
+      const server = discordInvite(inv, c);
+      if (server && !servers.has(server.publisherId ?? server.identifier)) servers.set(server.publisherId ?? server.identifier, server);
+    });
+    return [...servers.values()];
+  }
+}
+
+/** A Discord invite lookup -> the server it leads to (null for an invite to a group DM or with no server). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function discordInvite(inv: Record<string, any> | null, found: Candidate): Candidate | null {
+  const g = inv?.guild;
+  if (!inv || !g?.id || !g?.name) return null;
+  const description = g.description ?? "";
+  return candidate({
+    ...found,
+    displayName: g.name,
+    bio: firstChars([description, found.bio].filter(Boolean).join(" "), 2000),
+    audience: Math.trunc(Number(inv.approximate_member_count ?? 0)),
+    // The server's ID ties several invites to one server.
+    publisherId: String(g.id),
+    image: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=256` : null,
+    links: unique([...found.links, ...linksIn(description)]),
+    verified: Array.isArray(g.features) && (g.features.includes("VERIFIED") || g.features.includes("PARTNERED")),
+  });
 }
 
 // ---------- platforms with no public search ----------

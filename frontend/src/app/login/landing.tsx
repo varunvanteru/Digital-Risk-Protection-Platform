@@ -97,7 +97,7 @@ const FAQ = [
   },
   {
     q: "Where do the results come from?",
-    a: "Every result is real and found live. Google Play, the Apple App Store and Telegram are searched directly, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for their public pages. WhatsApp, Discord, Moj and Josh have no public search, so they are shown as not connected.",
+    a: "Every result is real and found live. Google Play, the Apple App Store and Telegram are searched directly, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Discord, Moj and Josh through a web search for their public pages.",
   },
   {
     q: "Will it flag the brand’s real accounts?",

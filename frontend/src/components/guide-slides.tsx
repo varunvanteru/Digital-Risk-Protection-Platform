@@ -609,7 +609,7 @@ const SLIDES: Slide[] = [
           rows={[
             ["Live", "Searched just now on the real platform"],
             ["Cached", "The live source was down, so its last good results are used"],
-            ["Not connected", "Not searched: the platform has no public search (WhatsApp, Discord, Moj, Josh), or its API key is not set"],
+            ["Not connected", "Not searched: its API key is not set, or the platform has not approved API access yet (Reddit)"],
             ["Down", "Unavailable for this scan"],
           ]}
         />
@@ -650,7 +650,7 @@ const SLIDES: Slide[] = [
     body: (
       <Points
         items={[
-          ["Where do social results come from?", "All live. Telegram is read from its public pages, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for their public pages. WhatsApp, Discord, Moj and Josh have no public search, so they are shown as not connected."],
+          ["Where do social results come from?", "All live. Telegram is read from its public pages, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh through a web search for their public pages. Discord invites found that way are checked with Discord's own invite lookup. Only what search engines have indexed can be found, so new or private accounts may not appear."],
           ["Why does a result score exactly 39?", "It hit a cap: either only one signal was strong, or it is openly a fan, news, review or third-party item."],
           ["Can a real official account be flagged?", "Official verification runs first and the accuracy test checks it: 0 of 19 official assets are flagged. If something genuine ever slips through, It's official adds it to the allowlist."],
           ["Does anyone else see my searches?", "No. Each browser has its own private workspace."],

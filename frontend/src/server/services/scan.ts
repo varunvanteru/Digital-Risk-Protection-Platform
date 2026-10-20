@@ -14,7 +14,7 @@
 import { settings } from "../config";
 import { candidate, firstChars, SourceUnavailable, type Candidate, type Connector } from "../connectors/base";
 import { SocialDataset, StoreDataset } from "../connectors/datasets";
-import { NotConnected, SourceNotConnected, RedditLive, TelegramLive, WebSearchLive, YouTubeLive } from "../connectors/live";
+import { DiscordLive, NotConnected, SourceNotConnected, RedditLive, TelegramLive, WebSearchLive, YouTubeLive } from "../connectors/live";
 import { AppStoreLive, GooglePlayLive } from "../connectors/stores";
 import { exec, js, one, q } from "../db";
 import { allowKey, emptyContext, type BrandContext } from "../detection/context";
@@ -36,18 +36,18 @@ const LIVE_CONNECTORS: Record<string, Connector> = {
   src_x: new WebSearchLive("src_x", "x"),
   src_fb: new WebSearchLive("src_fb", "facebook"),
   src_tg: new TelegramLive(),
-  src_wa: new NotConnected("src_wa", "Not connected: WhatsApp has no public search or API for channels"),
+  src_wa: new WebSearchLive("src_wa", "whatsapp"),
   src_threads: new WebSearchLive("src_threads", "threads"),
   src_li: new WebSearchLive("src_li", "linkedin"),
   src_snap: new WebSearchLive("src_snap", "snapchat"),
   src_yt: new YouTubeLive(),
   src_sc: new WebSearchLive("src_sc", "sharechat"),
-  src_moj: new NotConnected("src_moj", "Not connected: Moj has no public search or API"),
-  src_josh: new NotConnected("src_josh", "Not connected: Josh has no public search or API"),
+  src_moj: new WebSearchLive("src_moj", "moj"),
+  src_josh: new WebSearchLive("src_josh", "josh"),
   src_pin: new WebSearchLive("src_pin", "pinterest"),
   src_reddit: new RedditLive(),
   src_quora: new WebSearchLive("src_quora", "quora"),
-  src_discord: new NotConnected("src_discord", "Not connected: Discord has no public server search or API"),
+  src_discord: new DiscordLive(),
 };
 
 /** Automated tests only: curated fixtures stand in for the social sources, so runs are repeatable and offline. */

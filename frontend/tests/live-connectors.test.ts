@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cleanTitle,
+  discordInvite,
   NotConnected,
   parseAudience,
   parseTelegramPage,
@@ -131,12 +132,28 @@ describe("web search results", () => {
       ["quora", "https://www.quora.com/What-is-PhonePe", null],
       ["snapchat", "https://www.snapchat.com/add/paytm_offers", "paytm_offers"],
       ["sharechat", "https://sharechat.com/profile/phonepe_rewards", "phonepe_rewards"],
+      // Shapes from the live search
+      ["whatsapp", "https://www.whatsapp.com/channel/0029VaPhonePe01Offers", "0029VaPhonePe01Offers"],
+      ["whatsapp", "https://chat.whatsapp.com/KfGqPaytmRefund12345", "group:KfGqPaytmRefund12345"],
+      ["whatsapp", "https://api.whatsapp.com/send?text=PhonePe", null],
+      ["whatsapp", "https://faq.whatsapp.com/1324084875126592/", null],
+      ["discord", "https://discord.com/invite/smartphones-542326846239277064", "smartphones-542326846239277064"],
+      ["discord", "https://discord.gg/paytmhelp", "paytmhelp"],
+      ["discord", "https://support.discord.com/hc/en-us/community/posts/1", null],
+      ["moj", "https://mojapp.in/@paytm_offers", "paytm_offers"],
+      ["moj", "https://mojapp.in/video/1782384542", null],
+      ["josh", "https://share.myjosh.in/profile/954b6e78-2a5d-4493-867d-a619f3de4951", "954b6e78-2a5d-4493-867d-a619f3de4951"],
+      ["josh", "https://share.myjosh.in/tags/pleasebus", null],
     ];
     for (const [platform, url, handle] of cases) expect([platform, url, webProfileHandle(platform, url)]).toEqual([platform, url, handle]);
     expect(webProfileUrl("facebook", "100089999999999")).toBe("https://www.facebook.com/profile.php?id=100089999999999");
     expect(webProfileUrl("quora", "space:phonepehelp")).toBe("https://phonepehelp.quora.com");
     expect(webProfileUrl("linkedin", "in/manjeet-singh-a60752159")).toBe("https://www.linkedin.com/in/manjeet-singh-a60752159");
     expect(webProfileUrl("linkedin", "paytmmoney")).toBe("https://www.linkedin.com/company/paytmmoney");
+    expect(webProfileUrl("whatsapp", "0029VaPhonePe01Offers")).toBe("https://whatsapp.com/channel/0029VaPhonePe01Offers");
+    expect(webProfileUrl("whatsapp", "group:KfGqPaytmRefund12345")).toBe("https://chat.whatsapp.com/KfGqPaytmRefund12345");
+    expect(webProfileUrl("discord", "paytmhelp")).toBe("https://discord.gg/paytmhelp");
+    expect(webProfileUrl("moj", "paytm_offers")).toBe("https://mojapp.in/@paytm_offers");
   });
 
   it("cleans the page titles platforms use", () => {
@@ -168,6 +185,28 @@ describe("web search results", () => {
     });
     expect(cs[0].bio).toContain("Official helpline, DM for refund");
     expect(cs[0].bio).toContain("Call 9800000000 for KYC");
+  });
+});
+
+describe("Discord invites", () => {
+  const found = webCandidates("discord", [{ title: "Join the Paytm Help Discord Server!", url: "https://discord.gg/paytmhelp", description: "Refund and KYC help" }], "src_discord")[0];
+
+  it("takes the server's real name, description, icon and member count from Discord's invite lookup", () => {
+    const c = discordInvite(
+      { approximate_member_count: 1234, guild: { id: "1029384756", name: "Paytm Help Desk", description: "Official refund help, DM admin https://wa.me/919800000000", icon: "abc123", features: [] } },
+      found,
+    )!;
+    expect(c).toMatchObject({
+      platform: "discord", identifier: "paytmhelp", url: "https://discord.gg/paytmhelp", displayName: "Paytm Help Desk",
+      audience: 1234, publisherId: "1029384756", image: "https://cdn.discordapp.com/icons/1029384756/abc123.png?size=256", verified: false,
+    });
+    expect(c.bio).toContain("Official refund help");
+    expect(c.links).toContain("https://wa.me/919800000000");
+  });
+
+  it("drops invites that lead to no server", () => {
+    expect(discordInvite(null, found)).toBeNull();
+    expect(discordInvite({ channel: { id: "1" } }, found)).toBeNull();
   });
 });
 

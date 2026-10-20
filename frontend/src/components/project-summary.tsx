@@ -99,8 +99,8 @@ export function ProjectSummary() {
       </ul>
 
       <p>
-        <b>Data disclosure:</b> everything shown is found live; there is no sample data. WhatsApp, Discord, Moj and Josh have no public search or API, so
-        they are shown as not connected. A source whose API key is not set is shown as not connected too, never filled with made-up results. The
+        <b>Data disclosure:</b> everything shown is found live; there is no sample data. WhatsApp, Discord, Moj and Josh have no search API, so their
+        public pages are found through web search. A source whose API key is not set is shown as not connected, never filled with made-up results. The
         Accuracy page runs a separate labelled test set, marked as such.
       </p>
     </section>
