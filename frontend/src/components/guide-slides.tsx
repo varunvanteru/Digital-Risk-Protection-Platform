@@ -112,7 +112,7 @@ function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
 }
 
 const Go = ({ href, children }: { href: string; children: ReactNode }) => (
-  <Link href={href} className="font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">
+  <Link href={href} className="ext-link font-medium">
     {children}
   </Link>
 );
@@ -732,7 +732,7 @@ export function GuideSlides() {
         </div>
         <div className="flex items-center gap-3">
           {slide.href && (
-            <Link href={slide.href} className="text-[12px] font-medium text-ink-2 hover:text-ink hover:underline">
+            <Link href={slide.href} className="ext-link text-[12px] font-medium">
               Open this tab →
             </Link>
           )}

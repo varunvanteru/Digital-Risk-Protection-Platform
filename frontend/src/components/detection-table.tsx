@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CLASS_LABEL, formatShortDate, handleDisplay } from "@/lib/format";
 import { mediaUrl } from "@/lib/api";
@@ -44,6 +44,28 @@ export function Identity({ d, size = 28 }: { d: Detection; size?: number }) {
         <div className="truncate font-mono text-[11.5px] text-ink-3">{handleDisplay(d.platform, d.handle)}</div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Opens the account, page or app itself on its platform, in a new tab. It does not trigger the row's
+ * own click (which opens the detection), so both work from the same row.
+ */
+export function OpenLink({ d, className }: { d: Detection; className?: string }) {
+  if (!d.url || d.sample) return null; // curated test data has no real page
+  return (
+    <a
+      href={d.url}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      title={`Open on the platform: ${d.url}`}
+      className={clsx("ext-link inline-flex items-center gap-1 whitespace-nowrap text-[12.5px] font-medium", className)}
+    >
+      Open
+      <ExternalLink className="size-3.5" />
+    </a>
   );
 }
 
@@ -93,7 +115,7 @@ export function DetectionTable({
       {/* Phones: one stacked row per detection, nothing cut off at the edge */}
       <ul className="divide-y divide-line md:hidden">
         {rows.map((d) => (
-          <li key={d.id}>
+          <li key={d.id} className="relative">
             <button
               onClick={() => open(d.id)}
               className={clsx(
@@ -113,12 +135,15 @@ export function DetectionTable({
                 <span className="flex items-center gap-3">
                   {!compact && <StatusBadge status={d.status} />}
                   <span className="tabular">{formatShortDate(d.firstSeen)}</span>
+                  {/* room for the Open link, which sits outside the button (a link cannot be inside one) */}
+                  {d.url && !d.sample && <span aria-hidden className="w-12" />}
                   <span aria-hidden className="float-btn size-7 [&_svg]:size-3.5">
                     <ArrowRight />
                   </span>
                 </span>
               </div>
             </button>
+            <OpenLink d={d} className="absolute bottom-[18px] right-[52px]" />
           </li>
         ))}
       </ul>
@@ -133,6 +158,9 @@ export function DetectionTable({
             <th className={th}>Strongest evidence</th>
             <SortHeader label="First seen" k="firstSeen" sort={sort} onSort={onSort} className={clsx(th, "w-[96px]")} />
             {!compact && <th className={clsx(th, "w-[170px]")}>Status</th>}
+            <th className={clsx(th, "w-[84px]")}>
+              <span className="sr-only">Link</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -166,6 +194,9 @@ export function DetectionTable({
                   <StatusBadge status={d.status} />
                 </td>
               )}
+              <td className="px-4 py-2.5 text-right">
+                <OpenLink d={d} />
+              </td>
             </tr>
           ))}
         </tbody>
