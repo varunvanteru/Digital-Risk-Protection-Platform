@@ -677,6 +677,26 @@
 .lp-link:hover {
   text-decoration: underline;
 }
+/* The work-email message under the hero's email box */
+.lp-cta-error {
+  max-width: 600px;
+  margin: -0.5rem auto 1.25rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  background: rgba(20, 0, 0, 0.72);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  text-align: left;
+  backdrop-filter: blur(6px);
+}
+.lp-cta-error .lp-error {
+  margin: 0;
+  line-height: 1.5;
+}
+.lp-link-inline {
+  display: inline;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .lp-error {
   color: #f87171;
   font-size: 0.875rem;

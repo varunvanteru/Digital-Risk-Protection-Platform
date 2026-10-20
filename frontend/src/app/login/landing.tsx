@@ -2,6 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { account, ApiError } from "@/lib/api";
+import { isPersonalEmail, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
+
+/** An error message; the work-email one ends with a button that opens the demo instead. */
+function FormError({ message, onDemo }: { message: string; onDemo?: () => void }) {
+  const isWorkEmail = message === WORK_EMAIL_MESSAGE;
+  return (
+    <p className="lp-error" role="alert">
+      {isWorkEmail ? message.replace(/ Just looking around\? Continue as demo\.$/, "") : message}
+      {isWorkEmail && onDemo && (
+        <>
+          {" "}Just looking around?{" "}
+          <button type="button" className="lp-link lp-link-inline" onClick={onDemo}>
+            Continue as demo &rarr;
+          </button>
+        </>
+      )}
+    </p>
+  );
+}
 
 /** Where to go after signing in: the page that sent the visitor here, if it is one of ours. */
 function nextPath(): string {
@@ -41,31 +60,53 @@ function Field(props: { id: string; label: string; type?: string; value: string;
   );
 }
 
-function EmailCta({ id, onSubmit }: { id: string; onSubmit: (email: string) => void }) {
+function EmailCta({ id, onSubmit, onDemo }: { id: string; onSubmit: (email: string) => void; onDemo: () => void }) {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
   return (
-    <form
-      className="lp-cta"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(email.trim());
-      }}
-    >
-      <div className="lp-field">
-        <input id={id} className="lp-input" type="email" required autoComplete="email" placeholder=" " value={email} onChange={(e) => setEmail(e.target.value)} />
-        <label htmlFor={id} className="lp-float">
-          Email address
-        </label>
-      </div>
-      <button type="submit" className="lp-btn-red lp-btn-big">
-        Get Started
-        <Chevron />
-      </button>
-    </form>
+    <>
+      <form
+        className="lp-cta"
+        onSubmit={(e) => {
+          e.preventDefault();
+          // Accounts are for companies: say so here, before the sign-up form opens.
+          if (isPersonalEmail(email)) return setError(WORK_EMAIL_MESSAGE);
+          onSubmit(email.trim());
+        }}
+      >
+        <div className="lp-field">
+          <input
+            id={id}
+            className="lp-input"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder=" "
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
+          />
+          <label htmlFor={id} className="lp-float">
+            Work email
+          </label>
+        </div>
+        <button type="submit" className="lp-btn-red lp-btn-big">
+          Get Started
+          <Chevron />
+        </button>
+      </form>
+      {error && (
+        <div className="lp-cta-error">
+          <FormError message={error} onDemo={onDemo} />
+        </div>
+      )}
+    </>
   );
 }
 
-function SignInForm({ onSwitch }: { onSwitch: () => void }) {
+function SignInForm({ onSwitch, onDemo }: { onSwitch: () => void; onDemo: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,6 +114,7 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (isPersonalEmail(email)) return setError(WORK_EMAIL_MESSAGE);
     setBusy(true);
     setError(null);
     try {
@@ -90,13 +132,9 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
         Sign In
       </h2>
       <form onSubmit={submit} noValidate={false}>
-        <Field id="si-email" label="Email address" type="email" value={email} onChange={setEmail} autoComplete="email" autoFocus />
+        <Field id="si-email" label="Work email" type="email" value={email} onChange={setEmail} autoComplete="email" autoFocus />
         <Field id="si-pass" label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />
-        {error && (
-          <p className="lp-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError message={error} onDemo={onDemo} />}
         <button type="submit" className="lp-btn-red lp-btn-block" disabled={busy}>
           {busy ? "Signing in…" : "Sign In"}
         </button>
@@ -114,7 +152,17 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
   );
 }
 
-function SignUpForm({ email: initialEmail, onSwitch, onDone }: { email: string; onSwitch: () => void; onDone: (name: string) => void }) {
+function SignUpForm({
+  email: initialEmail,
+  onSwitch,
+  onDone,
+  onDemo,
+}: {
+  email: string;
+  onSwitch: () => void;
+  onDone: (name: string) => void;
+  onDemo: () => void;
+}) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
@@ -123,6 +171,7 @@ function SignUpForm({ email: initialEmail, onSwitch, onDone }: { email: string; 
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (isPersonalEmail(email)) return setError(WORK_EMAIL_MESSAGE);
     setBusy(true);
     setError(null);
     try {
@@ -141,17 +190,13 @@ function SignUpForm({ email: initialEmail, onSwitch, onDone }: { email: string; 
       </h2>
       <form onSubmit={submit}>
         <Field id="su-name" label="Your name" value={name} onChange={setName} autoComplete="name" autoFocus />
-        <Field id="su-email" label="Email address" type="email" value={email} onChange={setEmail} autoComplete="email" />
+        <Field id="su-email" label="Work email" type="email" value={email} onChange={setEmail} autoComplete="email" />
         <Field id="su-pass" label="Password (at least 8 characters)" type="password" value={password} onChange={setPassword} autoComplete="new-password" minLength={8} />
-        {error && (
-          <p className="lp-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <FormError message={error} onDemo={onDemo} />}
         <button type="submit" className="lp-btn-red lp-btn-block" disabled={busy}>
           {busy ? "Creating account…" : "Create account"}
         </button>
-        <p className="lp-modal-hint">Free. Your password is stored only as a salted hash.</p>
+        <p className="lp-modal-hint">Free for companies: use your work email. Your password is stored only as a salted hash.</p>
       </form>
       <div className="lp-modal-foot">
         <p>
@@ -257,8 +302,8 @@ export function Landing({ className }: { className?: string }) {
             to be your brand
           </h1>
           <p className="lp-subheading">Fake profiles, fake brand pages, scam accounts and look-alike apps, each scored 0 to 100 with the evidence.</p>
-          <p className="lp-subtext">Enter your email to create a free account, or look around first in a demo workspace.</p>
-          <EmailCta id="hero-email" onSubmit={signUp} />
+          <p className="lp-subtext">Enter your work email to create a free company account, or look around first in a demo workspace.</p>
+          <EmailCta id="hero-email" onSubmit={signUp} onDemo={continueAsDemo} />
           <button type="button" className="lp-demo" onClick={continueAsDemo} disabled={demoBusy}>
             {demoBusy ? "Opening the demo…" : "Continue as demo, no account needed"} &rarr;
           </button>
@@ -295,9 +340,14 @@ export function Landing({ className }: { className?: string }) {
                 &times;
               </button>
             )}
-            {modal.kind === "signin" && <SignInForm onSwitch={() => signUp()} />}
+            {modal.kind === "signin" && <SignInForm onSwitch={() => signUp()} onDemo={continueAsDemo} />}
             {modal.kind === "signup" && (
-              <SignUpForm email={modal.email} onSwitch={() => setModal({ kind: "signin" })} onDone={(name) => setModal({ kind: "welcome", name })} />
+              <SignUpForm
+                email={modal.email}
+                onSwitch={() => setModal({ kind: "signin" })}
+                onDone={(name) => setModal({ kind: "welcome", name })}
+                onDemo={continueAsDemo}
+              />
             )}
             {modal.kind === "welcome" && <Welcome name={modal.name} />}
           </div>

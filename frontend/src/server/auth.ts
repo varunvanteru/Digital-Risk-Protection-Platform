@@ -9,7 +9,10 @@
  */
 
 import { createHash, randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
+import { resolveMx } from "node:dns/promises";
 import { promisify } from "node:util";
+import { emailDomain, isPersonalEmail, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
+import { settings } from "./config";
 import { exec, one } from "./db";
 import { utcnow } from "./util";
 import { COOKIE as WS_COOKIE, workspaceCookie } from "./workspace";
@@ -61,9 +64,31 @@ export function checkSignUp(raw: unknown): { name: string; email: string; passwo
   const password = typeof b.password === "string" ? b.password : "";
   if (name.length < 2 || name.length > 80) return "Enter your name (2 to 80 characters).";
   if (!EMAIL.test(email) || email.length > 160) return "Enter a valid email address.";
+  // Accounts are for companies; anyone can still explore with Continue as demo.
+  if (isPersonalEmail(email)) return WORK_EMAIL_MESSAGE;
   if (password.length < 8) return "Use a password of at least 8 characters.";
   if (password.length > 128) return "Use a password of at most 128 characters.";
   return { name, email, password };
+}
+
+/**
+ * Can the company's domain receive email? A domain with no mail server (e.g. a made-up company)
+ * is refused. If DNS itself does not answer, the address is given the benefit of the doubt.
+ * Skipped in the offline test mode.
+ */
+export async function domainReceivesMail(email: string): Promise<boolean> {
+  if (settings.dataMode === "fixtures") return true;
+  try {
+    const mx = await Promise.race([
+      resolveMx(emailDomain(email)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+    ]);
+    // null: DNS was too slow to answer; a real "no such domain / no mail server" answer throws below.
+    return mx === null || mx.some((r) => r.exchange && r.exchange !== ".");
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    return !(code === "ENOTFOUND" || code === "ENODATA" || code === "NXDOMAIN");
+  }
 }
 
 /* ---------- cookies ---------- */
@@ -134,6 +159,9 @@ export async function handleAuth(method: string, path: string, req: Request, cur
   if (method === "POST" && path === "auth/signup") {
     const input = checkSignUp(body);
     if (typeof input === "string") return { status: 422, body: { detail: input }, cookies: [] };
+    if (!(await domainReceivesMail(input.email))) {
+      return { status: 422, body: { detail: `${emailDomain(input.email)} does not receive email. Enter your company email address.` }, cookies: [] };
+    }
     if (await one("SELECT id FROM users WHERE email = ?", [input.email])) {
       return { status: 409, body: { detail: "An account with this email already exists. Sign in instead." }, cookies: [] };
     }
@@ -155,6 +183,8 @@ export async function handleAuth(method: string, path: string, req: Request, cur
     const b = body as Record<string, unknown>;
     const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
     const password = typeof b.password === "string" ? b.password : "";
+    // Same rule as sign-up, so a personal address gets the helpful message instead of "not correct".
+    if (isPersonalEmail(email)) return { status: 422, body: { detail: WORK_EMAIL_MESSAGE }, cookies: [] };
     const key = `${req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "local"}|${email}`;
     if (tooManyFailures(key)) return { status: 429, body: { detail: "Too many attempts. Try again in a few minutes." }, cookies: [] };
     const user = email ? await one<{ id: string; name: string; password_hash: string; workspace_id: string }>("SELECT id, name, password_hash, workspace_id FROM users WHERE email = ?", [email]) : null;

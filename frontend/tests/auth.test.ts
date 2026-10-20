@@ -5,6 +5,7 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET, POST } from "@/app/api/[...path]/route";
+import { isPersonalEmail, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
 import { checkSignUp, hashPassword, verifyPassword } from "@/server/auth";
 import { one } from "@/server/db";
 import { ready } from "@/server/init";
@@ -77,6 +78,19 @@ describe("accounts", () => {
     expect(row.password_hash).not.toContain("s3cret-pass");
     // Only a hash of the session token is stored.
     expect(await one("SELECT 1 FROM sessions WHERE token_hash = ?", [session])).toBeNull();
+  });
+
+  it("accepts only work emails, at sign-up and at sign-in", async () => {
+    for (const personal of ["asha@gmail.com", "asha@yahoo.co.in", "asha@mail.yahoo.co.in", "asha@outlook.com", "asha@rediffmail.com", "asha@mailinator.com"]) {
+      const up = await api("POST", "auth/signup", { name: "Asha Rao", email: personal, password: "s3cret-pass" });
+      expect([personal, up.status]).toEqual([personal, 422]);
+      expect(up.body.detail).toBe(WORK_EMAIL_MESSAGE);
+      const inn = await api("POST", "auth/login", { email: personal, password: "s3cret-pass" });
+      expect([personal, inn.status, inn.body.detail]).toEqual([personal, 422, WORK_EMAIL_MESSAGE]);
+    }
+    expect(isPersonalEmail("analyst@fourcrestsolutions.in")).toBe(false);
+    expect(isPersonalEmail("analyst@gmail.co")).toBe(false); // not the free service's domain
+    expect(isPersonalEmail("ASHA@GMAIL.COM")).toBe(true);
   });
 
   it("rejects a second account with the same email (any case)", async () => {
