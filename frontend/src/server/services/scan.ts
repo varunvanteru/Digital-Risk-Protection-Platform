@@ -200,6 +200,7 @@ export async function fetchWithRetries(source: SourceRow, keywords: string[]): P
       if (LIVE_SOURCES.has(source.id)) await saveCache(source.id, keywords, items);
       return [items, pyRound(performance.now() - start), attempt, null];
     } catch (e) {
+      if (e instanceof SourceNotConnected) throw e; // a setup problem: retrying or serving the cache would hide it
       lastError = e instanceof SourceTimeout ? new SourceUnavailable(e.message) : (e as Error);
     }
     await sleep(500 * (attempt + 1));
@@ -427,7 +428,8 @@ async function upsert(brandId: string, scanId: string, c: Candidate, ev: Evaluat
   const fields = {
     source_id: c.sourceId, channel: c.channel, cls: ev.cls, display_name: firstChars(c.displayName, 200), handle: c.handle,
     // icon_url holds up to 500 characters; a longer address (e.g. an inline image) is dropped, not truncated.
-    url: firstChars(c.url, 500), mark: ev.mark, icon_url: c.image && c.image.length <= 500 ? c.image : null, bio: c.bio, audience: c.audience, created_on: c.createdOn,
+    url: firstChars(c.url, 500), mark: ev.mark, icon_url: c.image && c.image.length <= 500 ? c.image : null, bio: c.bio,
+    audience: Math.min(Math.max(0, Math.trunc(c.audience)), 2_000_000_000), // 32-bit column created_on: c.createdOn,
     publisher: c.publisher, publisher_id: c.publisherId, links: JSON.stringify(c.links), last_seen: now, scan_id: scanId,
     signals: JSON.stringify(ev.signals), reasons: JSON.stringify(ev.reasons), checks: JSON.stringify(ev.checks),
     lookalike_domain: ev.lookalikeDomain ? 1 : 0, context_label: ev.contextLabel, score: bd.score, severity: bd.severity,

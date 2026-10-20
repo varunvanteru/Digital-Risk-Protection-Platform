@@ -66,6 +66,9 @@ describe("audience counts", () => {
     expect(parseAudience("3,201 members")).toBe(3201);
     expect(parseAudience("2M likes")).toBe(2_000_000);
     expect(parseAudience("no numbers here")).toBe(0);
+    // Phone numbers in a page name are not a follower count (a real Facebook page title).
+    expect(parseAudience("Phone pee customer care 08825176742 06291670660. 35 likes. Just for fun")).toBe(35);
+    expect(parseAudience("Call 9800000000 now, 1,204 followers")).toBe(1204);
   });
 });
 
@@ -114,10 +117,12 @@ describe("web search results", () => {
       ["facebook", "https://www.facebook.com/people/Paytm-Refund/100089999999999/", "100089999999999"],
       ["facebook", "https://www.facebook.com/groups/paytmhelp/", "groups/paytmhelp"],
       ["facebook", "https://www.facebook.com/watch/?v=1", null],
+      ["facebook", "https://www.facebook.com/community/whats-new/phonepe-not-working/", null],
       ["x", "https://x.com/PhonePeCare_/status/1799", "PhonePeCare_"],
       ["x", "https://twitter.com/search?q=phonepe", null],
       ["linkedin", "https://in.linkedin.com/company/phonepe-internet", "phonepe-internet"],
       ["linkedin", "https://www.linkedin.com/posts/someone_activity-1", null],
+      ["linkedin", "https://in.linkedin.com/in/manjeet-singh-a60752159", "in/manjeet-singh-a60752159"],
       ["threads", "https://www.threads.net/@paytm.offers/post/C9", "paytm.offers"],
       ["pinterest", "https://in.pinterest.com/paytmcashback/", "paytmcashback"],
       ["pinterest", "https://www.pinterest.com/pin/12345/", null],
@@ -130,6 +135,8 @@ describe("web search results", () => {
     for (const [platform, url, handle] of cases) expect([platform, url, webProfileHandle(platform, url)]).toEqual([platform, url, handle]);
     expect(webProfileUrl("facebook", "100089999999999")).toBe("https://www.facebook.com/profile.php?id=100089999999999");
     expect(webProfileUrl("quora", "space:phonepehelp")).toBe("https://phonepehelp.quora.com");
+    expect(webProfileUrl("linkedin", "in/manjeet-singh-a60752159")).toBe("https://www.linkedin.com/in/manjeet-singh-a60752159");
+    expect(webProfileUrl("linkedin", "paytmmoney")).toBe("https://www.linkedin.com/company/paytmmoney");
   });
 
   it("cleans the page titles platforms use", () => {
@@ -138,6 +145,10 @@ describe("web search results", () => {
     expect(cleanTitle("PhonePe Care (@PhonePeCare_) / X")).toBe("PhonePe Care");
     expect(cleanTitle("Paytm Offers on Threads")).toBe("Paytm Offers");
     expect(cleanTitle("PhonePe &amp; UPI Help - Quora")).toBe("PhonePe & UPI Help");
+    // Real titles from the live search
+    expect(cleanTitle('Paytm Travel Care on X: "@brajtomar1 Hi Braj, we are sorry"')).toBe("Paytm Travel Care");
+    expect(cleanTitle("Paytm Payments Bank (@PaytmBank) / ...")).toBe("Paytm Payments Bank");
+    expect(cleanTitle("Paytm (paytm) – Profile | Pinterest")).toBe("Paytm");
   });
 
   it("merges several results for the same account into one candidate", () => {

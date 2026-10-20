@@ -103,6 +103,21 @@ async function seedLive(): Promise<void> {
     }
   }
   await removeSampleData();
+  await syncOfficialAccounts();
+}
+
+/** Official accounts added to the list later reach every workspace's copy of the real demo brands. */
+async function syncOfficialAccounts(): Promise<void> {
+  const now = utcnow();
+  for (const b of REAL_BRANDS) {
+    for (const [platform, handle] of b.socials) {
+      await exec(
+        `INSERT IGNORE INTO official_assets (brand_id, kind, platform, identifier, handle, canonical_id, display_name, status, verified, created_at)
+         SELECT id, 'social', ?, ?, ?, ?, ?, 'official', 1, ? FROM brands WHERE id LIKE ?`,
+        [platform, handle.toLowerCase(), handle, `${platform}:${handle}`, b.name, now, `brd\\_${b.key}\\_%`],
+      );
+    }
+  }
 }
 
 /**
@@ -242,6 +257,15 @@ const REAL_BRANDS: RealBrand[] = [
       ["x", "Paytm"],
       ["facebook", "Paytm"],
       ["youtube", "paytm"],
+      // Paytm Money (a Paytm company; its app is published by Paytm's verified developer account),
+      // as listed in the footer of paytmmoney.com.
+      ["instagram", "paytmmoney"],
+      ["x", "paytmmoney"],
+      ["facebook", "PaytmMoney"],
+      ["linkedin", "paytmmoney"],
+      ["youtube", "paytmmoney"],
+      ["youtube", "PaytmMoneyIndia"],
+      ["telegram", "TheOfficialPaytmMoney"],
     ],
   },
 ];

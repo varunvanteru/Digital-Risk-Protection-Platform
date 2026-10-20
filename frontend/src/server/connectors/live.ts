@@ -39,13 +39,16 @@ export const decodeHtml = (s: string) =>
 
 /** "1 374 915 subscribers", "12.5K followers", "3,201 members" -> a number. */
 export function parseAudience(text: string): number {
-  const m = text.match(/([\d][\d\s.,]*)\s*([KkMmBb])?\+?\s*(subscribers|followers|members|likes|monthly visitors|subscriber|follower|member)/);
+  // A count is digits in groups of three ("1 374 915", "3,201") or a short decimal with a unit ("12.5K"),
+  // directly before the word: phone numbers earlier in the text are never read as a count.
+  const m = text.match(/(?<![\d.,])(\d{1,3}(?:[ ,.]\d{3})+|\d+(?:\.\d+)?)\s*([KkMmBb])?\+?\s+(subscribers|followers|members|likes|monthly visitors|subscriber|follower|member)\b/);
   if (!m) return 0;
   const unit = (m[2] ?? "").toLowerCase();
-  const raw = m[1].replace(/\s/g, "");
-  const n = unit ? Number(raw.replace(/,/g, "")) : Number(raw.replace(/[.,]/g, ""));
+  const grouped = /[ ,.]\d{3}$/.test(m[1]) && !unit;
+  const n = Number(grouped ? m[1].replace(/[ ,.]/g, "") : m[1].replace(/,/g, ""));
   if (!Number.isFinite(n)) return 0;
-  return Math.round(n * (unit === "k" ? 1e3 : unit === "m" ? 1e6 : unit === "b" ? 1e9 : 1));
+  const value = Math.round(n * (unit === "k" ? 1e3 : unit === "m" ? 1e6 : unit === "b" ? 1e9 : 1));
+  return Math.min(value, 2_000_000_000); // the audience column is a 32-bit integer
 }
 
 async function getText(url: string, init: RequestInit = {}, timeoutMs = 8000): Promise<{ status: number; text: string }> {
@@ -211,6 +214,10 @@ export class RedditLive implements Connector {
       signal: AbortSignal.timeout(10_000),
     });
     const body = await r.json().catch(() => ({}));
+    // Refused credentials are a setup problem, not an outage: say so instead of reporting Reddit as down.
+    if (r.status === 401 || r.status === 403) {
+      throw new SourceNotConnected("Not connected: Reddit refused the app ID and secret (the app may not be approved for API access yet)");
+    }
     if (!r.ok || !body.access_token) throw new SourceUnavailable(`Reddit sign-in failed (${r.status})`);
     g.__bsReddit = { token: body.access_token, until: Date.now() + Number(body.expires_in ?? 3600) * 1000 };
     return body.access_token;
@@ -305,7 +312,7 @@ export const WEB_SITES: Record<string, string> = {
 // First path segments that are site pages, not accounts.
 const RESERVED: Record<string, Set<string>> = {
   instagram: new Set(["p", "reel", "reels", "explore", "stories", "tv", "accounts", "directory", "about", "legal", "developer", "web", "popular"]),
-  facebook: new Set(["watch", "events", "photo", "photo.php", "photos", "share", "story.php", "permalink.php", "help", "login", "marketplace", "gaming", "hashtag", "public", "policies", "privacy", "business", "reel", "videos", "media", "places", "search", "pages"]),
+  facebook: new Set(["watch", "events", "photo", "photo.php", "photos", "share", "story.php", "permalink.php", "help", "login", "marketplace", "gaming", "hashtag", "public", "policies", "privacy", "business", "reel", "videos", "media", "places", "search", "pages", "community", "notes", "developers", "legal", "terms", "ads", "fundraisers"]),
   x: new Set(["i", "search", "hashtag", "intent", "home", "explore", "settings", "login", "signup", "tos", "privacy", "share", "notifications", "messages"]),
   pinterest: new Set(["pin", "search", "ideas", "today", "categories", "business", "login", "_"]),
   threads: new Set(["search", "login"]),
@@ -333,7 +340,9 @@ export function webProfileHandle(platform: string, url: string): string | null {
     case "x":
       return RESERVED.x.has(first.toLowerCase()) ? null : ok(first, /^[A-Za-z0-9_]{1,15}$/);
     case "linkedin":
-      return ["company", "showcase", "in"].includes(first) ? ok(segs[1], /^[A-Za-z0-9\-_%.]{2,100}$/) : null;
+      // Company pages keep their plain slug (as official profiles list them); people and showcase pages keep their kind.
+      if (first === "company") return ok(segs[1], /^[A-Za-z0-9\-_%.]{2,100}$/);
+      return first === "in" || first === "showcase" ? ok(segs[1], /^[A-Za-z0-9\-_%.]{2,100}$/) && `${first}/${segs[1]}` : null;
     case "threads":
       return first.startsWith("@") ? ok(first.slice(1), /^[A-Za-z0-9._]{1,30}$/) : null;
     case "pinterest":
@@ -353,6 +362,7 @@ export function webProfileHandle(platform: string, url: string): string | null {
 /** The canonical public URL of an account, the way each platform writes it. */
 export function webProfileUrl(platform: string, handle: string): string {
   if (handle.startsWith("groups/")) return `https://www.facebook.com/${handle}`;
+  if (platform === "linkedin" && /^(in|showcase)\//.test(handle)) return `https://www.linkedin.com/${handle}`;
   if (handle.startsWith("space:")) return `https://${handle.slice(6)}.quora.com`;
   const urls: Record<string, string> = {
     instagram: `https://www.instagram.com/${handle}/`,
@@ -371,11 +381,14 @@ export function webProfileUrl(platform: string, handle: string): string {
 /** "PhonePe (@phonepe) • Instagram photos and videos" -> "PhonePe"; "Paytm | Facebook" -> "Paytm". */
 export function cleanTitle(title: string): string {
   let t = decodeHtml(title).trim();
-  t = t.split(/\s+[|•·]\s+|\s+[-–—]\s+(?=(?:Instagram|Facebook|X|Twitter|LinkedIn|Threads|Pinterest|Quora|Snapchat|ShareChat)\b)/)[0];
+  // A post title: "Paytm Travel Care on X: "@someone Hi ..."" -> "Paytm Travel Care".
+  t = t.replace(/\s+on (X|Twitter|Threads|Instagram|Facebook|LinkedIn):\s.*$/i, "");
+  t = t.split(/\s+[|•·]\s+|\s+[-–—]\s+(?=(?:Instagram|Facebook|X|Twitter|LinkedIn|Threads|Pinterest|Quora|Snapchat|ShareChat|Profile)\b)/)[0];
   t = t
-    .replace(/\s*\/\s*(X|Twitter)\s*$/i, "")
+    .replace(/\s*\/\s*(X|Twitter|\.\.\.|…)\s*$/i, "") // "... / X", or cut short by the search engine: "... / ..."
     .replace(/\s+on (X|Twitter|Instagram|Threads|Snapchat)\s*$/i, "")
-    .replace(/\s*\(@[^)]+\)\s*$/, "");
+    .replace(/\s*\((@?[^()]+)\)\s*$/, "") // "(@handle)" or "(handle)"
+    .replace(/\s*(\.\.\.|…)\s*$/, "");
   return t.trim();
 }
 
