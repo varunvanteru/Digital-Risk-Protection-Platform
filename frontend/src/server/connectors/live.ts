@@ -413,7 +413,7 @@ export function cleanTitle(title: string): string {
   t = t.replace(/\s+on (X|Twitter|Threads|Instagram|Facebook|LinkedIn):\s.*$/i, "");
   t = t.split(/\s+[|•·]\s+|\s+[-–—]\s+(?=(?:Instagram|Facebook|X|Twitter|LinkedIn|Threads|Pinterest|Quora|Snapchat|ShareChat|Profile)\b)/)[0];
   t = t
-    .replace(/\s*\/\s*(X|Twitter|\.\.\.|…)\s*$/i, "") // "... / X", or cut short by the search engine: "... / ..."
+    .replace(/\s*\/\s*(X|Twitter|Posts|Replies|Media|\.\.\.|…)\s*$/i, "") // "... / X", "... / Posts", or cut short: "... / ..."
     .replace(/\s+on (X|Twitter|Instagram|Threads|Snapchat)\s*$/i, "")
     .replace(/\s*\((@?[^()]+)\)\s*$/, "") // "(@handle)" or "(handle)"
     .replace(/\s*(\.\.\.|…)\s*$/, "");

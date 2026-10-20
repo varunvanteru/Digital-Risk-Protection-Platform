@@ -14,7 +14,8 @@ import type { Channel, DetectionStatus, Platform, Severity } from "@/lib/types";
 type ChannelFilter = "all" | Channel;
 type StatusFilter = "active" | "all" | DetectionStatus;
 
-const DEFAULT_SEVERITIES: Severity[] = ["critical", "high", "medium"];
+// Every severity by default, so a quiet brand still sees everything the scan found; Low can be switched off.
+const DEFAULT_SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
 
 export default function DetectionsPage() {
   const { detections, scanning } = useStore();

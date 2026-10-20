@@ -228,7 +228,7 @@ export interface ScanSummary {
   officialSkipped: number;
   officialFlagged: number;
   newDetections: number;
-  sources: Record<string, { ok: boolean; error?: string; items?: number; kept?: number; latencyMs?: number; retries?: number }>;
+  sources: Record<string, { ok: boolean; state?: SourceState; error?: string; items?: number; kept?: number; latencyMs?: number; retries?: number }>;
   possiblyOfficial: { platform: Platform; name: string; packageId: string; publisher: string; publisherId: string; status?: "OFFICIAL" | "LIKELY_OFFICIAL" }[];
 }
 

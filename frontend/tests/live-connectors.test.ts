@@ -166,6 +166,7 @@ describe("web search results", () => {
     expect(cleanTitle('Paytm Travel Care on X: "@brajtomar1 Hi Braj, we are sorry"')).toBe("Paytm Travel Care");
     expect(cleanTitle("Paytm Payments Bank (@PaytmBank) / ...")).toBe("Paytm Payments Bank");
     expect(cleanTitle("Paytm (paytm) – Profile | Pinterest")).toBe("Paytm");
+    expect(cleanTitle("Fortress Solutions (@fortsol) / Posts")).toBe("Fortress Solutions");
   });
 
   it("uses the handle when the platform shows a login wall or its own name as the title", () => {

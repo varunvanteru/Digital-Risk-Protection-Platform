@@ -8,6 +8,7 @@ export interface DayCount {
   critical: number;
   high: number;
   medium: number;
+  low: number;
 }
 
 /** Stack order, bottom to top, with the severity colours used everywhere else in the app. */
@@ -15,9 +16,10 @@ const SERIES = [
   { key: "critical", label: "Critical", color: "var(--chart-crit)" },
   { key: "high", label: "High", color: "var(--chart-high)" },
   { key: "medium", label: "Medium", color: "var(--chart-med)" },
+  { key: "low", label: "Low (not flagged)", color: "var(--chart-low)" },
 ] as const;
 
-const total = (d: DayCount) => d.critical + d.high + d.medium;
+const total = (d: DayCount) => d.critical + d.high + d.medium + d.low;
 
 /**
  * Stacked column chart: new detections per day, split by severity. Colour always comes
@@ -94,7 +96,7 @@ export function TrendChart({ data, height = 220 }: { data: DayCount[]; height?: 
                 onFocus={() => setHover(i)}
                 onBlur={() => setHover(null)}
                 tabIndex={0}
-                aria-label={`${d.label}: ${d.critical} critical, ${d.high} high, ${d.medium} medium`}
+                aria-label={`${d.label}: ${d.critical} critical, ${d.high} high, ${d.medium} medium, ${d.low} low`}
                 className="outline-none"
               >
                 <rect x={cx - slot / 2} y={pad.t} width={slot} height={innerH} fill={hover === i ? "var(--surface-2)" : "transparent"} />
