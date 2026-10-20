@@ -52,7 +52,7 @@ export default function AccuracyPage() {
       <PageHeader
         eyebrow="Labelled test set"
         title="Detection accuracy"
-        description="Every labelled case runs through the same engine as scans and Quick check: official verification first, then risk scoring. Nothing on this page is typed in by hand. Scope: 82 cases for the two demo brands (ZentraPay, PhonePe), 11 of them written before the rules they test; this shows how the rules behave on these cases, not real-world accuracy."
+        description="Every labelled case runs through the same engine as scans and Quick check: official verification first, then risk scoring. Nothing on this page is typed in by hand. Scope: a fixed labelled test set of 82 cases for two test brands (ZentraPay, a fictional brand, and PhonePe), 11 of them written before the rules they test; this shows how the rules behave on these cases, not real-world accuracy. Monitoring itself uses live data only."
         actions={
           <Button onClick={load} disabled={loading}>
             {loading ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
@@ -168,7 +168,7 @@ export default function AccuracyPage() {
                         </td>
                         <td className="max-w-[260px] px-2 py-2">
                           <div className="flex items-center gap-1.5 truncate text-ink">
-                            {ALL_PLATFORMS.includes(r.platform as Platform) && <PlatformLogo platform={r.platform as Platform} size={12} />}
+                            {(ALL_PLATFORMS.includes(r.platform as Platform) || r.platform === "apk_site") && <PlatformLogo platform={r.platform as Platform} size={12} />}
                             <span className="truncate">{r.name}</span>
                           </div>
                           <div className="truncate text-[11.5px] text-ink-3">{r.group}</div>

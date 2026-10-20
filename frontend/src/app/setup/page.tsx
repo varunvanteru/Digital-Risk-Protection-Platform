@@ -305,7 +305,7 @@ export default function SetupPage() {
                 <div className="space-y-5">
                   <div>
                     <Label htmlFor="name">Brand name</Label>
-                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="ZentraPay" invalid={showErrors && !!errors1.name} />
+                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="PhonePe" invalid={showErrors && !!errors1.name} />
                     {showErrors && errors1.name && <Hint error>{errors1.name}</Hint>}
                   </div>
                   <div>
@@ -314,7 +314,7 @@ export default function SetupPage() {
                   </div>
                   <div>
                     <Label htmlFor="legal-name">Legal company name (optional)</Label>
-                    <Input id="legal-name" value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="ZentraPay Technologies Pvt Ltd" />
+                    <Input id="legal-name" value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="PhonePe Private Limited" />
                     <Hint>Recognised in any spelling: &ldquo;Pvt. Ltd.&rdquo;, &ldquo;Private Limited&rdquo; and capitals are normalised</Hint>
                   </div>
                 </div>
@@ -447,7 +447,7 @@ export default function SetupPage() {
                 )}
                 <div className="mt-4">
                   <Label htmlFor="publisher">Official publisher name</Label>
-                  <Input id="publisher" value={publisher} onChange={(e) => setPublisher(e.target.value)} placeholder="ZentraPay Technologies Pvt Ltd" invalid={showErrors && !!errors2.publisher} />
+                  <Input id="publisher" value={publisher} onChange={(e) => setPublisher(e.target.value)} placeholder="PhonePe Private Limited" invalid={showErrors && !!errors2.publisher} />
                   {showErrors && errors2.publisher ? (
                     <Hint error>{errors2.publisher}</Hint>
                   ) : (
@@ -456,13 +456,13 @@ export default function SetupPage() {
                 </div>
                 <div className="mt-4">
                   <Label htmlFor="publisher-aliases">Other publisher spellings (optional)</Label>
-                  <TagInput id="publisher-aliases" values={publisherAliases} onChange={setPublisherAliases} placeholder="ZentraPay, ZENTRAPAY TECHNOLOGIES" />
+                  <TagInput id="publisher-aliases" values={publisherAliases} onChange={setPublisherAliases} placeholder="PhonePe, PHONEPE PVT LTD" />
                 </div>
               </section>
 
               <section className="border-t border-line pt-5">
                 <Label htmlFor="domains">Official domains</Label>
-                <TagInput id="domains" values={domains} onChange={setDomains} placeholder="zentrapay.com" validate={validateDomain} mono />
+                <TagInput id="domains" values={domains} onChange={setDomains} placeholder="phonepe.com" validate={validateDomain} mono />
               </section>
 
               {showErrors && errors2.assets && <Hint error>{errors2.assets}</Hint>}

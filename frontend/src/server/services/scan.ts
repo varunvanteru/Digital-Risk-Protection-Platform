@@ -14,6 +14,7 @@
 import { settings } from "../config";
 import { candidate, firstChars, SourceUnavailable, type Candidate, type Connector } from "../connectors/base";
 import { SocialDataset, StoreDataset } from "../connectors/datasets";
+import { NotConnected, SourceNotConnected, RedditLive, TelegramLive, WebSearchLive, YouTubeLive } from "../connectors/live";
 import { AppStoreLive, GooglePlayLive } from "../connectors/stores";
 import { exec, js, one, q } from "../db";
 import { allowKey, emptyContext, type BrandContext } from "../detection/context";
@@ -27,7 +28,30 @@ import { getBrand, type Brand } from "../repo";
 import { inWorkspace } from "../workspace";
 import { hexId, iso, mapLimit, pyRound, sleep, SourceTimeout, todayUtc, unique, utcnow, withTimeout } from "../util";
 
-export const CONNECTORS: Record<string, Connector> = {
+/** Live: every source searches the real platform, or says it is not connected. */
+const LIVE_CONNECTORS: Record<string, Connector> = {
+  src_play: new GooglePlayLive(),
+  src_appstore: new AppStoreLive(),
+  src_ig: new WebSearchLive("src_ig", "instagram"),
+  src_x: new WebSearchLive("src_x", "x"),
+  src_fb: new WebSearchLive("src_fb", "facebook"),
+  src_tg: new TelegramLive(),
+  src_wa: new NotConnected("src_wa", "Not connected: WhatsApp has no public search or API for channels"),
+  src_threads: new WebSearchLive("src_threads", "threads"),
+  src_li: new WebSearchLive("src_li", "linkedin"),
+  src_snap: new WebSearchLive("src_snap", "snapchat"),
+  src_yt: new YouTubeLive(),
+  src_sc: new WebSearchLive("src_sc", "sharechat"),
+  src_moj: new NotConnected("src_moj", "Not connected: Moj has no public search or API"),
+  src_josh: new NotConnected("src_josh", "Not connected: Josh has no public search or API"),
+  src_pin: new WebSearchLive("src_pin", "pinterest"),
+  src_reddit: new RedditLive(),
+  src_quora: new WebSearchLive("src_quora", "quora"),
+  src_discord: new NotConnected("src_discord", "Not connected: Discord has no public server search or API"),
+};
+
+/** Automated tests only: curated fixtures stand in for the social sources, so runs are repeatable and offline. */
+const FIXTURE_CONNECTORS: Record<string, Connector> = {
   src_play: new GooglePlayLive(),
   src_appstore: new AppStoreLive(),
   src_store_demo: new StoreDataset("src_store_demo", "store_snapshot.json"),
@@ -49,7 +73,16 @@ export const CONNECTORS: Record<string, Connector> = {
   src_quora: new SocialDataset("src_quora", "quora"),
   src_discord: new SocialDataset("src_discord", "discord"),
 };
-export const LIVE_SOURCES = new Set(["src_play", "src_appstore"]);
+
+export const CONNECTORS: Record<string, Connector> = settings.dataMode === "fixtures" ? FIXTURE_CONNECTORS : LIVE_CONNECTORS;
+
+/** Sources whose results come from a live search (cached on success, served from cache on failure). */
+export const LIVE_SOURCES = new Set(
+  settings.dataMode === "fixtures" ? ["src_play", "src_appstore"] : Object.keys(LIVE_CONNECTORS).filter((id) => !(LIVE_CONNECTORS[id] instanceof NotConnected)),
+);
+
+/** Why a source cannot run right now (no public API, key not set), or null. */
+export const notConnectedReason = (sourceId: string) => CONNECTORS[sourceId]?.notConnected?.() ?? null;
 
 export interface SourceRow {
   id: string;
@@ -152,6 +185,8 @@ async function loadCache(sourceId: string, keywords: string[]): Promise<[Candida
  */
 export async function fetchWithRetries(source: SourceRow, keywords: string[]): Promise<[Candidate[], number | null, number, string | null]> {
   const connector = CONNECTORS[source.id];
+  const reason = notConnectedReason(source.id);
+  if (reason) throw new SourceNotConnected(reason); // no retries, no cache: there is nothing to fetch
   const timeout = connector.timeoutMs ?? settings.sourceTimeoutMs;
   let lastError: Error | null = null;
   for (let attempt = 0; attempt <= settings.sourceRetries; attempt++) {
@@ -182,10 +217,11 @@ export async function prefetchImages(cands: Candidate[]): Promise<void> {
   await mapLimit(remote, 16, (u) => features(u));
 }
 
-export function sourceState(source: SourceRow, ok: boolean, cachedAt: string | null): string {
+export function sourceState(source: SourceRow, ok: boolean, cachedAt: string | null, notConnected = false): string {
+  if (notConnected) return "not_connected";
   if (!ok) return "down";
   if (cachedAt !== null) return "cached";
-  return source.mode === "live" ? "live" : "simulated";
+  return LIVE_SOURCES.has(source.id) ? "live" : "simulated";
 }
 
 export function officialEntry(c: Candidate, ev: Evaluation) {
@@ -262,7 +298,8 @@ async function run(scanId: string, brand: Brand): Promise<void> {
   const validation = await validateBrandAssets(brand);
   brand = (await getBrand(brand.id))!;
   const ctx = await brandContext(brand);
-  const keywords = unique([...(brand.keywords ?? []), brand.name]);
+  // The brand name first: connectors with a tight query budget (YouTube, web search) use the first terms.
+  const keywords = unique([brand.name, ...(brand.keywords ?? [])]);
   const today = todayUtc();
   const status: Record<string, unknown> = {};
   const officialFound: ReturnType<typeof officialEntry>[] = [];
@@ -275,6 +312,14 @@ async function run(scanId: string, brand: Brand): Promise<void> {
       [items, latency, retries, cachedAt] = await fetchWithRetries(source, keywords);
     } catch (e) {
       const msg = (e as Error).message;
+      if (e instanceof SourceNotConnected) {
+        await exec("UPDATE sources SET health = 'not_connected', state = 'not_connected', note = ?, latency_ms = NULL, items_last_scan = 0 WHERE id = ?", [
+          firstChars(msg, 255),
+          source.id,
+        ]);
+        status[source.id] = { ok: false, state: "not_connected", error: msg };
+        continue;
+      }
       await exec("UPDATE sources SET health = 'unavailable', state = 'down', note = ?, latency_ms = NULL WHERE id = ?", [
         firstChars(`${msg}. Showing the last good results.`, 255),
         source.id,
@@ -381,7 +426,8 @@ async function upsert(brandId: string, scanId: string, c: Candidate, ev: Evaluat
 
   const fields = {
     source_id: c.sourceId, channel: c.channel, cls: ev.cls, display_name: firstChars(c.displayName, 200), handle: c.handle,
-    url: firstChars(c.url, 500), mark: ev.mark, icon_url: c.image, bio: c.bio, audience: c.audience, created_on: c.createdOn,
+    // icon_url holds up to 500 characters; a longer address (e.g. an inline image) is dropped, not truncated.
+    url: firstChars(c.url, 500), mark: ev.mark, icon_url: c.image && c.image.length <= 500 ? c.image : null, bio: c.bio, audience: c.audience, created_on: c.createdOn,
     publisher: c.publisher, publisher_id: c.publisherId, links: JSON.stringify(c.links), last_seen: now, scan_id: scanId,
     signals: JSON.stringify(ev.signals), reasons: JSON.stringify(ev.reasons), checks: JSON.stringify(ev.checks),
     lookalike_domain: ev.lookalikeDomain ? 1 : 0, context_label: ev.contextLabel, score: bd.score, severity: bd.severity,

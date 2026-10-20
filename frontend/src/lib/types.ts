@@ -157,14 +157,15 @@ export interface BrandProfile {
   updatedAt: string;
 }
 
-export type SourceHealth = "operational" | "degraded" | "unavailable";
+export type SourceHealth = "operational" | "degraded" | "unavailable" | "not_connected";
 
 export interface Source {
   id: string;
   name: string;
   platform: Platform;
   channel: Channel;
-  mode: "live" | "dataset" | "manual";
+  /** off: the platform has no public search, so it is never searched. */
+  mode: "live" | "dataset" | "manual" | "off";
   health: SourceHealth;
   lastSuccess: string | null;
   latencyMs: number | null;
@@ -175,7 +176,8 @@ export interface Source {
   state: SourceState;
 }
 
-export type SourceState = "live" | "cached" | "simulated" | "down";
+/** not_connected: no public API for the platform, or its API key is not set; nothing is searched. */
+export type SourceState = "live" | "cached" | "simulated" | "down" | "not_connected";
 
 export interface BrandSummary {
   id: string;

@@ -37,7 +37,8 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const urgent = detections.filter(
     (d) => d.status === "open" && (d.breakdown.severity === "critical" || d.breakdown.severity === "high"),
   ).length;
-  const sourceIssues = sources.filter((s) => s.health !== "operational").length;
+  // Not connected is a fixed fact about a platform, not a problem to attend to.
+  const sourceIssues = sources.filter((s) => s.health !== "operational" && s.health !== "not_connected").length;
 
   return (
     <div className="flex h-full flex-col">
@@ -151,7 +152,7 @@ function AccountFooter() {
 function ScanStatus() {
   const { scanning, runScan, lastScan, sources } = useStore();
   const [error, setError] = useState<string | null>(null);
-  const down = sources.filter((s) => s.health !== "operational");
+  const down = sources.filter((s) => s.health !== "operational" && s.health !== "not_connected");
 
   async function start() {
     setError(null);
@@ -168,7 +169,7 @@ function ScanStatus() {
         {error ? (
           <span className="text-crit">{error}</span>
         ) : scanning ? (
-          `Scanning ${sources.length} sources…`
+          `Scanning ${sources.filter((s) => s.health !== "not_connected").length} sources…`
         ) : (
           <>
             {lastScan?.finishedAt ? (

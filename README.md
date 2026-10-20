@@ -18,9 +18,9 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 **Verify without a browser.** These live links return JSON:
 - [`/api/accuracy`](https://impostr.live/api/accuracy) runs the labelled test set: 82/82 correct, 0 of 19 official assets flagged.
 - [`/api/search?query=PhonePe&platforms=google_play,app_store`](https://impostr.live/api/search?query=PhonePe&platforms=google_play,app_store) is a live app-store search. Official apps appear under `official` with risk 0, and look-alikes appear under `results` with reasons, signals and evidence checks.
-- [`/api/search?query=zentrapay&platforms=instagram,facebook,whatsapp,telegram,x`](https://impostr.live/api/search?query=zentrapay&platforms=instagram,facebook,whatsapp,telegram,x) covers social impersonation and scam accounts, with official accounts excluded.
+- [`/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube`](https://impostr.live/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube) runs a live social search for impersonation and scam accounts, with official accounts excluded.
 - [`/api/search?query=z3ntra.pay_official`](https://impostr.live/api/search?query=z3ntra.pay_official) shows the look-alike name analysis, step by step, in `nameAnalysis`.
-- [`/api/sources`](https://impostr.live/api/sources) lists all 20 sources, their mode (live or sample data) and their health.
+- [`/api/sources`](https://impostr.live/api/sources) lists every source, its mode (live, or not connected) and its health.
 
 ## Screenshots
 
@@ -81,9 +81,15 @@ No brand is hard-coded: brands are data, and the same rules apply to every brand
 | --- | --- |
 | Google Play | Live (`google-play-scraper`) |
 | Apple App Store | Live (iTunes Search API) |
-| 16 social platforms (Instagram, Facebook, WhatsApp, X, Threads, LinkedIn, Telegram, Snapchat, YouTube, ShareChat, Moj, Josh, Pinterest, Reddit, Quora, Discord), APK mirror sites, store snapshot | Curated sample data: these platforms have no open search API. Results are tagged **SAMPLE** in the app. |
+| Telegram | Live: public t.me pages for usernames built from the brand name (no key needed) |
+| YouTube | Live: YouTube Data API v3 (`YOUTUBE_API_KEY`) |
+| Reddit | Live: Reddit API, app-only OAuth (`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`) |
+| Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat | Live: Brave Search API, one `site:` query per platform for public profiles and pages (`BRAVE_SEARCH_API_KEY`) |
+| WhatsApp, Discord, Moj, Josh | Not connected: no public search or API |
 
-**Private workspaces.** There are no accounts. Each browser gets its own workspace through an HTTP-only cookie, starting with two demo brands: **ZentraPay**, a fictional payments app, and **PhonePe**. Anything a visitor registers, scans or marks is visible only in their own browser.
+There is no sample data. A source whose API key is not set is shown as **Not connected** and returns nothing. Set the keys as environment variables (hPanel → Environment variables, or `.env.local`); never commit them. The automated tests run with `DATA_MODE=fixtures`, where curated fixtures stand in for the social sources so the tests are repeatable and offline.
+
+**Workspaces and accounts.** Each browser gets its own private workspace through an HTTP-only cookie (Continue as demo), or signs in to an account that keeps its workspace. A workspace starts with two real brands, **PhonePe** and **Paytm**, with their official apps and the official accounts listed on their own websites. Anything a visitor registers, scans or marks is visible only in their own workspace.
 
 ## Tech stack
 

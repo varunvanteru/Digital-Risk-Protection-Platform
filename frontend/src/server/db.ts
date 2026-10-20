@@ -95,8 +95,8 @@ const TABLES: [string, string][] = [
     CONSTRAINT uq_source_cache UNIQUE (source_id, query_key))`],
   ["sources", `CREATE TABLE IF NOT EXISTS sources (
     id VARCHAR(30) NOT NULL, name VARCHAR(60) NOT NULL, platform VARCHAR(20) NOT NULL, channel VARCHAR(10) NOT NULL,
-    mode VARCHAR(10) NOT NULL, health VARCHAR(12) NOT NULL, last_success DATETIME, latency_ms INTEGER,
-    items_last_scan INTEGER NOT NULL, note VARCHAR(255), simulate_outage BOOL NOT NULL, state VARCHAR(12),
+    mode VARCHAR(10) NOT NULL, health VARCHAR(20) NOT NULL, last_success DATETIME, latency_ms INTEGER,
+    items_last_scan INTEGER NOT NULL, note VARCHAR(255), simulate_outage BOOL NOT NULL, state VARCHAR(20),
     PRIMARY KEY (id))`],
   ["detections", `CREATE TABLE IF NOT EXISTS detections (
     id VARCHAR(40) NOT NULL, brand_id VARCHAR(40) NOT NULL, source_id VARCHAR(30) NOT NULL, channel VARCHAR(10) NOT NULL,
@@ -135,6 +135,9 @@ const TABLES: [string, string][] = [
     id VARCHAR(40) NOT NULL, email VARCHAR(160) NOT NULL, name VARCHAR(80) NOT NULL,
     password_hash VARCHAR(255) NOT NULL, workspace_id VARCHAR(40) NOT NULL, created_at DATETIME NOT NULL,
     last_login_at DATETIME, PRIMARY KEY (id), CONSTRAINT uq_user_email UNIQUE (email))`],
+  // One-time markers, e.g. that the sample data was removed when the database switched to live data.
+  ["app_meta", `CREATE TABLE IF NOT EXISTS app_meta (
+    k VARCHAR(40) NOT NULL, v VARCHAR(255) NOT NULL, PRIMARY KEY (k))`],
   // Sign-in sessions; only a SHA-256 of the session token is stored.
   ["sessions", `CREATE TABLE IF NOT EXISTS sessions (
     token_hash CHAR(64) NOT NULL, user_id VARCHAR(40) NOT NULL, created_at DATETIME NOT NULL,
@@ -169,6 +172,11 @@ export async function createSchema(): Promise<void> {
   for (const [table, column, ddl] of ADDED_COLUMNS) {
     if (!set.has(`${table}.${column}`)) await exec(`ALTER TABLE \`${table}\` ADD COLUMN ${column} ${ddl}`);
   }
+  // Widened after the first release ("not_connected" needs 13 characters).
+  const narrow = await one<{ n: number }>(
+    "SELECT character_maximum_length AS n FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sources' AND column_name = 'health'",
+  );
+  if (narrow && Number(narrow.n) < 20) await exec("ALTER TABLE sources MODIFY health VARCHAR(20) NOT NULL, MODIFY state VARCHAR(20)");
 }
 
 /** Drop every table (tests and the demo reset only). */

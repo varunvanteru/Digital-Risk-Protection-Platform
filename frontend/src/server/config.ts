@@ -15,6 +15,15 @@ export const settings = {
   // Password for actions that change data (edit brands, change detection status, simulate outages).
   // Unset: open, as in local development. Set it in hPanel for the public site.
   adminPassword: process.env.ADMIN_PASSWORD || "",
-  // data/ holds the simulated datasets, the labelled test set and the word list.
+  // data/ holds the labelled test set, the word list and the test fixtures.
   dataDir: path.join(process.cwd(), "data"),
+  // "live" (default): every source searches the real platform, or is shown as not connected.
+  // "fixtures": the curated datasets stand in for the social sources; used only by the automated
+  // tests, so they are repeatable and offline.
+  dataMode: process.env.DATA_MODE === "fixtures" ? ("fixtures" as const) : ("live" as const),
+  // API keys for the live connectors. A connector without its key is shown as not connected.
+  youtubeApiKey: process.env.YOUTUBE_API_KEY || "",
+  braveApiKey: process.env.BRAVE_SEARCH_API_KEY || "",
+  redditClientId: process.env.REDDIT_CLIENT_ID || "",
+  redditClientSecret: process.env.REDDIT_CLIENT_SECRET || "",
 };

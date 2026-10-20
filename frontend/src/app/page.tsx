@@ -72,7 +72,18 @@ export default function OverviewPage() {
           icon={<Radar />}
           label="Open detections"
           value={open.length}
-          sub={lastScan ? `${open.filter((d) => !d.sample).length} live · ${open.filter((d) => d.sample).length} sample data · from ${lastScan.candidates} candidates` : scanning ? "First scan running…" : "No scan yet"}
+          sub={
+            lastScan
+              ? [
+                  `${open.filter((d) => !d.sample).length} live`,
+                  // Only test fixtures are sample data; the live app never shows any.
+                  ...(open.some((d) => d.sample) ? [`${open.filter((d) => d.sample).length} sample data`] : []),
+                  `from ${lastScan.candidates} candidates`,
+                ].join(" · ")
+              : scanning
+                ? "First scan running…"
+                : "No scan yet"
+          }
           href="/detections"
           hrefLabel="All detections"
         />

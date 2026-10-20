@@ -140,9 +140,8 @@ const SLIDES: Slide[] = [
       <>
         <P>
           Fraudsters copy a brand&apos;s name and logo to make fake apps, fake customer-care pages and scam accounts. IMPOSTR finds them. You tell it
-          what genuinely belongs to the brand, it searches 20 sources, sets aside everything verified as official, and gives every other look-alike a
-          risk score from 0 to 100 with the evidence behind it. Two demo brands are ready to explore: <b>ZentraPay</b>, a fictional payments app, and{" "}
-          <b>PhonePe</b>.
+          what genuinely belongs to the brand, it searches the app stores and social platforms live, sets aside everything verified as official, and gives every other look-alike a
+          risk score from 0 to 100 with the evidence behind it. Two real brands are ready to explore: <b>PhonePe</b> and <b>Paytm</b>.
         </P>
         <Sub>Five-minute tour</Sub>
         <Steps
@@ -178,7 +177,7 @@ const SLIDES: Slide[] = [
         <div className="grid gap-2.5 sm:grid-cols-5">
           {[
             ["Register", "Name, logo, official accounts, apps, publisher and domains"],
-            ["Search", "Google Play and App Store live; social and APK sites from sample data"],
+            ["Search", "Every source live: stores, Telegram, YouTube, Reddit, and web search for public social pages"],
             ["Verify official", "Your own assets are recognised first and never scored"],
             ["Score", "Six signals, weighted, plus fixed boosts and caps: 0 to 100"],
             ["Act", "Confirm, request takedown, mark false positive or official"],
@@ -211,7 +210,7 @@ const SLIDES: Slide[] = [
         </P>
         <Points
           items={[
-            ["Brand name", "The name to protect, for example ZentraPay."],
+            ["Brand name", "The name to protect, for example PhonePe."],
             ["Other names", "Spellings people use (Zentra, Zentra Pay). Each is matched for look-alikes. Press Enter after each."],
             ["Legal company name", "Optional. Recognised in any spelling: “Pvt. Ltd.”, “Private Limited” and capitals are normalised."],
             ["Official logo", "Compared with every profile picture and app icon, including mirrored and recoloured copies."],
@@ -234,7 +233,7 @@ const SLIDES: Slide[] = [
           ["Social accounts", "Pick a platform, type the handle, click Add. A Partner account is allowed but marked as a partner."],
           ["Mobile apps", "Pick Google Play or the App Store and add the package name (com.brand.app) or App Store ID (id123…)."],
           ["Official publisher", "The developer name on the stores. Each app is checked on its store, and its developer account then identifies your other official apps automatically."],
-          ["Official domains", "Your websites. Links to look-alikes of them (zentrapay-refund.xyz) raise the score."],
+          ["Official domains", "Your websites. Links to look-alikes of them (phonepe-refund.xyz) raise the score."],
         ]}
       />
     ),
@@ -259,7 +258,7 @@ const SLIDES: Slide[] = [
     icon: LayoutGrid,
     title: "The brand's risk at a glance after each scan",
     href: "/",
-    shots: [{ src: "overview", alt: "Overview page with stat cards, chart and sources", caption: "Overview for ZentraPay after a scan" }],
+    shots: [{ src: "overview", alt: "Overview page with stat cards, chart and sources", caption: "Overview after a scan" }],
     body: (
       <>
         <Points
@@ -299,8 +298,8 @@ const SLIDES: Slide[] = [
           ]}
         />
         <P>
-          The red number next to Detections in the menu counts open Critical and High items. A <b>SAMPLE</b> tag marks items from the curated sample
-          data rather than a live search.
+          The red number next to Detections in the menu counts open Critical and High items. Every item was found by a live search and links to the
+          real account or app.
         </P>
       </>
     ),
@@ -309,11 +308,11 @@ const SLIDES: Slide[] = [
     section: "A detection, step by step",
     icon: ListChecks,
     title: "Why an item was flagged",
-    shots: [{ src: "detection-detail", alt: "Detection page for ZentraPay Care", caption: "A Critical scam account: score, reasons and details" }],
+    shots: [{ src: "detection-detail", alt: "Detection page for a scam account", caption: "A scam account: score, reasons and details" }],
     body: (
       <Points
         items={[
-          ["Header", "Name, handle, platform, the kind of threat (Scam account, Look-alike app, Fake brand page, Impersonation) and SAMPLE when it is sample data."],
+          ["Header", "Name, handle, platform, the kind of threat (Scam account, Look-alike app, Fake brand page, Impersonation)."],
           ["Score", "0 to 100 with its severity and what to do: takedown recommended, review today, or look-alike."],
           ["Why this was flagged", "Every finding in plain words, such as a copied logo, a request for an OTP or a link to a look-alike domain."],
           ["Compared with the official asset", "When there is an official counterpart, both are shown side by side."],
@@ -349,7 +348,7 @@ const SLIDES: Slide[] = [
         rows={[
           ["Confirm threat", "Marks it Confirmed. Request takedown then appears."],
           ["Request takedown", "Marks it Takedown requested, to track that the platform was asked to remove it."],
-          ["Report on <platform>", "For confirmed live items: copies a ready-made report with the evidence and opens the item so you can paste it into the platform's Report form. Not shown for sample data, which has no real page."],
+          ["Report on <platform>", "For confirmed live items: copies a ready-made report with the evidence and opens the item so you can paste it into the platform's Report form."],
           ["False positive", "Marks it as not a threat and lowers its score by 15 points. It leaves the Active view."],
           ["It's official", "Adds it to the brand's allowlist. It is never flagged again; Undo removes it."],
           ["Reopen", "Returns any marked item to Open."],
@@ -370,7 +369,7 @@ const SLIDES: Slide[] = [
           <>Pick platforms, or leave All platforms selected (19 platforms).</>,
           <>
             Type a brand name (<Code>PhonePe</Code>), a handle (<Code>z3ntra.pay_official</Code>) or paste an official link (
-            <Code>instagram.com/zentrapay</Code>, a Play Store or App Store URL), then press Enter. The Try chips fill in examples.
+            <Code>t.me/phonepe_rewards</Code>, a Play Store or App Store URL), then press Enter. The Try chips fill in examples.
           </>,
           <>Results compare against the registered brand the query matches. Nothing is saved to Detections.</>,
         ]}
@@ -386,11 +385,11 @@ const SLIDES: Slide[] = [
     body: (
       <Points
         items={[
-          ["Platform line", "How many results each platform returned and its state: LIVE (searched just now), CACHED (live source down, last good results), SIMULATED (sample data) or DOWN."],
+          ["Platform line", "How many results each platform returned and its state: LIVE (searched just now), CACHED (live source down, last good results), NOT CONNECTED (no public API, or its API key is not set) or DOWN."],
           ["Official assets", "Recognised as the brand's own and excluded with risk 0, with how they were recognised. Add to profile puts one on the allowlist."],
           ["Suspicious matches", "Everything else that resembles the brand, highest risk first, with reasons and evidence chips."],
           ["Mentions", "Results scoring 39 or less are listed but not flagged."],
-          ["Details or No live page", "Details opens a tracked detection. Live store results open their store page. Sample results say No live page because they do not exist on the platform."],
+          ["Details or Open", "Details opens a tracked detection. Open (blue, underlined) opens the real account or app on its platform."],
         ]}
       />
     ),
@@ -427,7 +426,7 @@ const SLIDES: Slide[] = [
     icon: Building2,
     title: "The allowlist every check compares against",
     href: "/brand",
-    shots: [{ src: "brand", alt: "Brand profile page", caption: "ZentraPay's brand profile" }],
+    shots: [{ src: "brand", alt: "Brand profile page", caption: "A brand profile" }],
     body: (
       <Points
         items={[
@@ -446,16 +445,16 @@ const SLIDES: Slide[] = [
     icon: PlugZap,
     title: "Where candidates come from, and their health",
     href: "/sources",
-    shots: [{ src: "sources", alt: "Sources page", caption: "Live store connectors and sample-data sources" }],
+    shots: [{ src: "sources", alt: "Sources page", caption: "Live connectors and their health" }],
     body: (
       <>
         <P>
-          20 sources in two groups, app stores and social platforms. Each runs on its own with a 10-second timeout and 2 retries, so one failing source
+          18 sources in two groups, app stores and social platforms, each live or not connected. Each runs on its own with a 10-second timeout and 2 retries, so one failing source
           never stops a scan.
         </P>
         <Points
           items={[
-            ["State", "Live, Cached, Simulated or Down (see Labels and terms)."],
+            ["State", "Live, Cached, Not connected or Down (see Labels and terms)."],
             ["Health", "Operational, degraded or unavailable."],
             ["Last success · Latency · Items", "When it last answered, how fast, and how many items it returned in the last scan."],
             ["Simulate outage", "Makes a source fail on purpose to show resilience: the scan still finishes, and a live source falls back to its last good results. End outage restores it."],
@@ -608,9 +607,9 @@ const SLIDES: Slide[] = [
         <Table
           head={["State", "Meaning"]}
           rows={[
-            ["Live", "Searched just now: Google Play and the App Store"],
+            ["Live", "Searched just now on the real platform"],
             ["Cached", "The live source was down, so its last good results are used"],
-            ["Simulated", "Curated sample data, for platforms with no open search API: social, messaging, video and APK sites"],
+            ["Not connected", "Not searched: the platform has no public search (WhatsApp, Discord, Moj, Josh), or its API key is not set"],
             ["Down", "Unavailable for this scan"],
           ]}
         />
@@ -635,7 +634,6 @@ const SLIDES: Slide[] = [
     body: (
       <Points
         items={[
-          ["SAMPLE", "From the curated sample data, not a live search. Its link does not exist, so it shows No live page."],
           ["Scam account", "Shows strong scam behaviour (0.6 or more)."],
           ["Look-alike app", "An app imitating the brand."],
           ["Fake brand page", "A page, channel or group posing as the brand: Facebook, WhatsApp, Telegram, YouTube, LinkedIn, Pinterest, Discord or Quora."],
@@ -652,7 +650,7 @@ const SLIDES: Slide[] = [
     body: (
       <Points
         items={[
-          ["Why are social results sample data?", "Instagram, Facebook, WhatsApp and the other social platforms do not offer an open search API. Those results come from a curated sample set and are tagged SAMPLE everywhere. Google Play and the App Store are searched live."],
+          ["Where do social results come from?", "All live. Telegram is read from its public pages, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for their public pages. WhatsApp, Discord, Moj and Josh have no public search, so they are shown as not connected."],
           ["Why does a result score exactly 39?", "It hit a cap: either only one signal was strong, or it is openly a fan, news, review or third-party item."],
           ["Can a real official account be flagged?", "Official verification runs first and the accuracy test checks it: 0 of 19 official assets are flagged. If something genuine ever slips through, It's official adds it to the allowlist."],
           ["Does anyone else see my searches?", "No. Each browser has its own private workspace."],

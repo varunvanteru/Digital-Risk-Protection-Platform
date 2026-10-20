@@ -23,7 +23,7 @@ export function ProjectSummary() {
         IMPOSTR finds fake social-media profiles, fake brand pages, scam accounts and look-alike mobile apps that impersonate a brand. It scores each
         one from 0 to 100, explains every flag in plain words, and never flags the brand&apos;s own accounts and apps. The app runs in the browser at{" "}
         <A href={SITE}>{SITE}</A>; no account is needed: choose &quot;Continue as demo&quot; on the sign-in page, or create a free account to keep your
-        work. Each workspace starts with two demo brands, ZentraPay (fictional) and PhonePe (real).
+        work. Each workspace starts with two real brands, PhonePe and Paytm, monitored on live data only.
       </p>
 
       <h2 className="text-[16px] font-semibold text-ink">Start here</h2>
@@ -52,7 +52,9 @@ export function ProjectSummary() {
           official items get risk 0 and are never stored as threats; the allowlist is checked again just before a detection is saved.
         </li>
         <li>
-          <b>Social Media Monitoring:</b> impersonation accounts, fake brand pages and scam profiles on 16 social and messaging platforms, found by
+          <b>Social Media Monitoring:</b> impersonation accounts, fake brand pages and scam profiles found live (Telegram directly, YouTube and Reddit
+          through their official APIs, Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for public
+          pages), found by
           look-alike name, copied logo (perceptual hash, including mirrored and recoloured copies), copied bio, &quot;official/helpline&quot; claims and scam
           behaviour (requests for OTP or fees, lures, moving to WhatsApp, brand-new accounts).
         </li>
@@ -84,21 +86,22 @@ export function ProjectSummary() {
           with reasons, signals and evidence checks.
         </li>
         <li>
-          <A href={`${SITE}/api/search?query=zentrapay&platforms=instagram,facebook,whatsapp,telegram,x`}>{`${SITE}/api/search?query=zentrapay&platforms=instagram,facebook,whatsapp,telegram,x`}</A>:
-          social impersonation and scam accounts scored, with the brand&apos;s official accounts excluded.
+          <A href={`${SITE}/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube`}>{`${SITE}/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube`}</A>:
+          live social search: real impersonation and scam accounts scored, with the brand&apos;s official accounts excluded.
         </li>
         <li>
-          <A href={`${SITE}/api/search?query=z3ntra.pay_official`}>{`${SITE}/api/search?query=z3ntra.pay_official`}</A>: look-alike name analysis step
+          <A href={`${SITE}/api/search?query=ph0nepe_support`}>{`${SITE}/api/search?query=ph0nepe_support`}</A>: look-alike name analysis step
           by step (field &quot;nameAnalysis&quot;).
         </li>
         <li>
-          <A href={`${SITE}/api/sources`}>{`${SITE}/api/sources`}</A>: all 20 sources with their mode (live or sample data) and health.
+          <A href={`${SITE}/api/sources`}>{`${SITE}/api/sources`}</A>: every source with its mode (live, or not connected) and health.
         </li>
       </ul>
 
       <p>
-        <b>Data disclosure:</b> Instagram, Facebook, WhatsApp and the other social platforms offer no open search API, so their results come from a curated
-        sample set and are tagged SAMPLE in the app. Google Play and the App Store are searched live.
+        <b>Data disclosure:</b> everything shown is found live; there is no sample data. WhatsApp, Discord, Moj and Josh have no public search or API, so
+        they are shown as not connected. A source whose API key is not set is shown as not connected too, never filled with made-up results. The
+        Accuracy page runs a separate labelled test set, marked as such.
       </p>
     </section>
   );

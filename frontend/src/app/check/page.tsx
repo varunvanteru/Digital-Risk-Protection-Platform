@@ -1,9 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowUpRight, Check, ChevronRight, ExternalLink, LayoutGrid, LoaderCircle, Plus, Search, SearchX, ShieldCheck, ScanSearch } from "lucide-react";
+import { ArrowUpRight, Check, ChevronRight, ExternalLink, LayoutGrid, LoaderCircle, Plus, Search, SearchX, ShieldCheck, ScanSearch, Unplug } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ScoreCell } from "@/components/badges";
 import { initialsOf, SampleTag } from "@/components/detection-table";
 import { EvidenceStrip, VerdictChip } from "@/components/evidence";
@@ -18,29 +18,46 @@ import type { Platform, SearchResponse, SourceState } from "@/lib/types";
 const PLATFORMS = ALL_PLATFORMS;
 
 const EXAMPLES = [
-  "zentrapay",
-  "instagram.com/zentrapay",
-  "youtube.com/@zentrapay",
-  "Zentra Pay",
-  "play.google.com/store/apps/details?id=com.zentrapay.app",
-  "z3ntra.pay_official",
+  "paytm",
+  "phonepe",
+  "t.me/paytm_care",
+  "Phone Pe",
+  "play.google.com/store/apps/details?id=net.one97.paytm",
+  "ph0nepe_support",
 ];
 
-function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; onChange: (v: Platform[] | "all") => void }) {
-  const all = selected === "all";
-  const isOn = (p: Platform) => all || selected.includes(p);
+/** Platforms that cannot be searched (no public API, or the API key is not set), with the reason. */
+function useNotConnected(): Map<Platform, string> {
+  const { sources } = useStore();
+  return useMemo(() => {
+    const off = new Map<Platform, string>();
+    for (const p of PLATFORMS) {
+      const srcs = sources.filter((s) => s.platform === p);
+      if (srcs.length && srcs.every((s) => s.state === "not_connected")) off.set(p, srcs[0].note ?? "Not connected");
+    }
+    return off;
+  }, [sources]);
+}
 
-  // Every platform ticked collapses to "all"; nothing ticked stays an empty selection.
-  const settle = (next: Platform[]) => onChange(next.length === PLATFORMS.length ? "all" : next);
-  const current = all ? PLATFORMS : selected;
+function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; onChange: (v: Platform[] | "all") => void }) {
+  const off = useNotConnected();
+  const usable = PLATFORMS.filter((p) => !off.has(p));
+  const all = selected === "all";
+  const isOn = (p: Platform) => !off.has(p) && (all || selected.includes(p));
+
+  // Every searchable platform ticked collapses to "all"; nothing ticked stays an empty selection.
+  const settle = (next: Platform[]) => onChange(next.length === usable.length ? "all" : next);
+  const current = all ? usable : selected;
 
   function toggle(p: Platform) {
+    if (off.has(p)) return;
     settle(current.includes(p) ? current.filter((x) => x !== p) : [...current, p]);
   }
 
   function toggleGroup(ps: Platform[]) {
-    const everyOn = ps.every((p) => current.includes(p));
-    settle(everyOn ? current.filter((p) => !ps.includes(p)) : Array.from(new Set([...current, ...ps])));
+    const open = ps.filter((p) => !off.has(p));
+    const everyOn = open.every((p) => current.includes(p));
+    settle(everyOn ? current.filter((p) => !open.includes(p)) : Array.from(new Set([...current, ...open])));
   }
 
   return (
@@ -59,7 +76,7 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
           All platforms
         </button>
         <span className="text-[12.5px] text-ink-3">
-          {all ? `All ${PLATFORMS.length} platforms selected` : `${selected.length} of ${PLATFORMS.length} selected`}
+          {all ? `All ${usable.length} platforms selected` : `${selected.length} of ${usable.length} selected`}
         </span>
       </div>
 
@@ -87,34 +104,43 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
               </button>
               <div className={clsx("grid grid-cols-2 gap-2 sm:grid-cols-4", wide && "2xl:grid-cols-8")}>
                 {g.platforms.map((p) => {
+                  const reason = off.get(p);
                   const on = !all && isOn(p);
                   return (
                     <button
                       key={p}
                       aria-pressed={isOn(p)}
+                      disabled={!!reason}
                       onClick={() => toggle(p)}
-                      title={PLATFORM_LABEL[p]}
+                      title={reason ? `${PLATFORM_LABEL[p]}: ${reason}` : PLATFORM_LABEL[p]}
                       className={clsx(
                         "flex h-9 w-full min-w-0 items-center gap-2 rounded-md border px-2.5 text-left text-[12.5px] font-medium shadow-[0_1px_2px_rgb(16_24_40/0.05)] transition-colors",
-                        on
-                          ? "border-accent bg-accent-soft text-ink"
-                          : all
-                            ? "border-line-strong bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
-                            : "border-line-strong bg-surface text-ink-3 hover:border-ink-3 hover:text-ink",
+                        reason
+                          ? "cursor-not-allowed border-dashed border-line-strong bg-surface-2 text-ink-3 shadow-none"
+                          : on
+                            ? "border-accent bg-accent-soft text-ink"
+                            : all
+                              ? "border-line-strong bg-surface text-ink-2 hover:border-ink-3 hover:text-ink"
+                              : "border-line-strong bg-surface text-ink-3 hover:border-ink-3 hover:text-ink",
                       )}
                     >
-                      <PlatformLogo platform={p} size={16} className={clsx("shrink-0", !all && !on && "opacity-45 grayscale")} />
+                      <PlatformLogo platform={p} size={16} className={clsx("shrink-0", (reason || (!all && !on)) && "opacity-45 grayscale")} />
                       <span className="min-w-0 flex-1 truncate">{PLATFORM_LABEL[p]}</span>
-                      {/* Checkbox: white, with a green tick when the platform is included in the search. */}
-                      <span
-                        aria-hidden
-                        className={clsx(
-                          "flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white",
-                          isOn(p) ? "border-[#16a34a] text-[#16a34a]" : "border-line-strong",
-                        )}
-                      >
-                        {isOn(p) && <Check className="size-3" strokeWidth={3.5} />}
-                      </span>
+                      {reason ? (
+                        // Not connected: nothing to tick.
+                        <Unplug aria-hidden className="size-3.5 shrink-0 text-ink-3" />
+                      ) : (
+                        // Checkbox: white, with a green tick when the platform is included in the search.
+                        <span
+                          aria-hidden
+                          className={clsx(
+                            "flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white",
+                            isOn(p) ? "border-[#16a34a] text-[#16a34a]" : "border-line-strong",
+                          )}
+                        >
+                          {isOn(p) && <Check className="size-3" strokeWidth={3.5} />}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -131,6 +157,7 @@ const STATE_STYLE: Record<SourceState, string> = {
   cached: "text-high",
   simulated: "text-ink-3",
   down: "text-crit",
+  not_connected: "text-ink-3",
 };
 
 function PlatformStatus({ data }: { data: SearchResponse }) {
@@ -155,7 +182,7 @@ function PlatformStatus({ data }: { data: SearchResponse }) {
                 {states.map((st, i) => (
                   <span key={st} className={STATE_STYLE[st]}>
                     {i > 0 && <span className="text-ink-3"> + </span>}
-                    {st}
+                    {st.replace("_", " ")}
                   </span>
                 ))}
               </span>
@@ -166,7 +193,7 @@ function PlatformStatus({ data }: { data: SearchResponse }) {
       <p className="mt-2 text-[11.5px] text-ink-3">
         <span className="font-semibold text-ok">LIVE</span> searched just now ·{" "}
         <span className="font-semibold text-high">CACHED</span> live source down, last good results ·{" "}
-        <span className="font-semibold">SIMULATED</span> curated sample data, no open API ·{" "}
+        <span className="font-semibold">NOT CONNECTED</span> no public API, or its API key is not set ·{" "}
         <span className="font-semibold text-crit">DOWN</span> unavailable. <ShieldCheck className="inline size-3 text-ok" /> = official assets
         excluded.
       </p>
@@ -408,8 +435,8 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
         <PlatformStatus data={data} />
         {socialSimulatedEmpty > 0 && (
           <p className="border-b border-line bg-surface-2/40 px-4 py-2 text-[12px] text-ink-2">
-            {socialSimulatedEmpty} platform{socialSimulatedEmpty === 1 ? "" : "s"} returned nothing: they run on simulated sample data, which only contains
-            the demo brands (ZentraPay, PhonePe). Live results come from Google Play and the App Store.
+            {socialSimulatedEmpty} platform{socialSimulatedEmpty === 1 ? "" : "s"} returned nothing: they run on curated test data, which only contains
+            the test brands.
           </p>
         )}
         {n === 0 ? (
@@ -478,7 +505,7 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
                     </td>
                     <td className="px-4 py-3 text-right">
                       {r.detectionId ? (
-                        <Link href={`/detections/${r.detectionId}`} className="inline-flex items-center gap-1 text-[12.5px] font-medium text-ink hover:underline">
+                        <Link href={`/detections/${r.detectionId}`} className="ext-link inline-flex items-center gap-1 text-[12.5px] font-medium">
                           Details
                           <ArrowUpRight className="size-3.5" />
                         </Link>
@@ -491,7 +518,7 @@ function Results({ data, onRerun }: { data: SearchResponse; onRerun: () => void 
                           No live page
                         </span>
                       ) : (
-                        <a href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[12.5px] font-medium text-ink hover:underline">
+                        <a href={r.url} target="_blank" rel="noreferrer" className="ext-link inline-flex items-center gap-1 text-[12.5px] font-medium">
                           Open
                           <ExternalLink className="size-3.5" />
                         </a>
@@ -516,7 +543,8 @@ export default function QuickCheckPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const count = platforms === "all" ? PLATFORMS.length : platforms.length;
+  const off = useNotConnected();
+  const count = platforms === "all" ? PLATFORMS.filter((p) => !off.has(p)).length : platforms.length;
 
   // Shareable searches: /check?q=zentrapay&platforms=instagram,x
   const booted = useRef(false);

@@ -82,7 +82,7 @@ const FEATURES = [
   {
     title: "Live app-store search",
     icon: "📱",
-    desc: "Google Play and the Apple App Store are searched live. The social-media sources use sample data in this demo, and every such result is labelled SAMPLE.",
+    desc: "Google Play, the App Store, Telegram, YouTube and Reddit are searched live, and public profiles on Instagram, Facebook, X and more are found through web search. No sample data.",
   },
 ];
 
@@ -93,11 +93,11 @@ const FAQ = [
   },
   {
     q: "Do I need an account?",
-    a: "No. “Continue as demo” opens a private workspace in this browser with two demo brands, ZentraPay (fictional) and PhonePe (real). Create a free account to keep your work and open it from any browser; anything you did in the demo is kept.",
+    a: "No. “Continue as demo” opens a private workspace in this browser with two real brands to explore, PhonePe and Paytm. Create a free account to keep your work and open it from any browser; anything you did in the demo is kept.",
   },
   {
-    q: "Which results are live and which are sample data?",
-    a: "Google Play and the Apple App Store are searched live. Instagram, Facebook, WhatsApp and the other social platforms offer no open search API, so in this demo their results come from a curated sample set and are labelled SAMPLE.",
+    q: "Where do the results come from?",
+    a: "Every result is real and found live. Google Play, the Apple App Store and Telegram are searched directly, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for their public pages. WhatsApp, Discord, Moj and Josh have no public search, so they are shown as not connected.",
   },
   {
     q: "Will it flag the brand’s real accounts?",
@@ -286,7 +286,7 @@ function Welcome({ name }: { name: string }) {
           <span aria-hidden>✓</span> Private workspace saved to your account
         </li>
         <li>
-          <span aria-hidden>✓</span> Two demo brands to explore: ZentraPay and PhonePe
+          <span aria-hidden>✓</span> Two real brands to explore: PhonePe and Paytm
         </li>
         <li className="lp-step-next">
           <span aria-hidden>→</span> Next: add your own brand in Setup Brand Profile

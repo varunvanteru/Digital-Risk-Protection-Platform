@@ -27,7 +27,7 @@ export const PLATFORM_GROUPS: { label: string; platforms: Platform[] }[] = [
   { label: "Social and messaging", platforms: ["instagram", "facebook", "whatsapp", "x", "threads", "linkedin", "telegram", "snapchat"] },
   { label: "Video and Indian short video", platforms: ["youtube", "sharechat", "moj", "josh"] },
   { label: "Communities", platforms: ["pinterest", "reddit", "quora", "discord"] },
-  { label: "App stores", platforms: ["google_play", "app_store", "apk_site"] },
+  { label: "App stores", platforms: ["google_play", "app_store"] },
 ];
 
 export const ALL_PLATFORMS: Platform[] = PLATFORM_GROUPS.flatMap((g) => g.platforms);

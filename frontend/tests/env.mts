@@ -19,5 +19,7 @@ export function testEnv(): Record<string, string> {
     SOURCE_TIMEOUT_S: "5",
     // Offline: never call the live stores to validate official apps during tests.
     VALIDATE_ASSETS: "0",
+    // Repeatable: the curated fixtures stand in for the social sources.
+    DATA_MODE: "fixtures",
   };
 }

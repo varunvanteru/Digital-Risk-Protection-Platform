@@ -77,12 +77,18 @@ function Diagram() {
     <div className="rounded-lg border border-line bg-surface-2/40 p-3 sm:p-4" role="img" aria-label="IMPOSTR architecture: data sources and the brand profile feed collection; official assets are excluded first; the rest are scored; a second allowlist check runs before results are stored and shown.">
       {/* Inputs */}
       <div className="grid gap-3 lg:grid-cols-2">
-        <Box tone="source" icon={Globe} kicker="Data sources · 20" title="Where candidates come from">
+        <Box tone="source" icon={Globe} kicker="Data sources · 18, all live" title="Where candidates come from">
           <Li>
-            <b className="text-ink">Live:</b> Google Play (google-play-scraper) and the Apple App Store (iTunes Search API)
+            <b className="text-ink">Stores:</b> Google Play (google-play-scraper) and the Apple App Store (iTunes Search API)
           </Li>
           <Li>
-            <b className="text-ink">Curated sample data:</b> 16 social and messaging platforms, APK mirror sites and a store snapshot. These platforms have no open search API.
+            <b className="text-ink">Social, official APIs:</b> Telegram (public t.me pages), YouTube Data API, Reddit API
+          </Li>
+          <Li>
+            <b className="text-ink">Social, web search:</b> Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat public pages, through the Brave Search API
+          </Li>
+          <Li>
+            <b className="text-ink">Not connected:</b> WhatsApp, Discord, Moj and Josh (no public search). No sample data anywhere.
           </Li>
           <Li>Each source runs on its own: 10-second timeout, 2 retries. A failed live source falls back to its last good results (Cached); otherwise it is marked Down and the scan continues.</Li>
         </Box>
@@ -244,7 +250,7 @@ export function Architecture() {
               ["scans", "Each scan: candidates seen, official assets skipped, official assets flagged, new detections, per-source status."],
               ["detections", "Scored look-alikes: signals, reasons, evidence checks, score, severity and status."],
               ["detection_events", "Every status change: confirmed, takedown requested, false positive, official, reopened."],
-              ["media_files", "Brand logos, sample-data avatars and official app icons saved during store validation."],
+              ["media_files", "Brand logos and official app icons saved during store validation."],
             ]}
           />
         </section>

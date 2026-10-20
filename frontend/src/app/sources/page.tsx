@@ -15,7 +15,11 @@ const STATE: Record<SourceState, { label: string; className: string; note: strin
   cached: { label: "Cached", className: "bg-high-bg text-high", note: "Live source down; last good results" },
   simulated: { label: "Simulated", className: "bg-low-bg text-ink-2", note: "Curated sample data (no open API)" },
   down: { label: "Down", className: "bg-crit-bg text-crit", note: "Unavailable" },
+  not_connected: { label: "Not connected", className: "bg-surface-2 text-ink-3", note: "Not searched: no public API, or its API key is not set" },
 };
+
+// A source's note: red when it failed, amber when degraded, grey when it is simply not connected.
+const noteColor = (health: string) => (health === "unavailable" ? "text-crit" : health === "not_connected" ? "text-ink-3" : "text-high");
 
 export default function SourcesPage() {
   const { sources, setOutage } = useStore();
@@ -44,7 +48,7 @@ export default function SourcesPage() {
       <div className="space-y-4">
         {groups.map((g) => (
           <Card key={g.title}>
-            <CardHeader icon={g.icon} title={g.title} description={`${g.rows.length} sources · ${g.rows.filter((s) => s.mode === "live").length} live`} />
+            <CardHeader icon={g.icon} title={g.title} description={`${g.rows.length} sources · ${g.rows.filter((s) => s.mode === "live" && s.state !== "not_connected").length} live · ${g.rows.filter((s) => s.state === "not_connected").length} not connected`} />
             {/* Phones: stacked rows */}
             <ul className="divide-y divide-line md:hidden">
               {g.rows.map((s) => (
@@ -62,7 +66,7 @@ export default function SourcesPage() {
                     </span>
                   </div>
                   {s.note && (
-                    <p className={clsx("mt-1 text-[12px]", s.health === "unavailable" ? "text-crit" : "text-high")}>{s.note}</p>
+                    <p className={clsx("mt-1 text-[12px]", noteColor(s.health))}>{s.note}</p>
                   )}
                   <div className="mt-2 flex items-center justify-between gap-3 text-[12px] text-ink-2">
                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -70,7 +74,7 @@ export default function SourcesPage() {
                       <span className="tabular">{s.health === "operational" ? `${s.itemsLastScan} items` : "—"}</span>
                       {s.health === "operational" && s.latencyMs !== null && <span className="tabular font-mono text-ink-3">{s.latencyMs} ms</span>}
                     </span>
-                    {!s.simulateOutage ? (
+                    {s.state === "not_connected" ? null : !s.simulateOutage ? (
                       <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)}>
                         Simulate outage
                       </Button>
@@ -105,7 +109,7 @@ export default function SourcesPage() {
                           {s.name}
                         </div>
                         {s.note && (
-                          <p className={clsx("mt-1 max-w-sm text-[12px]", s.health === "unavailable" ? "text-crit" : "text-high")}>
+                          <p className={clsx("mt-1 max-w-sm text-[12px]", noteColor(s.health))}>
                             {s.note}
                           </p>
                         )}
@@ -113,7 +117,7 @@ export default function SourcesPage() {
                       <td className="px-4 py-3">
                         <span
                           className={clsx("inline-flex h-5 items-center rounded px-1.5 text-[11px] font-semibold uppercase tracking-wide", STATE[s.state].className)}
-                          title={`${STATE[s.state].note} · ${s.mode === "live" ? "Live connector" : "Curated dataset"}`}
+                          title={`${STATE[s.state].note} · ${s.mode === "live" ? "Live connector" : s.mode === "off" ? "No public API" : "Curated dataset"}`}
                         >
                           {STATE[s.state].label}
                         </span>
@@ -121,13 +125,15 @@ export default function SourcesPage() {
                       <td className="px-4 py-3">
                         <HealthBadge health={s.health} />
                       </td>
-                      <td className="tabular px-4 py-3 text-ink-2">{s.lastSuccess ? formatDateTime(s.lastSuccess) : "Never"}</td>
+                      <td className="tabular px-4 py-3 text-ink-2">
+                        {s.state === "not_connected" ? "—" : s.lastSuccess ? formatDateTime(s.lastSuccess) : "Never"}
+                      </td>
                       <td className="tabular px-4 py-3 text-right font-mono text-[12px] text-ink-2">
                         {s.health === "operational" && s.latencyMs !== null ? `${s.latencyMs} ms` : "—"}
                       </td>
                       <td className="tabular px-4 py-3 text-right text-ink">{s.health === "operational" ? s.itemsLastScan : "—"}</td>
                       <td className="px-4 py-3 text-right">
-                        {!s.simulateOutage ? (
+                        {s.state === "not_connected" ? null : !s.simulateOutage ? (
                           <Button size="sm" variant="ghost" disabled={busy === s.id} onClick={() => toggle(s.id, true)}>
                             Simulate outage
                           </Button>

@@ -7,7 +7,9 @@
  * stored; any that are already tracked carry their detection id.
  */
 
+import { settings } from "../config";
 import type { Candidate } from "../connectors/base";
+import { SourceNotConnected } from "../connectors/live";
 import { q } from "../db";
 import { allowKey, emptyContext, type BrandContext } from "../detection/context";
 import { analyseName, nameSimilarity } from "../detection/lookalike";
@@ -17,6 +19,7 @@ import { allBrands, getBrand, type Brand } from "../repo";
 import { mapLimit, todayUtc, unique } from "../util";
 import {
   CONNECTORS,
+  LIVE_SOURCES,
   brandContext,
   fetchWithRetries,
   officialEntry,
@@ -33,13 +36,21 @@ const SOCIAL_SOURCES: Record<string, string> = {
   moj: "src_moj", josh: "src_josh", pinterest: "src_pin", reddit: "src_reddit", quora: "src_quora", discord: "src_discord",
 };
 
-// Which sources answer for which platform. The demo store snapshot holds both Play and App Store items.
-export const PLATFORM_SOURCES: Record<string, string[]> = {
-  ...Object.fromEntries(Object.entries(SOCIAL_SOURCES).map(([p, sid]) => [p, [sid]])),
-  google_play: ["src_play", "src_store_demo"],
-  app_store: ["src_appstore", "src_store_demo"],
-  apk_site: ["src_apk"],
-};
+// Which sources answer for which platform. Live: one live source each. Fixtures (tests): the store
+// snapshot also holds Play and App Store items, and APK sites have their own fixture.
+export const PLATFORM_SOURCES: Record<string, string[]> =
+  settings.dataMode === "live"
+    ? {
+        ...Object.fromEntries(Object.entries(SOCIAL_SOURCES).map(([p, sid]) => [p, [sid]])),
+        google_play: ["src_play"],
+        app_store: ["src_appstore"],
+      }
+    : {
+        ...Object.fromEntries(Object.entries(SOCIAL_SOURCES).map(([p, sid]) => [p, [sid]])),
+        google_play: ["src_play", "src_store_demo"],
+        app_store: ["src_appstore", "src_store_demo"],
+        apk_site: ["src_apk"],
+      };
 export const PLATFORMS = Object.keys(PLATFORM_SOURCES);
 
 /**
@@ -170,13 +181,15 @@ export async function runSearch(raw: string, platforms: string[]) {
         let cachedAt: string | null = null;
         let ok = true;
         let error: string | null = null;
+        let notConnected = false;
         try {
           [items, latency, , cachedAt] = await fetchWithRetries(src, keywords);
         } catch (e) {
           ok = false;
           error = (e as Error).message;
+          notConnected = e instanceof SourceNotConnected;
         }
-        const state = sourceState(src, ok, cachedAt);
+        const state = sourceState(src, ok, cachedAt, notConnected);
         for (const p of wanted) {
           if (PLATFORM_SOURCES[p].includes(sid)) {
             status[p].sources.push({
@@ -221,7 +234,7 @@ export async function runSearch(raw: string, platforms: string[]) {
     results.push({
       status: ev.status,
       riskScore: ev.breakdown!.score,
-      sample: !LIVE_STORE_SOURCES.has(c.sourceId),
+      sample: !LIVE_SOURCES.has(c.sourceId),
       excluded: false,
       platform: c.platform,
       channel: c.channel,

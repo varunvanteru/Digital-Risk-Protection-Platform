@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Ban, CircleCheck, CircleDot, CircleAlert, Flag, OctagonAlert, ShieldCheck, TriangleAlert, CircleX } from "lucide-react";
+import { Ban, CircleCheck, CircleDot, CircleAlert, Flag, OctagonAlert, ShieldCheck, TriangleAlert, CircleX, Unplug } from "lucide-react";
 import { STATUS_LABEL } from "@/lib/format";
 import type { DetectionStatus, Severity, SourceHealth } from "@/lib/types";
 
@@ -70,13 +70,14 @@ const HEALTH: Record<SourceHealth, { label: string; text: string; dot: string; I
   operational: { label: "Operational", text: "text-ok", dot: "bg-ok", Icon: CircleCheck },
   degraded: { label: "Degraded", text: "text-high", dot: "bg-high", Icon: TriangleAlert },
   unavailable: { label: "Unavailable", text: "text-crit", dot: "bg-crit", Icon: CircleX },
+  not_connected: { label: "Not connected", text: "text-ink-3", dot: "bg-ink-3", Icon: Unplug },
 };
 
 export function HealthBadge({ health, compact }: { health: SourceHealth; compact?: boolean }) {
   const { label, text, Icon } = HEALTH[health];
   return (
-    <span className={clsx("inline-flex items-center gap-1 text-[12px] font-medium", text)}>
-      <Icon aria-hidden className="size-3.5" strokeWidth={2.2} />
+    <span className={clsx("inline-flex items-center gap-1 whitespace-nowrap text-[12px] font-medium", text)}>
+      <Icon aria-hidden className="size-3.5 shrink-0" strokeWidth={2.2} />
       {!compact && label}
     </span>
   );

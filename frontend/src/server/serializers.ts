@@ -1,12 +1,13 @@
 /** Database rows to the JSON shapes the frontend uses (camelCase, ISO dates in UTC). Port of serializers.py. */
 
+import { settings } from "./config";
 import { bool, js } from "./db";
 import { scoreDetection } from "./detection/scoring";
 import type { Asset, Brand } from "./repo";
 import { iso } from "./util";
 
-/** Sources that search live; everything else is curated sample data. */
-const LIVE_SOURCE_IDS = new Set(["src_play", "src_appstore"]);
+/** Live mode: every source searches live. Fixture mode (tests): only the stores do; the rest is curated. */
+const isSample = (sourceId: string) => settings.dataMode === "fixtures" && sourceId !== "src_play" && sourceId !== "src_appstore";
 
 const assetOut = (a: Asset) => ({
   id: a.id, platform: a.platform, handle: a.handle, canonicalId: a.canonicalId,
@@ -53,7 +54,7 @@ export function detectionOut(d: any) {
   return {
     id: d.id,
     sourceId: d.source_id,
-    sample: !LIVE_SOURCE_IDS.has(d.source_id),
+    sample: isSample(d.source_id),
     channel: d.channel,
     platform: d.platform,
     cls: d.cls,
@@ -95,8 +96,10 @@ export function sourceOut(s: any) {
     itemsLastScan: s.items_last_scan,
     note: s.note,
     simulateOutage: bool(s.simulate_outage),
-    // live | cached | simulated | down. Datasets are always reported as simulated, never live.
-    state: s.state || (s.health === "unavailable" ? "down" : s.mode !== "live" ? "simulated" : "live"),
+    // live | cached | simulated | down | not_connected. Datasets are always reported as simulated, never live.
+    state:
+      s.state ||
+      (s.mode === "off" || s.health === "not_connected" ? "not_connected" : s.health === "unavailable" ? "down" : s.mode !== "live" ? "simulated" : "live"),
   };
 }
 
