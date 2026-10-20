@@ -84,7 +84,7 @@ No brand is hard-coded: brands are data, and the same rules apply to every brand
 | Telegram | Live: public t.me pages for usernames built from the brand name (no key needed) |
 | YouTube | Live: YouTube Data API v3 (`YOUTUBE_API_KEY`) |
 | Reddit | Live: Reddit API, app-only OAuth (`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`) |
-| Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp (public channels and group invites), Moj, Josh | Live: Brave Search API, `site:` queries per platform for public profiles and pages (`BRAVE_SEARCH_API_KEY`) |
+| Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp (public channels and group invites), Moj, Josh | Live: web search, `site:` queries per platform for public profiles and pages. Brave Search (`BRAVE_SEARCH_API_KEY`) first, Serper / Google results (`SERPER_API_KEY`) when Brave is out of credit or fails; each query's results are shared by all workspaces for 12 hours |
 | Discord | Live: invites found by web search, each checked with Discord's public invite lookup (server name, description, member count; expired invites dropped) |
 
 There is no sample data. A source whose API key is not set is shown as **Not connected** and returns nothing. Set the keys as environment variables (hPanel → Environment variables, or `.env.local`); never commit them. The automated tests run with `DATA_MODE=fixtures`, where curated fixtures stand in for the social sources so the tests are repeatable and offline.

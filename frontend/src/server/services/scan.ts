@@ -335,8 +335,11 @@ async function run(scanId: string, brand: Brand): Promise<void> {
         state, `Live search failed; using cached results from ${fmtCached(cachedAt)} UTC`, items.length, source.id,
       ]);
     } else {
+      // A connector can explain how it answered (e.g. which web search provider, and why another was skipped).
+      const how = CONNECTORS[source.id].statusNote?.() ?? null;
       await exec("UPDATE sources SET state = ?, health = ?, note = ?, latency_ms = ?, last_success = ?, items_last_scan = ? WHERE id = ?", [
-        state, retries ? "degraded" : "operational", retries ? `Succeeded after ${retries} retr${retries === 1 ? "y" : "ies"}` : null,
+        state, retries ? "degraded" : "operational",
+        firstChars([retries ? `Succeeded after ${retries} retr${retries === 1 ? "y" : "ies"}` : null, how].filter(Boolean).join(". "), 255) || null,
         latency, utcnow(), items.length, source.id,
       ]);
     }

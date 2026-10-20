@@ -462,39 +462,129 @@ export function webCandidates(platform: string, results: WebResult[], sourceId: 
   return [...out.values()];
 }
 
-// The free Brave plan allows one query per second: every web-search connector shares this queue,
-// and identical queries within 15 minutes are answered from memory.
-const web = globalThis as unknown as { __bsBrave?: { next: number; cache: Map<string, { at: number; results: WebResult[] }> } };
-const brave = () => (web.__bsBrave ??= { next: 0, cache: new Map() });
+// ---------- web search providers: Brave first, Serper (Google results) as the fallback ----------
 
-async function braveSearch(query: string): Promise<WebResult[]> {
-  const b = brave();
-  const hit = b.cache.get(query);
-  if (hit && Date.now() - hit.at < 15 * 60_000) return hit.results;
-  const wait = b.next - Date.now();
-  b.next = Math.max(Date.now(), b.next) + 1100;
-  if (wait > 0) await sleep(wait);
-  const r = await fetch(`https://api.search.brave.com/res/v1/web/search?${new URLSearchParams({ q: query, count: "20", country: "IN", safesearch: "off" })}`, {
-    headers: { Accept: "application/json", "X-Subscription-Token": settings.braveApiKey },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (r.status === 429) throw new SourceUnavailable("Web search rate limit reached");
-  if (r.status === 401 || r.status === 403) throw new SourceUnavailable("Web search API key was refused");
-  if (!r.ok) throw new SourceUnavailable(`Web search error ${r.status}`);
-  const body = await r.json();
-  const results: WebResult[] = (body?.web?.results ?? []).map((x: { title?: string; url?: string; description?: string }) => ({
-    title: x.title ?? "",
-    url: x.url ?? "",
-    description: x.description ?? "",
-  }));
-  b.cache.set(query, { at: Date.now(), results });
-  if (b.cache.size > 500) b.cache.delete(b.cache.keys().next().value as string);
-  return results;
+/** A provider refused because its credit or quota is used up; skipped for a while instead of asked again. */
+class ProviderExhausted extends SourceUnavailable {}
+
+interface Provider {
+  name: string;
+  ready(): boolean;
+  search(query: string): Promise<WebResult[]>;
+}
+
+const providerState = globalThis as unknown as { __bsWeb?: { braveNext: number; exhausted: Map<string, { until: number; reason: string }> } };
+const pstate = () => (providerState.__bsWeb ??= { braveNext: 0, exhausted: new Map() });
+
+const BRAVE: Provider = {
+  name: "Brave",
+  ready: () => !!settings.braveApiKey,
+  async search(query) {
+    // A short gap between requests keeps bursts under the plan's per-second limit.
+    const s = pstate();
+    const wait = s.braveNext - Date.now();
+    s.braveNext = Math.max(Date.now(), s.braveNext) + 250;
+    if (wait > 0) await sleep(wait);
+    const r = await fetch(`https://api.search.brave.com/res/v1/web/search?${new URLSearchParams({ q: query, count: "20", country: "IN", safesearch: "off" })}`, {
+      headers: { Accept: "application/json", "X-Subscription-Token": settings.braveApiKey },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (r.status === 402) throw new ProviderExhausted("Brave Search credits are used up for this month");
+    if (r.status === 429) throw new SourceUnavailable("Brave Search rate limit reached");
+    if (r.status === 401 || r.status === 403) throw new ProviderExhausted("Brave Search refused the API key");
+    if (!r.ok) throw new SourceUnavailable(`Brave Search error ${r.status}`);
+    const body = await r.json();
+    return (body?.web?.results ?? []).map((x: { title?: string; url?: string; description?: string }) => ({
+      title: x.title ?? "",
+      url: x.url ?? "",
+      description: x.description ?? "",
+    }));
+  },
+};
+
+const SERPER: Provider = {
+  name: "Serper",
+  ready: () => !!settings.serperApiKey,
+  async search(query) {
+    // 10 results cost one Serper credit (more would cost two).
+    const r = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: { "X-API-KEY": settings.serperApiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ q: query, gl: "in", hl: "en", num: 10 }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (r.status === 400 && /credit|balance|quota/i.test(JSON.stringify(body))) throw new ProviderExhausted("Serper credits are used up");
+    if (r.status === 402) throw new ProviderExhausted("Serper credits are used up");
+    if (r.status === 401 || r.status === 403) throw new ProviderExhausted("Serper refused the API key");
+    if (r.status === 429) throw new SourceUnavailable("Serper rate limit reached");
+    if (!r.ok) throw new SourceUnavailable(`Serper error ${r.status}`);
+    return (body?.organic ?? []).map((x: { title?: string; link?: string; snippet?: string }) => ({
+      title: x.title ?? "",
+      url: x.link ?? "",
+      description: x.snippet ?? "",
+    }));
+  },
+};
+
+const PROVIDERS = [BRAVE, SERPER];
+const EXHAUSTED_FOR_MS = 6 * 3600_000; // re-check a provider that ran out after six hours
+const SHARED_CACHE_MS = 12 * 3600_000; // every workspace shares a query's results for twelve hours
+
+/** What the last web search used, for the Sources page note: "Searched via Serper; Brave: credits used up". */
+export interface WebSearchOutcome {
+  results: WebResult[];
+  provider: string | null; // null: answered from the shared cache
+  skipped: string[]; // providers that could not answer, with the reason
+}
+
+/**
+ * One web search, shared by every workspace: answered from the 12-hour shared cache when the same
+ * query ran recently, otherwise by the first provider that answers (Brave, then Serper).
+ */
+export async function webSearch(query: string): Promise<WebSearchOutcome> {
+  const { exec, one } = await import("../db");
+  const key = firstChars(query.toLowerCase(), 255);
+  const cached = await one<{ fetched_at: string; payload: unknown }>(
+    "SELECT fetched_at, payload FROM source_cache WHERE source_id = 'websearch' AND query_key = ?",
+    [key],
+  ).catch(() => null);
+  if (cached && Date.now() - Date.parse(`${cached.fetched_at.replace(" ", "T")}Z`) < SHARED_CACHE_MS) {
+    const payload = typeof cached.payload === "string" ? JSON.parse(cached.payload) : cached.payload;
+    return { results: payload as WebResult[], provider: null, skipped: [] };
+  }
+  const s = pstate();
+  const skipped: string[] = [];
+  let lastError: Error | null = null;
+  for (const p of PROVIDERS) {
+    if (!p.ready()) continue;
+    const ex = s.exhausted.get(p.name);
+    if (ex && ex.until > Date.now()) {
+      skipped.push(`${p.name}: ${ex.reason}`);
+      continue;
+    }
+    try {
+      const results = await p.search(query);
+      s.exhausted.delete(p.name);
+      await exec(
+        `INSERT INTO source_cache (source_id, query_key, fetched_at, payload) VALUES ('websearch', ?, UTC_TIMESTAMP(), ?)
+         ON DUPLICATE KEY UPDATE fetched_at = VALUES(fetched_at), payload = VALUES(payload)`,
+        [key, JSON.stringify(results)],
+      ).catch(() => undefined); // the cache is an optimisation; a failed write never fails the search
+      return { results, provider: p.name, skipped };
+    } catch (e) {
+      lastError = e as Error;
+      if (e instanceof ProviderExhausted) s.exhausted.set(p.name, { until: Date.now() + EXHAUSTED_FOR_MS, reason: e.message });
+      skipped.push(`${p.name}: ${(e as Error).message}`);
+    }
+  }
+  throw new SourceUnavailable(skipped.length ? skipped.join("; ") : (lastError?.message ?? "No web search provider is set up"));
 }
 
 export class WebSearchLive implements Connector {
-  // Queued behind other platforms' queries at one per second.
+  // A scan's queries go one after another; a slow provider still finishes within this budget.
   timeoutMs = 60_000;
+  private note: string | null = null;
 
   constructor(
     public sourceId: string,
@@ -502,7 +592,12 @@ export class WebSearchLive implements Connector {
   ) {}
 
   notConnected() {
-    return settings.braveApiKey ? null : "Not connected: add a Brave Search API key (BRAVE_SEARCH_API_KEY)";
+    return PROVIDERS.some((p) => p.ready()) ? null : "Not connected: add a web search API key (BRAVE_SEARCH_API_KEY or SERPER_API_KEY)";
+  }
+
+  /** Which provider answered the last search, and why another one was skipped. */
+  statusNote() {
+    return this.note;
   }
 
   async fetch(keywords: string[]): Promise<Candidate[]> {
@@ -516,7 +611,16 @@ export class WebSearchLive implements Connector {
         ? [`${name} site:${sites[0]}`, `${name} (official OR support OR "customer care" OR helpline) site:${sites[0]}`]
         : sites.map((s) => `${name} site:${s}`);
     const results: WebResult[] = [];
-    for (const query of queries) results.push(...(await braveSearch(query)));
+    const used = new Set<string>();
+    const skipped = new Set<string>();
+    for (const query of queries) {
+      const out = await webSearch(query);
+      results.push(...out.results);
+      used.add(out.provider ?? "shared cache");
+      out.skipped.forEach((x) => skipped.add(x));
+    }
+    const via = [...used].join(" and ");
+    this.note = skipped.size || used.has("Serper") || used.has("shared cache") ? `Searched via ${via}${skipped.size ? ` (${[...skipped].join("; ")})` : ""}` : null;
     return this.finish(webCandidates(this.platform, results, this.sourceId));
   }
 

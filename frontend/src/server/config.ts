@@ -24,6 +24,8 @@ export const settings = {
   // API keys for the live connectors. A connector without its key is shown as not connected.
   youtubeApiKey: process.env.YOUTUBE_API_KEY || "",
   braveApiKey: process.env.BRAVE_SEARCH_API_KEY || "",
+  // Second web-search provider (Google results): used when Brave is out of credit or fails, or alone.
+  serperApiKey: process.env.SERPER_API_KEY || "",
   redditClientId: process.env.REDDIT_CLIENT_ID || "",
   redditClientSecret: process.env.REDDIT_CLIENT_SECRET || "",
 };

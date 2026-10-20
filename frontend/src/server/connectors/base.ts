@@ -44,6 +44,8 @@ export interface Connector {
   timeoutMs?: number;
   /** Why this source cannot run (no public API, API key not set), or null when it can. */
   notConnected?(): string | null;
+  /** A note for the Sources page after a successful fetch (e.g. which provider answered), or null. */
+  statusNote?(): string | null;
   fetch(keywords: string[]): Promise<Candidate[]>;
   enrich?(c: Candidate): Promise<void>;
 }
