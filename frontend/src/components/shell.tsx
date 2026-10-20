@@ -40,7 +40,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const sourceIssues = sources.filter((s) => s.health !== "operational").length;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="app-sidebar flex h-full flex-col">
       <div className="flex h-[52px] items-center gap-2.5 px-4">
         <ProductMark />
         <span className="page-title !text-[15px] !leading-none text-ink">
@@ -270,7 +270,7 @@ function ReadyShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="min-w-0">
-        <header className="glass-panel sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line pl-2 pr-3 sm:px-6">
+        <header className="app-topbar glass-panel sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line pl-2 pr-3 sm:px-6">
           <div className="flex items-center gap-2 lg:hidden">
             <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-2 text-ink-2 hover:bg-surface-2">
               {open ? <X className="size-4" /> : <Menu className="size-4" />}
