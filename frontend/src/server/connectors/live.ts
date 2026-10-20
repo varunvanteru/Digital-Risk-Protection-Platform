@@ -420,6 +420,9 @@ export function cleanTitle(title: string): string {
   return t.trim();
 }
 
+// Titles a platform shows instead of the account's name (login walls, the bare site name).
+const GENERIC_TITLES = /^(instagram|facebook|x|twitter|linkedin|threads|pinterest|quora|snapchat|sharechat|whatsapp|discord|moj|josh|log in or sign up to view|log into facebook|login|sign up|page not found|profile|posts)$/i;
+
 export interface WebResult {
   title: string;
   url: string;
@@ -448,7 +451,7 @@ export function webCandidates(platform: string, results: WebResult[], sourceId: 
         platform,
         identifier: id,
         handle,
-        displayName: cleanTitle(r.title) || handle,
+        displayName: ((t) => (t && !GENERIC_TITLES.test(t) ? t : handle))(cleanTitle(r.title)),
         url: webProfileUrl(platform, handle),
         bio: firstChars(description, 2000),
         audience: parseAudience(description),

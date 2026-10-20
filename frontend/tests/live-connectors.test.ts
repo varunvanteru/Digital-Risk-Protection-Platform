@@ -168,6 +168,13 @@ describe("web search results", () => {
     expect(cleanTitle("Paytm (paytm) – Profile | Pinterest")).toBe("Paytm");
   });
 
+  it("uses the handle when the platform shows a login wall or its own name as the title", () => {
+    const [fb] = webCandidates("facebook", [{ title: "Log in or sign up to view", url: "https://www.facebook.com/foresitesolutions", description: "" }], "src_fb");
+    const [ig] = webCandidates("instagram", [{ title: "Instagram", url: "https://www.instagram.com/fourst/", description: "" }], "src_ig");
+    expect(fb.displayName).toBe("foresitesolutions");
+    expect(ig.displayName).toBe("fourst");
+  });
+
   it("merges several results for the same account into one candidate", () => {
     const cs = webCandidates(
       "instagram",

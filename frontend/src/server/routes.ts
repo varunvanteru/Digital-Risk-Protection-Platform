@@ -133,7 +133,8 @@ function checkBrandBody(body: BrandIn): void {
     const de = domainError(d);
     if (de) badRequest("domains", de);
   }
-  if (!body.accounts.length && !body.apps.length) badRequest("assets", "Add at least one official account or app");
+  // A brand with no social accounts or apps (a business known only by its website) is protected by its domains.
+  if (!body.accounts.length && !body.apps.length && !body.domains.length) badRequest("assets", "Add at least one official account, app or domain");
   if (body.apps.length && !(body.publisher ?? "").trim()) badRequest("publisher", "Required when apps are listed");
 }
 

@@ -185,7 +185,8 @@ export default function SetupPage() {
     logo: null as string | null, // optional: the verified official app icon is used when no logo is uploaded
   };
   const errors2 = {
-    assets: accounts.length + apps.length === 0 ? "Add at least one official account or app" : null,
+    // A business known only by its website is protected by its official domains.
+    assets: accounts.length + apps.length + domains.length === 0 ? "Add at least one official account, app or domain" : null,
     publisher: apps.length && !publisher.trim() ? "Required when apps are listed" : null,
   };
   const stepValid = step === 0 ? !Object.values(errors1).some(Boolean) : step === 1 ? !Object.values(errors2).some(Boolean) : true;
