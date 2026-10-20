@@ -46,6 +46,8 @@ export interface Connector {
   notConnected?(): string | null;
   /** A note for the Sources page after a successful fetch (e.g. which provider answered), or null. */
   statusNote?(): string | null;
+  /** Reuse a successful search for this long (any workspace) instead of calling the API again. */
+  shareResultsMs?: number;
   fetch(keywords: string[]): Promise<Candidate[]>;
   enrich?(c: Candidate): Promise<void>;
 }

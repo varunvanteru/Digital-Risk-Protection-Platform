@@ -136,6 +136,8 @@ export class TelegramLive implements Connector {
 export class YouTubeLive implements Connector {
   sourceId = "src_yt";
   timeoutMs = 20_000;
+  // The free quota allows about 50 channel searches a day: every workspace shares a search for 12 hours.
+  shareResultsMs = 12 * 3600_000;
 
   notConnected() {
     return settings.youtubeApiKey ? null : "Not connected: add a YouTube Data API key (YOUTUBE_API_KEY)";
@@ -581,6 +583,11 @@ export async function webSearch(query: string): Promise<WebSearchOutcome> {
   throw new SourceUnavailable(skipped.length ? skipped.join("; ") : (lastError?.message ?? "No web search provider is set up"));
 }
 
+// Phrases in the page title of an account (not a post), e.g. "PhonePe (@phonepe) • Instagram photos and videos".
+const PROFILE_HINTS: Record<string, string> = {
+  instagram: '"photos and videos"',
+};
+
 export class WebSearchLive implements Connector {
   // A scan's queries go one after another; a slow provider still finishes within this budget.
   timeoutMs = 60_000;
@@ -610,6 +617,9 @@ export class WebSearchLive implements Connector {
       sites.length === 1
         ? [`${name} site:${sites[0]}`, `${name} (official OR support OR "customer care" OR helpline) site:${sites[0]}`]
         : sites.map((s) => `${name} site:${s}`);
+    // Search engines return mostly posts for some platforms; a phrase only profile pages carry finds the accounts.
+    const hint = PROFILE_HINTS[this.platform];
+    if (hint) queries.push(`${name} ${hint} site:${sites[0]}`);
     const results: WebResult[] = [];
     const used = new Set<string>();
     const skipped = new Set<string>();

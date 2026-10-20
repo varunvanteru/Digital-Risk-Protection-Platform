@@ -183,10 +183,19 @@ async function loadCache(sourceId: string, keywords: string[]): Promise<[Candida
  * Candidates, latency in ms, retries needed, and cachedAt (set only when a live
  * source failed and its last good results were served from cache).
  */
-export async function fetchWithRetries(source: SourceRow, keywords: string[]): Promise<[Candidate[], number | null, number, string | null]> {
+export async function fetchWithRetries(
+  source: SourceRow,
+  keywords: string[],
+): Promise<[Candidate[], number | null, number, string | null, string | null]> {
   const connector = CONNECTORS[source.id];
   const reason = notConnectedReason(source.id);
   if (reason) throw new SourceNotConnected(reason); // no retries, no cache: there is nothing to fetch
+  // Sources with a tight daily quota reuse a recent successful search (from any workspace).
+  // The 5th value is when that search ran, so the Sources page can say so.
+  if (connector.shareResultsMs && LIVE_SOURCES.has(source.id) && !source.simulate_outage) {
+    const recent = await loadCache(source.id, keywords);
+    if (recent && Date.now() - Date.parse(`${recent[1].replace(" ", "T")}Z`) < connector.shareResultsMs) return [recent[0], null, 0, null, recent[1]];
+  }
   const timeout = connector.timeoutMs ?? settings.sourceTimeoutMs;
   let lastError: Error | null = null;
   for (let attempt = 0; attempt <= settings.sourceRetries; attempt++) {
@@ -198,7 +207,7 @@ export async function fetchWithRetries(source: SourceRow, keywords: string[]): P
     try {
       const items = await withTimeout(connector.fetch(keywords), timeout, source.id);
       if (LIVE_SOURCES.has(source.id)) await saveCache(source.id, keywords, items);
-      return [items, pyRound(performance.now() - start), attempt, null];
+      return [items, pyRound(performance.now() - start), attempt, null, null];
     } catch (e) {
       if (e instanceof SourceNotConnected) throw e; // a setup problem: retrying or serving the cache would hide it
       lastError = e instanceof SourceTimeout ? new SourceUnavailable(e.message) : (e as Error);
@@ -207,7 +216,7 @@ export async function fetchWithRetries(source: SourceRow, keywords: string[]): P
   }
   if (LIVE_SOURCES.has(source.id) && !source.simulate_outage) {
     const cached = await loadCache(source.id, keywords);
-    if (cached) return [cached[0], null, settings.sourceRetries, cached[1]];
+    if (cached) return [cached[0], null, settings.sourceRetries, cached[1], null];
   }
   throw new SourceUnavailable(lastError ? lastError.message : "Unknown error");
 }
@@ -308,9 +317,9 @@ async function run(scanId: string, brand: Brand): Promise<void> {
 
   for (const source of await q<SourceRow>("SELECT * FROM sources ORDER BY id")) {
     if (!(source.id in CONNECTORS)) continue;
-    let items: Candidate[], latency: number | null, retries: number, cachedAt: string | null;
+    let items: Candidate[], latency: number | null, retries: number, cachedAt: string | null, sharedAt: string | null;
     try {
-      [items, latency, retries, cachedAt] = await fetchWithRetries(source, keywords);
+      [items, latency, retries, cachedAt, sharedAt] = await fetchWithRetries(source, keywords);
     } catch (e) {
       const msg = (e as Error).message;
       if (e instanceof SourceNotConnected) {
@@ -336,7 +345,9 @@ async function run(scanId: string, brand: Brand): Promise<void> {
       ]);
     } else {
       // A connector can explain how it answered (e.g. which web search provider, and why another was skipped).
-      const how = CONNECTORS[source.id].statusNote?.() ?? null;
+      const how = sharedAt
+        ? `From the live search at ${fmtCached(sharedAt)} UTC, reused for 12 hours to save the daily API quota`
+        : (CONNECTORS[source.id].statusNote?.() ?? null);
       await exec("UPDATE sources SET state = ?, health = ?, note = ?, latency_ms = ?, last_success = ?, items_last_scan = ? WHERE id = ?", [
         state, retries ? "degraded" : "operational",
         firstChars([retries ? `Succeeded after ${retries} retr${retries === 1 ? "y" : "ies"}` : null, how].filter(Boolean).join(". "), 255) || null,
