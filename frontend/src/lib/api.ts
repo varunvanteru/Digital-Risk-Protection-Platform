@@ -142,6 +142,7 @@ export const api = {
   detection: (id: string) => request<DetectionDetail>(`/api/detections/${id}`),
   setStatus: (id: string, status: DetectionStatus) => request<DetectionDetail>(`/api/detections/${id}`, json("PATCH", { status })),
   undoAllowlist: (id: string) => request<DetectionDetail>(`/api/detections/${id}/allowlist`, { method: "DELETE" }),
+  letterCopied: (id: string) => request<DetectionDetail>(`/api/detections/${id}/letter`, { method: "POST" }),
 
   check: (value: string) => request<QuickCheck>("/api/check", json("POST", { value })),
   search: (query: string, platforms: (Platform | "all")[]) => request<SearchResponse>("/api/search", json("POST", { query, platforms })),

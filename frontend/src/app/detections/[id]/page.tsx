@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ArrowLeft, Ban, Calculator, CircleX, ExternalLink, FileDown, Flag, GitCompare, History, Info, Link2, ListChecks, LoaderCircle, ShieldCheck, Undo2 } from "lucide-react";
+import { ArrowLeft, Ban, Calculator, CircleX, ExternalLink, FileDown, FileText, Flag, GitCompare, History, Info, Link2, ListChecks, LoaderCircle, ShieldCheck, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { SeverityBadge, StatusBadge } from "@/components/badges";
 import { EvidenceTable, VerdictChip } from "@/components/evidence";
 import { initialsOf, SampleTag } from "@/components/detection-table";
 import { BrandMark, PlatformLabel } from "@/components/marks";
+import { TakedownLetter } from "@/components/takedown-letter";
 import { Button, Card, CardHeader, EmptyState, KeyValue, Mono, Orb, Tag } from "@/components/ui";
 import { api, ApiError, mediaUrl } from "@/lib/api";
 import { CLASS_LABEL, PLATFORM_LABEL, STATUS_LABEL, ageInDays, formatCount, formatDate, formatDateTime, handleDisplay } from "@/lib/format";
@@ -182,25 +183,11 @@ function downloadEvidence(d: Detection) {
   URL.revokeObjectURL(a.href);
 }
 
-/** Plain-text report to paste into the platform's own "Report" form. */
-function reportText(d: Detection, brand: string) {
-  return [
-    `Impersonation report: ${d.displayName} (${handleDisplay(d.platform, d.handle)}) on ${PLATFORM_LABEL[d.platform]}`,
-    d.url,
-    "",
-    `This ${d.channel === "app" ? "app" : "account"} impersonates ${brand} and is not an official ${brand} channel.`,
-    `Risk score ${d.breakdown.score}/100 (${d.breakdown.severity}), first seen ${d.firstSeen?.slice(0, 10) ?? "recently"}.`,
-    "",
-    "Evidence:",
-    ...d.reasons.map((r) => `- ${r}`),
-  ].join("\n");
-}
-
 export default function DetectionPage() {
   const { id } = useParams<{ id: string }>();
   const { setStatus, refresh, brand } = useStore();
   const [d, setD] = useState<DetectionDetail | null>(null);
-  const [reported, setReported] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<DetectionStatus | "undo" | null>(null);
 
@@ -227,16 +214,16 @@ export default function DetectionPage() {
     }
   }
 
-  /** Copy a ready-made report and open the item on its platform, where the "Report" option lives. */
-  async function reportOnPlatform(x: Detection) {
-    try {
-      await navigator.clipboard.writeText(reportText(x, brand.name));
-      setReported(true);
-    } catch {
-      setReported(false);
-    }
-    if (x.url) window.open(x.url, "_blank", "noopener,noreferrer");
+  /** Mark the takedown as requested and show the letter to send to the platform. */
+  async function requestTakedown() {
+    setLetterOpen(true);
+    await act("takedown_requested");
   }
+
+  const letterCopied = useCallback(() => {
+    api.letterCopied(id).then(setD).catch(() => {});
+  }, [id]);
+  const closeLetter = useCallback(() => setLetterOpen(false), []);
 
   async function undoAllowlist() {
     setBusy("undo");
@@ -326,21 +313,21 @@ export default function DetectionPage() {
             </>
           )}
           {d.status === "confirmed" && (
-            <Button variant="primary" onClick={() => act("takedown_requested")} disabled={busy !== null}>
+            <Button variant="primary" onClick={requestTakedown} disabled={busy !== null}>
               {spin("takedown_requested") ?? <Ban />}
               Request takedown
+            </Button>
+          )}
+          {d.status === "takedown_requested" && (
+            <Button variant="primary" onClick={() => setLetterOpen(true)}>
+              <FileText />
+              Takedown letter
             </Button>
           )}
           {d.status !== "open" && (
             <Button variant="ghost" onClick={() => act("open")} disabled={busy !== null}>
               {spin("open") ?? <Undo2 />}
               Reopen
-            </Button>
-          )}
-          {(d.status === "confirmed" || d.status === "takedown_requested") && d.url && !d.sample && (
-            <Button onClick={() => reportOnPlatform(d)}>
-              <ExternalLink />
-              Report on {PLATFORM_LABEL[d.platform]}
             </Button>
           )}
           <Button variant="ghost" onClick={() => downloadEvidence(d)}>
@@ -356,12 +343,7 @@ export default function DetectionPage() {
           Social platforms and APK sites have no open search API, so they are shown with sample data. Google Play and the App Store are searched live.
         </p>
       )}
-      {reported && (
-        <p className="mb-4 rounded-md border border-line bg-surface px-3 py-2 text-[13px] text-ink-2" role="status">
-          Report text copied. On the {PLATFORM_LABEL[d.platform]} page that just opened, choose <span className="font-medium text-ink">Report</span> and paste
-          it; attach the Evidence file if the form allows.
-        </p>
-      )}
+      {letterOpen && <TakedownLetter d={d} brand={brand} onClose={closeLetter} onCopied={letterCopied} />}
       {error && <p className="mb-4 text-[13px] text-crit">{error}</p>}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
@@ -470,7 +452,11 @@ export default function DetectionPage() {
               {d.events.map((e, i) => (
                 <li key={i} className="flex justify-between gap-3">
                   <span className="text-ink">
-                    {e.action === "allowlisted" ? "Added to allowlist" : `${e.from ? STATUS_LABEL[e.from] : "—"} → ${e.to ? STATUS_LABEL[e.to] : "—"}`}
+                    {e.action === "allowlisted"
+                      ? "Added to allowlist"
+                      : e.action === "letter_copied"
+                        ? "Takedown letter copied"
+                        : `${e.from ? STATUS_LABEL[e.from] : "—"} → ${e.to ? STATUS_LABEL[e.to] : "—"}`}
                   </span>
                   <span className="tabular shrink-0 text-ink-3">{formatDateTime(e.at)}</span>
                 </li>

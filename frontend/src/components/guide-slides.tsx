@@ -347,8 +347,8 @@ const SLIDES: Slide[] = [
         head={["Button", "What it does"]}
         rows={[
           ["Confirm threat", "Marks it Confirmed. Request takedown then appears."],
-          ["Request takedown", "Marks it Takedown requested, to track that the platform was asked to remove it."],
-          ["Report on <platform>", "For confirmed live items: copies a ready-made report with the evidence and opens the item so you can paste it into the platform's Report form."],
+          ["Request takedown", "Marks it Takedown requested and opens a ready-made takedown letter with the evidence, a Copy letter button and a link to the platform's report form. Nothing is sent for you."],
+          ["Takedown letter", "Opens the letter again later. Each copy is recorded in the Activity log."],
           ["False positive", "Marks it as not a threat and lowers its score by 15 points. It leaves the Active view."],
           ["It's official", "Adds it to the brand's allowlist. It is never flagged again; Undo removes it."],
           ["Reopen", "Returns any marked item to Open."],

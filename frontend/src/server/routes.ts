@@ -440,6 +440,15 @@ async function setStatus(id: string, raw: Body) {
   return getDetection(id);
 }
 
+/** The analyst copied the takedown letter: kept in the activity log so the request has a trail. */
+async function letterCopied(id: string) {
+  const brand = await currentBrand();
+  const d: any = await one("SELECT * FROM detections WHERE id = ?", [id]);
+  if (!d || d.brand_id !== brand.id) throw new HttpError(404, "Detection not found");
+  await exec("INSERT INTO detection_events (detection_id, at, action, from_status, to_status) VALUES (?, ?, 'letter_copied', ?, ?)", [id, utcnow(), d.status, d.status]);
+  return getDetection(id);
+}
+
 async function undoAllowlist(id: string) {
   const brand = await currentBrand();
   const d: any = await one("SELECT * FROM detections WHERE id = ?", [id]);
@@ -553,6 +562,7 @@ const ROUTES: [string, RegExp, Handler, number?][] = [
   ["GET", /^detections\/([^/]+)$/, ([id]) => getDetection(id)],
   ["PATCH", /^detections\/([^/]+)$/, async ([id], r) => setStatus(id, await body(r))],
   ["DELETE", /^detections\/([^/]+)\/allowlist$/, ([id]) => undoAllowlist(id)],
+  ["POST", /^detections\/([^/]+)\/letter$/, ([id]) => letterCopied(id)],
   ["POST", /^check$/, async (_, r) => quickCheck(await body(r))],
   ["POST", /^search$/, async (_, r) => search(await body(r))],
   // The same Quick check as a plain link, so results can be verified by any tool that can fetch a URL:

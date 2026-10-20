@@ -6,6 +6,9 @@
 
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { PLATFORM_LABEL } from "@/lib/format";
+import { letterText } from "@/lib/takedown";
+import type { Platform } from "@/lib/types";
 import { candidate } from "@/server/connectors/base";
 import { pool } from "@/server/db";
 import { ready } from "@/server/init";
@@ -132,6 +135,24 @@ describe("API", () => {
     expect(scan.status).toBe(202);
     await waitForScan(scan.body.id);
     expect((await get(`detections/${det.id}`)).status).toBe("confirmed");
+  });
+
+  it("takedown letter: built from the detection, and each copy is logged", async () => {
+    const det = (await get("detections")).find((d: any) => d.status === "open" && d.breakdown.score >= 40);
+    await call("PATCH", `detections/${det.id}`, { status: "confirmed" });
+    const req = (await call("PATCH", `detections/${det.id}`, { status: "takedown_requested" })).body;
+    const text = letterText(req, await get("brand"));
+    expect(text).toContain(`Dear ${PLATFORM_LABEL[req.platform as Platform]} Support team`);
+    expect(text).toContain(req.displayName);
+    expect(text).toContain(req.reasons[0]);
+    expect(text).toContain(`${req.breakdown.score}/100`);
+    expect(text).not.toMatch(/illegal/i);
+    const logged = await call("POST", `detections/${det.id}/letter`);
+    expect(logged.status).toBe(200);
+    expect(logged.body.status).toBe("takedown_requested");
+    expect(logged.body.events.at(-1).action).toBe("letter_copied");
+    expect((await call("POST", "detections/nope/letter")).status).toBe(404);
+    await call("PATCH", `detections/${det.id}`, { status: "open" });
   });
 
   it("a source outage does not stop a scan", async () => {
