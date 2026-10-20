@@ -86,9 +86,6 @@ export async function seed(): Promise<void> {
 }
 
 async function seedLive(): Promise<void> {
-  // The app has no outage switch any more (the automated tests still use the API for it): a source
-  // left switched off would otherwise stay off for good.
-  await exec("UPDATE sources SET simulate_outage = 0, health = 'operational', state = NULL, note = NULL WHERE simulate_outage = 1");
   for (const [sid, name, platform, channel] of LIVE_SOURCE_ROWS) {
     const mode = LIVE_SOURCES.has(sid) ? "live" : "off";
     await exec(

@@ -483,7 +483,8 @@ async function patchSource(id: string, raw: Body) {
   if (typeof raw?.simulateOutage !== "boolean") invalid("Input should be a valid boolean", ["simulateOutage"]);
   if (!(await one("SELECT id FROM sources WHERE id = ?", [id]))) throw new HttpError(404, "Source not found");
   if (raw.simulateOutage) {
-    await exec("UPDATE sources SET simulate_outage = 1, health = 'unavailable', note = ? WHERE id = ?", [
+    // State and health change together, so the row reads "Down · Unavailable" straight away.
+    await exec("UPDATE sources SET simulate_outage = 1, health = 'unavailable', state = 'down', note = ? WHERE id = ?", [
       "Simulated outage. The scan continues with other sources; showing the last good results.", id,
     ]);
   } else {
