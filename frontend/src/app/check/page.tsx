@@ -30,17 +30,17 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
   const all = selected === "all";
   const isOn = (p: Platform) => all || selected.includes(p);
 
+  // Every platform ticked collapses to "all"; nothing ticked stays an empty selection.
+  const settle = (next: Platform[]) => onChange(next.length === PLATFORMS.length ? "all" : next);
+  const current = all ? PLATFORMS : selected;
+
   function toggle(p: Platform) {
-    if (all) return onChange([p]);
-    const next = selected.includes(p) ? selected.filter((x) => x !== p) : [...selected, p];
-    onChange(next.length === 0 || next.length === PLATFORMS.length ? "all" : next);
+    settle(current.includes(p) ? current.filter((x) => x !== p) : [...current, p]);
   }
 
   function toggleGroup(ps: Platform[]) {
-    const current = all ? [] : selected;
-    const everyOn = !all && ps.every((p) => current.includes(p));
-    const next = everyOn ? current.filter((p) => !ps.includes(p)) : Array.from(new Set([...current, ...ps]));
-    onChange(next.length === 0 || next.length === PLATFORMS.length ? "all" : next);
+    const everyOn = ps.every((p) => current.includes(p));
+    settle(everyOn ? current.filter((p) => !ps.includes(p)) : Array.from(new Set([...current, ...ps])));
   }
 
   return (
@@ -48,7 +48,8 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <button
           aria-pressed={all}
-          onClick={() => onChange("all")}
+          // On by default; clicking it again clears every platform so they can be picked one by one.
+          onClick={() => onChange(all ? [] : "all")}
           className={clsx(
             "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-[13px] font-medium transition-colors",
             all ? "border-accent bg-accent text-accent-ink" : "border-line-strong bg-surface text-ink-2 hover:text-ink",
@@ -104,15 +105,15 @@ function PlatformPicker({ selected, onChange }: { selected: Platform[] | "all"; 
                     >
                       <PlatformLogo platform={p} size={16} className={clsx("shrink-0", !all && !on && "opacity-45 grayscale")} />
                       <span className="min-w-0 flex-1 truncate">{PLATFORM_LABEL[p]}</span>
-                      {/* Checkbox: ticked when the platform is included in the search. */}
+                      {/* Checkbox: white, with a green tick when the platform is included in the search. */}
                       <span
                         aria-hidden
                         className={clsx(
-                          "flex size-4 shrink-0 items-center justify-center rounded-[4px] border",
-                          isOn(p) ? "border-accent bg-accent text-accent-ink" : "border-line-strong bg-surface",
+                          "flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white",
+                          isOn(p) ? "border-[#16a34a] text-[#16a34a]" : "border-line-strong",
                         )}
                       >
-                        {isOn(p) && <Check className="size-3" strokeWidth={3} />}
+                        {isOn(p) && <Check className="size-3" strokeWidth={3.5} />}
                       </span>
                     </button>
                   );
@@ -533,6 +534,7 @@ export default function QuickCheckPage() {
 
   async function run(query = value, sel: Platform[] | "all" = platforms) {
     const q = query.trim();
+    if (sel !== "all" && sel.length === 0) return setError("Select at least one platform");
     if (q.length < 2) return setError("Enter at least 2 characters");
     setValue(q);
     setPending(true);
@@ -556,7 +558,13 @@ export default function QuickCheckPage() {
 
       <Card>
         <div className="space-y-4 p-4">
-          <PlatformPicker selected={platforms} onChange={setPlatforms} />
+          <PlatformPicker
+            selected={platforms}
+            onChange={(v) => {
+              setPlatforms(v);
+              setError(null);
+            }}
+          />
 
           <form
             onSubmit={(e) => {
@@ -583,7 +591,7 @@ export default function QuickCheckPage() {
                 spellCheck={false}
               />
             </div>
-            <Button type="submit" variant="primary" className="h-11 px-5" disabled={pending}>
+            <Button type="submit" variant="primary" className="h-11 px-5" disabled={pending || count === 0}>
               {pending ? <LoaderCircle className="animate-spin" /> : <Search />}
               {pending ? "Searching" : `Search ${count === PLATFORMS.length ? "all" : count} platform${count === 1 ? "" : "s"}`}
             </Button>
