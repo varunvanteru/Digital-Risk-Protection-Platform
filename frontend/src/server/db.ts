@@ -130,6 +130,16 @@ const TABLES: [string, string][] = [
     id INTEGER NOT NULL AUTO_INCREMENT, detection_id VARCHAR(40) NOT NULL, at DATETIME NOT NULL,
     action VARCHAR(30) NOT NULL, from_status VARCHAR(20), to_status VARCHAR(20), PRIMARY KEY (id),
     FOREIGN KEY(detection_id) REFERENCES detections (id) ON DELETE CASCADE)`],
+  // Accounts (optional: "Continue as demo" needs none). An account owns one private workspace.
+  ["users", `CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(40) NOT NULL, email VARCHAR(160) NOT NULL, name VARCHAR(80) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, workspace_id VARCHAR(40) NOT NULL, created_at DATETIME NOT NULL,
+    last_login_at DATETIME, PRIMARY KEY (id), CONSTRAINT uq_user_email UNIQUE (email))`],
+  // Sign-in sessions; only a SHA-256 of the session token is stored.
+  ["sessions", `CREATE TABLE IF NOT EXISTS sessions (
+    token_hash CHAR(64) NOT NULL, user_id VARCHAR(40) NOT NULL, created_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL, PRIMARY KEY (token_hash),
+    FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE)`],
 ];
 
 // Columns added after the first release, with their DDL: added to older databases on start.

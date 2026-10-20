@@ -600,7 +600,7 @@ const SHARED = new Set(["health", "auth", "accuracy"]);
  * Dispatch one /api request in the caller's workspace. `path` is the part after /api/.
  * Without `ws` (scripts) only data that belongs to no workspace is visible.
  */
-export async function handle(method: string, path: string, req: Request, ws?: string): Promise<{ status: number; body: unknown }> {
+export async function handle(method: string, path: string, req: Request, ws?: string, signedIn = false): Promise<{ status: number; body: unknown }> {
   if (!ws || SHARED.has(path)) return dispatch(method, path, req);
   return inWorkspace(ws, async () => {
     try {
@@ -609,11 +609,12 @@ export async function handle(method: string, path: string, req: Request, ws?: st
       console.error("workspace setup failed", e);
       return { status: 503, body: { detail: "Could not prepare your workspace. Try again." } };
     }
-    return dispatch(method, path, req);
+    return dispatch(method, path, req, signedIn);
   });
 }
 
-async function dispatch(method: string, path: string, req: Request): Promise<{ status: number; body: unknown }> {
+/** `signedIn`: the caller is signed in to the account that owns this workspace, so its own data needs no admin password. */
+async function dispatch(method: string, path: string, req: Request, signedIn = false): Promise<{ status: number; body: unknown }> {
   if (path === "auth") {
     if (method === "GET") return { status: 200, body: { required: !!settings.adminPassword } };
     if (method === "POST") {
@@ -621,7 +622,9 @@ async function dispatch(method: string, path: string, req: Request): Promise<{ s
       return ok ? { status: 200, body: { ok: true } } : { status: 401, body: { detail: { field: "auth", message: "Wrong password." } } };
     }
   }
-  if (!authorised(method, path, req)) return { status: 401, body: LOCKED };
+  // Sources are shared by every workspace, so changing them always needs the admin password.
+  const ownData = signedIn && !path.startsWith("sources");
+  if (!ownData && !authorised(method, path, req)) return { status: 401, body: LOCKED };
   for (const [m, pattern, fn, ok] of ROUTES) {
     if (m !== method) continue;
     const match = path.match(pattern);

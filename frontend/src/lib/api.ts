@@ -152,3 +152,36 @@ export const api = {
   startScan: () => request<ScanSummary>("/api/scans", { method: "POST" }),
   latestScan: () => request<{ running: ScanSummary | null; last: ScanSummary | null; total: number }>("/api/scans/latest"),
 };
+
+// ---------- accounts (sign in, create account, continue as demo) ----------
+
+export interface Account {
+  name: string;
+  email: string;
+}
+
+/** Plain fetch: a wrong password (401) must not open the admin-password dialog. */
+async function accountCall<T>(path: string, body?: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/auth/${path}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError("Cannot reach the server. Check your connection and try again.", 0);
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(typeof data?.detail === "string" ? data.detail : `Request failed (${res.status})`, res.status);
+  return data as T;
+}
+
+export const account = {
+  me: () => accountCall<{ user: Account | null; demo: boolean }>("me"),
+  signUp: (body: { name: string; email: string; password: string }) => accountCall<{ user: Account }>("signup", body),
+  signIn: (body: { email: string; password: string }) => accountCall<{ user: Account }>("login", body),
+  signOut: () => accountCall<{ ok: true }>("logout", {}),
+  demo: () => accountCall<{ ok: true }>("demo", {}),
+};

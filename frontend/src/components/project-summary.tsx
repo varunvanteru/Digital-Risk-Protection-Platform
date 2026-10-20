@@ -21,8 +21,9 @@ export function ProjectSummary() {
       <h1 className="text-[20px] font-bold text-ink">IMPOSTR: Digital Risk Protection for Social &amp; App Monitoring</h1>
       <p>
         IMPOSTR finds fake social-media profiles, fake brand pages, scam accounts and look-alike mobile apps that impersonate a brand. It scores each
-        one from 0 to 100, explains every flag in plain words, and never flags the brand&apos;s own accounts and apps. The app runs in the browser and
-        needs no login: open <A href={SITE}>{SITE}</A>. Each browser gets a private workspace with two demo brands, ZentraPay (fictional) and PhonePe (real).
+        one from 0 to 100, explains every flag in plain words, and never flags the brand&apos;s own accounts and apps. The app runs in the browser at{" "}
+        <A href={SITE}>{SITE}</A>; no account is needed: choose &quot;Continue as demo&quot; on the sign-in page, or create a free account to keep your
+        work. Each workspace starts with two demo brands, ZentraPay (fictional) and PhonePe (real).
       </p>
 
       <h2 className="text-[16px] font-semibold text-ink">Start here</h2>

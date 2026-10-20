@@ -1,12 +1,12 @@
 "use client";
 
 import clsx from "clsx";
-import { BookOpen, Building2, CloudOff, LayoutGrid, LoaderCircle, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, Target, X } from "lucide-react";
+import { BookOpen, Building2, CloudOff, LayoutGrid, LoaderCircle, LogOut, Menu, PlugZap, Radar, RefreshCw, ScanSearch, Settings2, Target, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/format";
-import { API_URL } from "@/lib/api";
+import { account, API_URL, type Account } from "@/lib/api";
 import { useLoadState, useStore } from "@/lib/store";
 import { BrandSwitcher } from "./brand-switcher";
 import { ProductMark } from "./marks";
@@ -86,18 +86,64 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="space-y-0.5 border-t border-line px-3 py-3">
         <AppearanceMenu />
-        <div className="flex items-center gap-2.5 px-2.5 pt-2">
-          <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[10.5px] font-semibold text-ink-2">
-            SA
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-[12.5px] font-medium">Security analyst</span>
-            <span className="block truncate text-[11.5px] text-ink-3" title="Brands, scans and results you add are visible only in this browser">
-              Private workspace · this browser
-            </span>
-          </span>
-        </div>
+        <AccountFooter />
       </div>
+    </div>
+  );
+}
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("") || "?";
+
+/** Who is signed in (or the demo workspace), with Sign out / Sign in. */
+function AccountFooter() {
+  const [me, setMe] = useState<{ user: Account | null; demo: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    account.me().then(setMe).catch(() => setMe({ user: null, demo: true }));
+  }, []);
+
+  async function signOut() {
+    setBusy(true);
+    try {
+      await account.signOut();
+    } finally {
+      window.location.assign("/login"); // full load: drop this workspace's data from memory
+    }
+  }
+
+  const user = me?.user;
+  return (
+    <div className="flex items-center gap-2.5 px-2.5 pt-2">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-[10.5px] font-semibold text-ink-2">
+        {user ? initials(user.name) : <UserRound className="size-3.5" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[12.5px] font-medium" title={user?.email}>
+          {user ? user.name : "Demo workspace"}
+        </span>
+        <span
+          className="block truncate text-[11.5px] text-ink-3"
+          title={user ? "Your brands, scans and verdicts are saved to your account" : "Brands, scans and results you add are visible only in this browser"}
+        >
+          {user ? user.email : "Private · this browser"}
+        </span>
+      </span>
+      {me &&
+        (user ? (
+          <button onClick={signOut} disabled={busy} aria-label="Sign out" title="Sign out" className="rounded-md p-1.5 text-ink-3 hover:bg-surface-2 hover:text-ink">
+            <LogOut className="size-4" />
+          </button>
+        ) : (
+          <a href="/login" className="rounded-md px-2 py-1 text-[12px] font-medium text-[var(--brand)] hover:bg-surface-2">
+            Sign in
+          </a>
+        ))}
     </div>
   );
 }
@@ -189,6 +235,9 @@ function LoadingFrame({ error, waking, onRetry }: { error?: string; waking?: boo
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { load, retry } = useLoadState();
+  const pathname = usePathname();
+  // The sign-in page is a full-screen page of its own.
+  if (pathname === "/login") return <>{children}</>;
   if (load.kind !== "ready")
     return (
       <LoadingFrame

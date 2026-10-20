@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError } from "./api";
 import type { BrandProfile, BrandSummary, Detection, DetectionDetail, DetectionStatus, ScanSummary, Source } from "./types";
@@ -67,7 +68,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     attempt();
   }, [refresh]);
 
-  useEffect(initial, [initial]);
+  // The sign-in page shows no workspace data; leaving it is a full page load, which loads it then.
+  const onLogin = usePathname() === "/login";
+  useEffect(() => {
+    if (!onLogin) initial();
+  }, [initial, onLogin]);
 
   // While a scan runs, poll until it finishes, then refresh everything.
   useEffect(() => {
