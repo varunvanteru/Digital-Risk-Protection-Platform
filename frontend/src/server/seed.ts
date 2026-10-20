@@ -103,6 +103,7 @@ async function seedLive(): Promise<void> {
     }
   }
   await removeSampleData();
+  await updateDemoBrands();
   await syncOfficialAccounts();
 }
 
@@ -148,11 +149,19 @@ export async function seedWorkspace(ws: string): Promise<string> {
     await addRealDemoBrands(ws);
     return phonepeId(ws);
   }
+  const id = await addZentraPay(ws, true);
+  await seedPhonepeDemo(ws);
+  return id;
+}
+
+/** The fictional demo brand ZentraPay, with its official accounts and apps. Skipped if the workspace has it. */
+async function addZentraPay(ws: string, active: boolean): Promise<string> {
   const id = demoBrandId(ws);
+  if (await one("SELECT id FROM brands WHERE id = ?", [id])) return id;
   const now = utcnow();
   await exec(
     `INSERT INTO brands (id, name, aliases, keywords, domains, description, logo_path, legal_name, is_active, updated_at, workspace_id)
-     VALUES (?, 'ZentraPay', ?, ?, ?, ?, ?, NULL, 1, ?, ?)`,
+     VALUES (?, 'ZentraPay', ?, ?, ?, ?, ?, NULL, ${active ? 1 : 0}, ?, ?)`,
     [
       id,
       JSON.stringify(["Zentra", "Zentra Pay"]),
@@ -189,7 +198,6 @@ export async function seedWorkspace(ws: string): Promise<string> {
       verified: true, publisher: "ZentraPay Technologies Pvt Ltd", publisherId: pid,
     }, now);
   }
-  await seedPhonepeDemo(ws);
   return id;
 }
 
@@ -236,43 +244,11 @@ const REAL_BRANDS: RealBrand[] = [
       ["youtube", "UCe0domeQWPT2ZeIQDJg9XkA"],
     ],
   },
-  {
-    key: "paytm",
-    name: "Paytm",
-    aliases: ["Pay tm"],
-    keywords: ["paytm"],
-    domains: ["paytm.com"],
-    legalName: "One97 Communications Limited",
-    description:
-      "Paytm is a digital payments app for UPI money transfers, mobile recharges, bill payments and " +
-      "financial services. Paytm never asks for your UPI PIN, OTP or password.",
-    publisher: "One97 Communications Limited",
-    publisherAliases: ["Paytm", "Paytm - One97 Communications Ltd.", "PayTM Mobile Solutions Private Limited"],
-    apps: [
-      ["google_play", "net.one97.paytm", "Paytm: Secure UPI Payments"],
-      ["app_store", "id473941634", "Paytm: Secure UPI Payments"],
-    ],
-    socials: [
-      ["instagram", "paytm"],
-      ["x", "Paytm"],
-      ["facebook", "Paytm"],
-      ["youtube", "paytm"],
-      // Paytm Money (a Paytm company; its app is published by Paytm's verified developer account),
-      // as listed in the footer of paytmmoney.com.
-      ["instagram", "paytmmoney"],
-      ["x", "paytmmoney"],
-      ["facebook", "PaytmMoney"],
-      ["linkedin", "paytmmoney"],
-      ["youtube", "paytmmoney"],
-      ["youtube", "PaytmMoneyIndia"],
-      ["telegram", "TheOfficialPaytmMoney"],
-    ],
-  },
 ];
 
 const realBrandId = (key: string, ws: string) => `brd_${key}_${suffix(ws)}`;
 
-/** Give a workspace the real demo brands (PhonePe active, Paytm), with their official apps and accounts. */
+/** Give a workspace its two demo brands: PhonePe (real, active) and ZentraPay (fictional), with their official apps and accounts. */
 export async function addRealDemoBrands(ws: string): Promise<void> {
   const now = utcnow();
   for (const b of REAL_BRANDS) {
@@ -300,9 +276,25 @@ export async function addRealDemoBrands(ws: string): Promise<void> {
       );
     }
   }
+  await addZentraPay(ws, false);
   if (!(await one("SELECT id FROM brands WHERE workspace_id = ? AND is_active = 1", [ws]))) {
     await exec("UPDATE brands SET is_active = 1 WHERE id = ?", [realBrandId("phonepe", ws)]);
   }
+}
+
+/**
+ * One-time update of existing workspaces to the current demo brands: the Paytm demo copy goes
+ * (only the copy this app added, matched by its exact ID) and ZentraPay is added. Brands a visitor
+ * registered are never touched.
+ */
+async function updateDemoBrands(): Promise<void> {
+  if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'demo_brands'"))?.v === "phonepe+zentrapay") return;
+  await exec(
+    "DELETE FROM brands WHERE id LIKE 'brd\\_paytm\\_%' AND workspace_id IS NOT NULL AND id = CONCAT('brd_paytm_', LEFT(REPLACE(workspace_id, '-', ''), 16))",
+  );
+  const workspaces = await q<{ ws: string }>("SELECT DISTINCT workspace_id AS ws FROM brands WHERE id LIKE 'brd\\_phonepe\\_%' AND workspace_id IS NOT NULL");
+  for (const { ws } of workspaces) await addRealDemoBrands(ws);
+  await exec("INSERT INTO app_meta (k, v) VALUES ('demo_brands', 'phonepe+zentrapay') ON DUPLICATE KEY UPDATE v = VALUES(v)");
 }
 
 /**

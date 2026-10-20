@@ -263,7 +263,7 @@ function Welcome({ name }: { name: string }) {
           <span aria-hidden>✓</span> Private workspace saved to your account
         </li>
         <li>
-          <span aria-hidden>✓</span> Two real brands to explore: PhonePe and Paytm
+          <span aria-hidden>✓</span> Two demo brands to explore: PhonePe and ZentraPay
         </li>
         <li className="lp-step-next">
           <span aria-hidden>→</span> Next: add your own brand in Setup Brand Profile

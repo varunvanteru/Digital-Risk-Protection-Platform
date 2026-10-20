@@ -141,7 +141,7 @@ const SLIDES: Slide[] = [
         <P>
           Fraudsters copy a brand&apos;s name and logo to make fake apps, fake customer-care pages and scam accounts. IMPOSTR finds them. You tell it
           what genuinely belongs to the brand, it searches the app stores and social platforms live, sets aside everything verified as official, and gives every other look-alike a
-          risk score from 0 to 100 with the evidence behind it. Two real brands are ready to explore: <b>PhonePe</b> and <b>Paytm</b>.
+          risk score from 0 to 100 with the evidence behind it. Two demo brands are ready to explore: <b>PhonePe</b>, a real payments app, and <b>ZentraPay</b>, a fictional one.
         </P>
         <Sub>Five-minute tour</Sub>
         <Steps

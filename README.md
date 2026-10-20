@@ -89,7 +89,7 @@ No brand is hard-coded: brands are data, and the same rules apply to every brand
 
 There is no sample data. A source whose API key is not set is shown as **Not connected** and returns nothing. Set the keys as environment variables (hPanel → Environment variables, or `.env.local`); never commit them. The automated tests run with `DATA_MODE=fixtures`, where curated fixtures stand in for the social sources so the tests are repeatable and offline.
 
-**Workspaces and accounts.** Each browser gets its own private workspace through an HTTP-only cookie (Continue as demo), or signs in to an account that keeps its workspace. A workspace starts with two real brands, **PhonePe** and **Paytm**, with their official apps and the official accounts listed on their own websites. Anything a visitor registers, scans or marks is visible only in their own workspace.
+**Workspaces and accounts.** Each browser gets its own private workspace through an HTTP-only cookie (Continue as demo), or signs in to an account that keeps its workspace. A workspace starts with two demo brands: **PhonePe** (real; its official apps and the official accounts listed on phonepe.com) and **ZentraPay** (a fictional brand, used to show a brand profile end to end). Anything a visitor registers, scans or marks is visible only in their own workspace.
 
 ## Tech stack
 
