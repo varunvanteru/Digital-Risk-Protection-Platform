@@ -6,7 +6,7 @@ import type { BrandContext } from "@/server/detection/context";
 import type { Evaluation } from "@/server/detection/signals";
 import { context } from "@/server/evaluation";
 
-const DATA = path.join(__dirname, "..", "data");
+const DATA = path.join(__dirname, "fixtures");
 const read = (f: string) => JSON.parse(fs.readFileSync(path.join(DATA, f), "utf8"));
 
 export const TODAY = "2026-10-10";

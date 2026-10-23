@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { LoaderCircle, Search, SlidersHorizontal } from "lucide-react";
+import { LoaderCircle, ScanSearch, Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SeverityIcon, severityLabel } from "@/components/badges";
 import { DetectionTable, type SortKey } from "@/components/detection-table";
@@ -18,7 +18,7 @@ type StatusFilter = "active" | "all" | DetectionStatus;
 const DEFAULT_SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
 
 export default function DetectionsPage() {
-  const { detections, scanning } = useStore();
+  const { detections, scanning, lastScan, brand, runScan } = useStore();
   const [query, setQuery] = useState("");
   const [channel, setChannel] = useState<ChannelFilter>("all");
   const [platform, setPlatform] = useState<"all" | Platform>("all");
@@ -172,7 +172,15 @@ export default function DetectionsPage() {
           <DetectionTable rows={rows} sort={sort} onSort={onSort} />
         ) : !detections.length && scanning ? (
           <EmptyState icon={<LoaderCircle className="animate-spin" />} title="Scanning sources">
-            <p>The first scan of this workspace is running. Detections appear here in a few seconds.</p>
+            <p>The scan is running. Detections appear here when it finishes, usually within a minute.</p>
+          </EmptyState>
+        ) : !detections.length && !lastScan ? (
+          <EmptyState icon={<ScanSearch />} title="No scan yet">
+            <p>Press Run scan to search every source for look-alikes of {brand.name}.</p>
+            <Button size="sm" variant="primary" className="mt-3" onClick={runScan}>
+              <ScanSearch />
+              Run scan
+            </Button>
           </EmptyState>
         ) : (
           <EmptyState icon={<SlidersHorizontal />} title="No detections match these filters">

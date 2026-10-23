@@ -77,8 +77,8 @@ export function ProjectSummary() {
       <h2 className="text-[16px] font-semibold text-ink">Evidence you can open directly (JSON)</h2>
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          <A href={`${SITE}/api/accuracy`}>{`${SITE}/api/accuracy`}</A>: the labelled test set run live through the engine: 82 of 82 cases correct,
-          precision 1.0, recall 1.0, 0 of 19 official assets flagged.
+          <A href={`${SITE}/api/accuracy`}>{`${SITE}/api/accuracy`}</A>: the labelled PhonePe test set run live through the engine: 31 of 31 cases correct,
+          precision 1.0, recall 1.0, 0 of 8 official assets flagged.
         </li>
         <li>
           <A href={`${SITE}/api/search?query=PhonePe&platforms=google_play,app_store`}>{`${SITE}/api/search?query=PhonePe&platforms=google_play,app_store`}</A>:

@@ -137,10 +137,10 @@ export function domainOf(link: string): string {
 }
 
 /**
- * The full brand names a look-alike domain would borrow: the official domains' names (zentrapay
- * from zentrapay.com) and the brand aliases, minus any alias that is only a fragment of a longer
- * one ("zentra" inside "zentrapay"). A fragment is often an ordinary word that other companies
- * use for their own sites (zentra.co, zentrapos.com), so it is not evidence of copying.
+ * The full brand names a look-alike domain would borrow: the official domains' names (phonepe
+ * from phonepe.com) and the brand aliases, minus any alias that is only a fragment of a longer
+ * one ("phone" inside "phonepe"). A fragment is often an ordinary word that other companies
+ * use for their own sites (phone.co, phonepos.com), so it is not evidence of copying.
  */
 export function domainCores(officialDomains: string[], brandCores: string[]): string[] {
   const all = [...brandCores, ...officialDomains.map((d) => d.split(".")[0].replace(/[^a-z0-9]/g, ""))];
@@ -157,7 +157,7 @@ export function isLookalikeDomain(domain: string, officialDomains: string[], bra
   for (const ch of domain.split(".")[0]) first += ch === "1" ? "l" : (HOMOGLYPHS[ch] ?? ch);
   const label = first.replace(/[^a-z0-9]/g, "");
   for (const core of domainCores(officialDomains, brandCores)) {
-    // One typo for a short name (zentrapaay), two for a long one; more reads as a different name (zentrapos).
+    // One typo for a short name (phonepee), two for a long one; more reads as a different name (phonepos).
     const typos = Array.from(core).length >= 10 ? 2 : 1;
     if (label.includes(core) || damerau(label, core) <= typos) return true;
   }

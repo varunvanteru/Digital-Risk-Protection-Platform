@@ -25,6 +25,13 @@ interface Facts {
   note: string;
 }
 
+/** A Play app's current store icon as PNG bytes, or null if the store or the image cannot be reached. */
+export async function playIconPng(packageId: string): Promise<Buffer | null> {
+  const facts = await lookupPlay(packageId).catch(() => null);
+  const img = facts?.iconUrl ? await loadImage(facts.iconUrl) : null;
+  return img ? encodePng(img) : null;
+}
+
 /** Store facts about a Play app, or null if the store says it does not exist. */
 async function lookupPlay(packageId: string): Promise<Facts | null> {
   const gp = await gplay();

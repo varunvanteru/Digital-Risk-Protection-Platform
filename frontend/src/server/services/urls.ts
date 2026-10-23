@@ -82,7 +82,7 @@ export function parseQuery(raw: string): ParsedQuery {
         pkg = "";
       }
       if (pkg) {
-        // com.zentrapay.app -> "zentrapay": the most distinctive segment
+        // com.phonepe.app -> "phonepe": the most distinctive segment
         const parts = pkg.split(".").filter((p) => !["com", "in", "app", "android", "org", "net", "co"].includes(p));
         return { raw: s, name: parts.length ? parts[0] : pkg, platform, identifier: pkg.toLowerCase() };
       }

@@ -4,11 +4,13 @@
  * test_official.py.
  */
 
+import path from "node:path";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PLATFORM_LABEL } from "@/lib/format";
 import { letterText } from "@/lib/takedown";
 import type { Platform } from "@/lib/types";
+import { settings } from "@/server/config";
 import { candidate } from "@/server/connectors/base";
 import { pool } from "@/server/db";
 import { ready } from "@/server/init";
@@ -43,14 +45,12 @@ async function waitForScan(id: string, timeoutMs = 180_000): Promise<any> {
 
 beforeAll(async () => {
   await ready();
-  // Startup kicks off the first scan in the background; wait for it.
-  const until = Date.now() + 180_000;
-  while (Date.now() < until) {
-    const latest = await get("scans/latest");
-    if (latest.last && !latest.running) return;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error("first scan did not finish");
+  // A new workspace has no scan until one is started; start the first one and wait for it.
+  expect((await get("scans/latest")).last).toBeNull();
+  const scan = await call("POST", "scans");
+  expect(scan.status).toBe(202);
+  const done = await waitForScan(scan.body.id);
+  if (done.status !== "done") throw new Error("first scan did not finish");
 });
 
 afterAll(() => pool().end());
@@ -183,14 +183,23 @@ describe("API", () => {
     for (const s of await get("sources")) if (s.mode === "dataset") expect(["simulated", "down"]).toContain(s.state);
   });
 
-  it("accuracy: official assets are never flagged", async () => {
+  it("accuracy page: the PhonePe test set, official assets never flagged", async () => {
     const r = await get("accuracy");
-    expect(r.officialTested).toBeGreaterThanOrEqual(15);
+    expect(r.cases).toBe(31);
+    expect(Object.keys(r.byBrand)).toEqual(["PhonePe"]);
+    expect(r.officialTested).toBe(8);
     expect(r.officialFlagged).toBe(0);
     expect(r.officialRecognised).toBe(r.officialTested);
     expect(r.mentionsFlagged).toBe(0);
-    expect(r.precision).toBeGreaterThanOrEqual(0.95);
-    expect(r.recall).toBeGreaterThanOrEqual(0.85);
+    expect(r.rows.every((x: any) => x.correct)).toBe(true);
+  });
+
+  it("accuracy: the full fixture set, curated datasets included", async () => {
+    const { runEvaluation } = await import("@/server/evaluation");
+    const r = await runEvaluation(path.join(settings.fixturesDir, "labelled_cases.json"));
+    expect(r.cases).toBe(82);
+    expect(r.officialFlagged).toBe(0);
+    expect(r.rows.filter((x: any) => !x.correct)).toEqual([]);
   });
 
   it("14: a live source falls back to its cache, labelled as cached", async () => {

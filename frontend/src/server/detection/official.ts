@@ -23,7 +23,7 @@ import type { BrandContext } from "./context";
 import { publisherIdsFor } from "./context";
 
 // Legal-form words that do not identify a company. Meaningful words (Technologies,
-// Bank, Payments) are kept, so "ZentraPay Technologies" != "ZentraPay".
+// Bank, Payments) are kept, so "PhonePe Technologies" != "PhonePe".
 const LEGAL_SUFFIXES = new Set([
   "pvt", "private", "ltd", "limited", "llp", "llc", "inc", "incorporated", "corp", "corporation",
   "co", "company", "plc", "gmbh", "ag", "sa", "sas", "srl", "bv", "nv", "pte", "pty", "oy", "ab", "kk", "lp", "the",

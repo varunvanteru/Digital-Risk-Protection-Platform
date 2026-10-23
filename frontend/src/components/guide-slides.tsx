@@ -147,7 +147,7 @@ const SLIDES: Slide[] = [
         <Steps
           items={[
             <>
-              Open <Go href="/">Overview</Go>. The first scan of your workspace runs by itself and takes a few seconds.
+              Open <Go href="/">Overview</Go> and press <b>Run scan</b> at the top. The scan searches every source live and takes about a minute.
             </>,
             <>
               Open <Go href="/detections">Detections</Go> and click the top row to see why an account was flagged and how its score was built.
@@ -161,7 +161,7 @@ const SLIDES: Slide[] = [
               click.
             </>,
             <>
-              Open <Go href="/accuracy">Accuracy</Go> to see the engine tested on 82 labelled cases.
+              Open <Go href="/accuracy">Accuracy</Go> to see the engine tested on 31 labelled PhonePe cases.
             </>,
           ]}
         />
@@ -468,11 +468,11 @@ const SLIDES: Slide[] = [
     icon: Target,
     title: "Proof that the engine is right, on labelled cases",
     href: "/accuracy",
-    shots: [{ src: "accuracy", alt: "Accuracy page", caption: "82 of 82 correct: no fakes missed, no official asset flagged" }],
+    shots: [{ src: "accuracy", alt: "Accuracy page", caption: "31 of 31 correct: no fakes missed, no official asset flagged" }],
     body: (
       <>
         <P>
-          82 hand-labelled cases (official assets, fakes, honest mentions such as fan and news pages, and unrelated names) run through the same engine as
+          31 hand-labelled PhonePe cases (official assets, fakes, honest mentions such as fan and news pages, and unrelated names) run through the same engine as
           scans and Quick check. Nothing on the page is typed in by hand; <b>Re-run</b> evaluates them again.
         </P>
         <Points
@@ -652,7 +652,7 @@ const SLIDES: Slide[] = [
         items={[
           ["Where do social results come from?", "All live. Telegram is read from its public pages, YouTube through its official API, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh through a web search for their public pages. Discord invites found that way are checked with Discord's own invite lookup. Only what search engines have indexed can be found, so new or private accounts may not appear."],
           ["Why does a result score exactly 39?", "It hit a cap: either only one signal was strong, or it is openly a fan, news, review or third-party item."],
-          ["Can a real official account be flagged?", "Official verification runs first and the accuracy test checks it: 0 of 19 official assets are flagged. If something genuine ever slips through, It's official adds it to the allowlist."],
+          ["Can a real official account be flagged?", "Official verification runs first and the accuracy test checks it: 0 of 8 official assets are flagged. If something genuine ever slips through, It's official adds it to the allowlist."],
           ["Does anyone else see my searches?", "No. Each browser has its own private workspace."],
           ["How do I protect a new brand?", "Use Setup Brand Profile, or search it in Quick check and register it from the suggested official apps."],
         ]}

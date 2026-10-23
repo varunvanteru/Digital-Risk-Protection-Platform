@@ -26,7 +26,7 @@ function LastScan() {
   if (!lastScan) {
     return (
       <Card className="mt-4">
-        <CardHeader icon={<ScanSearch />} title="Last scan" description={scanning ? "The first scan is running…" : "No scan yet: press Run scan"} />
+        <CardHeader icon={<ScanSearch />} title="Last scan" description={scanning ? "The scan is running…" : "No scan yet: press Run scan"} />
       </Card>
     );
   }
@@ -137,7 +137,7 @@ export default function OverviewPage() {
           icon={<Radar />}
           label="Found"
           value={active.length}
-          sub={lastScan ? `look-alikes, from ${lastScan.candidates} checked` : scanning ? "First scan running…" : "No scan yet"}
+          sub={lastScan ? `look-alikes, from ${lastScan.candidates} checked` : scanning ? "Scan running…" : "No scan yet: press Run scan"}
           href="/detections"
           hrefLabel="All detections"
         />

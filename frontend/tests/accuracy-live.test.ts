@@ -13,12 +13,13 @@ describe("accuracy in live mode", () => {
     await pool().end();
   });
 
-  it("scores the whole labelled set: 82 of 82, no official asset flagged", async () => {
+  it("scores the whole labelled set: 31 of 31 PhonePe cases, no official asset flagged", async () => {
     const { settings } = await import("@/server/config");
     expect(settings.dataMode).toBe("live");
     const { runEvaluation } = await import("@/server/evaluation");
     const r = await runEvaluation();
-    expect(r.cases).toBe(82);
+    expect(r.cases).toBe(31);
+    expect(JSON.stringify(r)).not.toMatch(/zentra/i);
     const rows = r.rows as { outcome: string; correct: boolean; label: string; group: string }[];
     // Only unrelated accounts may be missing from the search for the brand; every official, fake and mention is found.
     expect(rows.filter((x) => x.outcome === "NOT RETURNED" && x.label !== "unrelated").map((x) => x.group)).toEqual([]);

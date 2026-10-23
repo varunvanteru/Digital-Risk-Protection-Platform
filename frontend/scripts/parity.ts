@@ -1,6 +1,6 @@
 /**
- * Parity check: run the labelled test set through this engine and compare every
- * row with the Python reference engine's output.
+ * Parity check: run the full fixture test set (tests/fixtures/labelled_cases.json, the one the
+ * Python reference engine uses) through this engine and compare every row with Python's output.
  *
  *   backend\.venv\Scripts\python backend\eval_dump.py > py.json
  *   npx tsx scripts/parity.ts py.json
@@ -8,12 +8,14 @@
 
 import "./load-env";
 import fs from "node:fs";
+import path from "node:path";
+import { settings } from "../src/server/config";
 import { pool } from "../src/server/db";
 import { runEvaluation } from "../src/server/evaluation";
 
 async function main() {
   const py = JSON.parse(fs.readFileSync(process.argv[2], "utf8").replace(/^﻿/, ""));
-  const js = await runEvaluation();
+  const js = await runEvaluation(path.join(settings.fixturesDir, "labelled_cases.json"));
   const fields = ["outcome", "status", "score", "severity", "reason"] as const;
   let diffs = 0;
   js.rows.forEach((r, i) => {

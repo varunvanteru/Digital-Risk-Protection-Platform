@@ -13,10 +13,10 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 | Architecture diagram | In the app under How to use → **Architecture**, and below: [`docs/architecture.png`](docs/architecture.png) |
 | Step-by-step guide | How to use tab: 25 slides with screenshots of every feature |
 
-**Try it in two minutes:** open https://impostr.live, wait a few seconds for the first scan, then open **Detections** and click the top row. In **Quick check**, search `PhonePe` (a real brand, searched live on Google Play and the App Store), then `Paytm` (an unregistered brand, which IMPOSTR offers to register from its real store apps).
+**Try it in two minutes:** open https://impostr.live, choose **Continue as demo**, press **Run scan** and wait about a minute, then open **Detections** and click the top row. In **Quick check**, search `PhonePe` (a real brand, searched live on Google Play and the App Store), then `Paytm` (an unregistered brand, which IMPOSTR offers to register from its real store apps).
 
 **Verify without a browser.** These live links return JSON:
-- [`/api/accuracy`](https://impostr.live/api/accuracy) runs the labelled test set: 82/82 correct, 0 of 19 official assets flagged.
+- [`/api/accuracy`](https://impostr.live/api/accuracy) runs the labelled PhonePe test set: 31/31 correct, 0 of 8 official assets flagged.
 - [`/api/search?query=PhonePe&platforms=google_play,app_store`](https://impostr.live/api/search?query=PhonePe&platforms=google_play,app_store) is a live app-store search. Official apps appear under `official` with risk 0, and look-alikes appear under `results` with reasons, signals and evidence checks.
 - [`/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube`](https://impostr.live/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube) runs a live social search for impersonation and scam accounts, with official accounts excluded.
 - [`/api/search?query=z3ntra.pay_official`](https://impostr.live/api/search?query=z3ntra.pay_official) shows the look-alike name analysis, step by step, in `nameAnalysis`.
@@ -28,7 +28,7 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 | --- | --- |
 | ![Overview](frontend/public/help/overview.webp) **Overview:** risk at a glance, with 0 official assets flagged | ![Detection](frontend/public/help/detection-detail.webp) **A detection:** score, plain-language reasons, details |
 | ![Quick check, official apps](frontend/public/help/check-official.webp) **Quick check (live stores):** PhonePe's own apps recognised and excluded | ![Score breakdown](frontend/public/help/detection-breakdown.webp) **Score breakdown:** signals × weights + boosts |
-| ![Setup Brand Profile](frontend/public/help/setup-identity.webp) **Setup Brand Profile:** the legitimate assets | ![Accuracy](frontend/public/help/accuracy.webp) **Accuracy:** 82/82 correct, 0 of 19 official assets flagged |
+| ![Setup Brand Profile](frontend/public/help/setup-identity.webp) **Setup Brand Profile:** the legitimate assets | ![Accuracy](frontend/public/help/accuracy.webp) **Accuracy:** 31/31 correct, 0 of 8 official assets flagged |
 
 ## How it meets the challenge
 
@@ -40,7 +40,7 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 | **User Experience** (15%) | Setup in three steps, or register a brand straight from a search. Detections give plain-language reasons, a score breakdown and evidence checks, with actions to confirm, request a takedown, mark a false positive or mark official. **Unavailable sources are handled gracefully:** each source has its own timeout and retries, falls back to cached results, and otherwise shows as Down while the scan completes (try **Pause source** on Sources); web search switches from Brave to Serper by itself when one provider runs out of credit. Works on any phone and installs as an app. |
 | **Look-alike names** (bonus) | Character swaps, missing or doubled letters, look-alike characters (`0`→`o`, `3`→`e`, Cyrillic letters), added words (`zentrapay_support_india`) and spacing changes (`zentra.pay`). It avoids over-flagging: ordinary words, other companies' names and openly labelled fan, news or third-party pages stay Low. |
 
-**Measured accuracy** (Accuracy tab, recomputed live): 82 hand-labelled cases, including 11 held out from rule-writing. All **82 of 82 are correct**: precision 100%, recall 100%, and **0 of 19 official assets flagged**.
+**Measured accuracy** (Accuracy tab, recomputed live): 31 hand-labelled PhonePe cases, including 11 held out from rule-writing. All **31 of 31 are correct**: precision 100%, recall 100%, and **0 of 8 official assets flagged**. The automated tests also run a larger fixture set of 82 cases (curated look-alike accounts and apps of a fictional test brand), with the same result.
 
 ## Architecture
 
@@ -109,7 +109,7 @@ npm install
 npm run dev                       # http://localhost:3000
 ```
 
-On first start the app creates the database tables, seeds the demo brand and runs a scan. Deployment steps are in [`DEPLOY.md`](DEPLOY.md).
+On first start the app creates the database tables; each new workspace gets the demo brand, and a scan runs when the user presses Run scan. Deployment steps are in [`DEPLOY.md`](DEPLOY.md).
 
 ## Tests
 
@@ -122,7 +122,7 @@ The tests cover:
 - engine unit tests and allowlist-first regression tests;
 - connector parsing on recorded store responses;
 - end-to-end API tests against MySQL;
-- a parity check, `frontend/scripts/parity.ts`, which runs all 82 labelled cases through both engines and compares every row.
+- a parity check, `frontend/scripts/parity.ts`, which runs the 82-case fixture set through both engines and compares every row (run it with `DATA_MODE=fixtures`).
 
 ## Security
 

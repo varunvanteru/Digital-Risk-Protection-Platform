@@ -225,7 +225,7 @@ export function Architecture() {
               ["Define", "The brand profile lists the official accounts, apps and publishers. Store validation turns each official app into a verified developer ID, so the brand's other apps are recognised too."],
               ["Gate 1, before scoring", "Every candidate is checked against the profile first (levels L1 to L5). Anything official or likely official stops there with risk 0 and is reported separately, never as a threat."],
               ["Gate 2, before saving", "Just before a detection is stored, the allowlist is read again from the database, so an asset added during a scan is still skipped."],
-              ["Prove it", "Each scan counts official assets that ended up flagged (shown on Overview, always 0), and the Accuracy test checks all 19 official assets in the labelled set."],
+              ["Prove it", "Each scan counts official assets that ended up flagged (shown on Overview, always 0), and the Accuracy test checks all 8 official assets in the labelled set."],
             ].map(([t, d], i) => (
               <li key={t} className="flex items-start gap-3">
                 <StepOrb n={i + 1} size="sm" />

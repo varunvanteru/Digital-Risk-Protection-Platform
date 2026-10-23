@@ -12,11 +12,12 @@ export const settings = {
   sourceRetries: Number(process.env.SOURCE_RETRIES ?? 2),
   // Validate official apps against the live stores. Off in offline tests.
   validateAssets: (process.env.VALIDATE_ASSETS ?? "1") === "1",
-  // Password for actions that change data (edit brands, change detection status, simulate outages).
-  // Unset: open, as in local development. Set it in hPanel for the public site.
+  // Password for pausing and resuming sources, which every workspace shares. Unset: open.
   adminPassword: process.env.ADMIN_PASSWORD || "",
-  // data/ holds the labelled test set, the word list and the test fixtures.
+  // data/ holds what the app uses: the labelled test set of the Accuracy page and the word list.
   dataDir: path.join(process.cwd(), "data"),
+  // The automated tests' curated datasets, their test brand and its images (fixture mode only).
+  fixturesDir: path.join(process.cwd(), "tests", "fixtures"),
   // "live" (default): every source searches the real platform, or is shown as not connected.
   // "fixtures": the curated datasets stand in for the social sources; used only by the automated
   // tests, so they are repeatable and offline.

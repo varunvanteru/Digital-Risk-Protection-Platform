@@ -61,13 +61,13 @@ hPanel → **Websites** → **Add website** → **Node.js web app** → **Import
 
 - `https://impostr.live/api/health` shows `"status": "ok"`, the database name and the
   MariaDB version.
-- `https://impostr.live` → **Continue as demo** shows the Overview for PhonePe after the
-  first scan (about a minute).
+- `https://impostr.live` → **Continue as demo** shows the Overview for PhonePe, with its logo,
+  and "No scan yet". Press **Run scan**: results appear in about a minute.
 - **Sources**: all 17 sources are *Live* (or *Cached* if a source failed this scan). A
   *Not connected* source means its API key is missing in step 2.
 - **Quick check** → `PhonePe` → official apps and accounts marked Verified official; nothing
   official flagged.
-- **Accuracy** → 82 of 82 correct, precision and recall 1.00, 0 of 19 official assets flagged.
+- **Accuracy** → 31 of 31 PhonePe cases correct, precision and recall 1.00, 0 of 8 official assets flagged.
 
 The first start after updating from the sample-data version removes the old sample data
 once and leaves every existing workspace with the current demo brand, PhonePe (the old

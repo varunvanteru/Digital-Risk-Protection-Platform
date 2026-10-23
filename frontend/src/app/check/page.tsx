@@ -548,7 +548,7 @@ export default function QuickCheckPage() {
   const off = useNotConnected();
   const count = platforms === "all" ? PLATFORMS.filter((p) => !off.has(p)).length : platforms.length;
 
-  // Shareable searches: /check?q=zentrapay&platforms=instagram,x
+  // Shareable searches: /check?q=phonepe&platforms=instagram,x
   const booted = useRef(false);
   useEffect(() => {
     if (booted.current) return;

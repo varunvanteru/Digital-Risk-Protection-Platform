@@ -3,13 +3,12 @@
  * create the schema, seed the sources and close scans interrupted by a restart.
  * Retried on the next request if the database is unreachable.
  *
- * Workspaces are set up on their first request (ensureWorkspace): demo brands are
- * copied in and a first scan starts.
+ * Workspaces are set up on their first request (ensureWorkspace): the demo brand is
+ * copied in. Scans run only when the user starts one (Run scan, or Save and run scan).
  */
 
 import { createSchema, ensureDatabase, exec, one } from "./db";
 import { seed, seedWorkspace } from "./seed";
-import { startScan } from "./services/scan";
 
 const g = globalThis as unknown as { __bsReady?: Promise<void>; __bsWorkspaces?: Map<string, Promise<void>> };
 
@@ -31,15 +30,14 @@ export function ready(): Promise<void> {
   return g.__bsReady;
 }
 
-/** Give a workspace its demo brands and first scan the first time it is used. */
+/** Give a workspace its demo brand the first time it is used. No scan starts until the user asks. */
 export function ensureWorkspace(ws: string): Promise<void> {
   const seen = (g.__bsWorkspaces ??= new Map());
   let p = seen.get(ws);
   if (!p) {
     p = (async () => {
       if (await one("SELECT id FROM brands WHERE workspace_id = ? LIMIT 1", [ws])) return;
-      const brandId = await seedWorkspace(ws);
-      await startScan(brandId);
+      await seedWorkspace(ws);
     })().catch((e) => {
       seen.delete(ws); // retry on the next request
       throw e;

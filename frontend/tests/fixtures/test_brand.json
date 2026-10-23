@@ -1,0 +1,23 @@
+{
+  "about": "The fictional brand the automated tests (fixture mode) run against. Never used by the live app.",
+  "name": "ZentraPay",
+  "aliases": ["Zentra", "Zentra Pay"],
+  "keywords": ["zentra", "zpay"],
+  "domains": ["zentrapay.com", "zentrapay.in"],
+  "description": "ZentraPay lets you pay bills, send money over UPI and manage cards in one secure app. Trusted by over 2 crore Indians. ZentraPay will never ask for your OTP, PIN or password.",
+  "publisher": { "name": "ZentraPay Technologies Pvt Ltd", "id": "8174492036215501734" },
+  "socials": [
+    ["instagram", "zentrapay", "ig:48213377102", "ZentraPay", "official", true],
+    ["x", "ZentraPay", "x:1452208813", "ZentraPay", "official", true],
+    ["facebook", "zentrapay", "fb:102938475610", "ZentraPay", "official", true],
+    ["telegram", "zentrapay_official", "tg:-1001788234", "ZentraPay Updates", "official", false],
+    ["instagram", "zentrapay_partner_mumbai", "ig:59011283377", "ZentraPay Partner, Mumbai", "partner", false],
+    ["youtube", "zentrapay", "yt:UCzentrapay", "ZentraPay", "official", true],
+    ["linkedin", "zentrapay", "li:zentrapay", "ZentraPay", "official", true],
+    ["whatsapp", "0029VaZentraPay01", "wa:0029VaZentraPay01", "ZentraPay", "official", true]
+  ],
+  "apps": [
+    ["google_play", "com.zentrapay.app", "ZentraPay: UPI, Bills & Cards", "8174492036215501734"],
+    ["app_store", "id1234567890", "ZentraPay", "1588120034"]
+  ]
+}

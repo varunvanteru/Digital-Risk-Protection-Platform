@@ -136,7 +136,7 @@ function stripFillers(tokens: string[], brandTokens: Set<string>): [string[], st
     }
     let changed = true;
     while (changed) {
-      // fillers glued to the name, e.g. "zentrapaysupport"
+      // fillers glued to the name, e.g. "phonepesupport"
       changed = false;
       for (const f of FILLER_WORDS) {
         if (brandTokens.has(f) || brandTokens.has(t)) continue;
@@ -319,8 +319,8 @@ function match(raw: string, cand: Candidate, alias: string, fullName = ""): Look
       guards.push(`"${alias}" is shorter than 5 letters, so only an exact match counts`);
       score = Math.min(score, 0.3);
     }
-    // A shortened form of the brand name ("zentra" from "zentrapay") is often an ordinary word that
-    // other companies use too; a misspelling of it ("zenvra") is not a copy of the brand.
+    // A shortened form of the brand name ("phone" from "phonepe") is often an ordinary word that
+    // other companies use too; a misspelling of it ("phome") is not a copy of the brand.
     if (fullName && alias !== fullName && fullName.includes(alias) && score > 0.6) {
       guards.push(`"${alias}" is a shortened form of the brand name, so only an exact spelling counts as a strong match`);
       score = 0.6;
@@ -379,7 +379,7 @@ const WORD = /[\p{L}\p{N}]+/gu;
 
 /**
  * Best look-alike score across several names (handle, display name, app title).
- * Long titles like "ZentraPay Wallet - UPI & Bills" are also scanned in windows
+ * Long titles like "PhonePe Wallet - UPI & Bills" are also scanned in windows
  * of 1 to 3 words, so the brand name is found inside a longer title.
  */
 export function nameSimilarity(names: (string | null | undefined)[], aliases: string[]): [number, LookalikeResult] {

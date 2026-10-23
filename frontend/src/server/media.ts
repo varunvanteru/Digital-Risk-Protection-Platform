@@ -1,9 +1,9 @@
 /**
- * Images served at /media/...: brand logos and simulated avatars.
+ * Images served at /media/...: brand logos (and, in the automated tests, the fixtures' avatars).
  *
- * Stored in MySQL (media_files), so nothing depends on the server's disk. The
- * demo images exported by backend/export_demo_media.py ship in data/demo-media
- * and are served from there when the database has no copy.
+ * Stored in MySQL (media_files), so nothing depends on the server's disk. In fixture mode the
+ * test images exported by backend/export_demo_media.py are served from tests/fixtures/demo-media
+ * when the database has no copy; the live app has no images on disk.
  */
 
 import fs from "node:fs/promises";
@@ -11,7 +11,7 @@ import path from "node:path";
 import { settings } from "./config";
 import { exec, one } from "./db";
 
-const STATIC_DIR = () => path.join(settings.dataDir, "demo-media");
+const STATIC_DIR = () => path.join(settings.dataMode === "fixtures" ? settings.fixturesDir : settings.dataDir, "demo-media");
 
 export interface Media {
   data: Buffer;

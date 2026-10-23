@@ -56,7 +56,7 @@ def english_words() -> frozenset[str]:
     """~38k common English words (data/common_words.txt). An ordinary word is never a look-alike on its own."""
     from ..config import settings
 
-    path = settings.data_dir / "common_words.txt"
+    path = settings.words_file
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError:

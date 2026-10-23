@@ -1,5 +1,7 @@
 /**
- * Accuracy on the labelled test set (data/labelled_cases.json). Port of evaluation.py.
+ * Accuracy on the labelled test set (data/labelled_cases.json, PhonePe cases). Port of evaluation.py.
+ * The automated tests also run the larger fixture set (tests/fixtures/labelled_cases.json), whose
+ * curated-dataset cases are rows of the fixture datasets.
  *
  * Every case goes through the same evaluate() used by scans and Quick check:
  * official verification first, then signals and scoring. Brand profiles come from
@@ -77,8 +79,8 @@ function inlineCandidate(c: any): Candidate {
 
 /**
  * All curated rows a search for the brand returns, keyed "platform:identifier".
- * Always read from the labelled data files, never the live sources, so the test set is the same
- * whichever mode the app runs in.
+ * Always read from the fixture datasets, never the live sources, so a test set gives the same
+ * result whichever mode the app runs in.
  */
 async function datasetCandidates(keywords: string[]): Promise<Map<string, Candidate>> {
   const platforms = unique(loadDataset("social_profiles.json").map((p) => String(p.platform)));
@@ -94,8 +96,8 @@ async function datasetCandidates(keywords: string[]): Promise<Map<string, Candid
   return out;
 }
 
-export async function runEvaluation() {
-  const data = JSON.parse(fs.readFileSync(path.join(settings.dataDir, "labelled_cases.json"), "utf8"));
+export async function runEvaluation(file = path.join(settings.dataDir, "labelled_cases.json")) {
+  const data = JSON.parse(fs.readFileSync(file, "utf8"));
   const today: string = data.today;
   const profiles: Record<string, unknown> = Object.fromEntries(data.brands.map((b: { name: string }) => [b.name, b]));
   const contexts = new Map(Object.entries(profiles).map(([name, b]) => [name, context(b)]));
@@ -103,10 +105,12 @@ export async function runEvaluation() {
   // brand, label, group, candidate (null = search did not return it)
   const items: [string, string, string, Candidate | null][] = [];
   const labels = data.dataset_labels;
-  const brandProfile = profiles[labels.brand] as { keywords: string[] };
-  const found = await datasetCandidates([...brandProfile.keywords, labels.brand]);
-  for (const label of ["official", "fake", "mention", "unrelated"]) {
-    for (const key of labels[label]) items.push([labels.brand, label, `Curated dataset: ${label}`, found.get(key) ?? null]);
+  if (labels) {
+    const brandProfile = profiles[labels.brand] as { keywords: string[] };
+    const found = await datasetCandidates([...brandProfile.keywords, labels.brand]);
+    for (const label of ["official", "fake", "mention", "unrelated"]) {
+      for (const key of labels[label]) items.push([labels.brand, label, `Curated dataset: ${label}`, found.get(key) ?? null]);
+    }
   }
   for (const c of data.cases) items.push([c.brand, c.label, c.group, inlineCandidate(c)]);
 

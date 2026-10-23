@@ -1,4 +1,7 @@
-/** Curated datasets for sources without open APIs (social platforms, APK sites). Port of datasets.py. */
+/**
+ * Curated datasets that stand in for the social sources and APK sites in the automated tests
+ * (fixture mode). They live in tests/fixtures and are never used by the live app. Port of datasets.py.
+ */
 
 import fs from "node:fs";
 import path from "node:path";
@@ -38,7 +41,7 @@ const g = globalThis as unknown as { __bsData?: Map<string, Row[]> };
 
 export function loadDataset(name: string): Row[] {
   g.__bsData ??= new Map();
-  if (!g.__bsData.has(name)) g.__bsData.set(name, JSON.parse(fs.readFileSync(path.join(settings.dataDir, name), "utf8")));
+  if (!g.__bsData.has(name)) g.__bsData.set(name, JSON.parse(fs.readFileSync(path.join(settings.fixturesDir, name), "utf8")));
   return g.__bsData.get(name)!;
 }
 

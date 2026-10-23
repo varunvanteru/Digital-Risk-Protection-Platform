@@ -1,10 +1,14 @@
 /** First-run data: the source registry and the demo brand profiles. Port of backend/app/seed.py. */
 
+import fs from "node:fs";
+import path from "node:path";
 import { settings } from "./config";
 import { exec, one, q } from "./db";
 import { ensureBrandLogo } from "./demoAssets";
+import { mediaExists, saveMedia } from "./media";
 import { LIVE_SOURCES, notConnectedReason } from "./services/scan";
-import { utcnow } from "./util";
+import { playIconPng } from "./services/validation";
+import { utcnow, withTimeout } from "./util";
 
 // Live mode: every source searches the real platform (or is not connected). No sample data.
 const LIVE_SOURCE_ROWS: [string, string, string, string][] = [
@@ -54,7 +58,7 @@ const SOURCES: [string, string, string, string, string][] = [
 
 /** Short, stable suffix that keeps each workspace's demo brand IDs unique. */
 const suffix = (ws: string) => ws.replace(/-/g, "").slice(0, 16);
-export const demoBrandId = (ws: string) => `brd_zentrapay_${suffix(ws)}`;
+const testBrandId = (ws: string) => `brd_test_${suffix(ws)}`;
 const phonepeId = (ws: string) => `brd_phonepe_${suffix(ws)}`;
 
 type AssetSeed = {
@@ -103,7 +107,16 @@ async function seedLive(): Promise<void> {
   }
   await removeSampleData();
   await updateDemoBrands();
+  await removeTestImages();
   await syncOfficialAccounts();
+}
+
+/**
+ * Images left in the database by the old demo brands and sample data: the fictional brand's logos
+ * and the sample avatars. Live data never stores either, so this only clears old rows.
+ */
+async function removeTestImages(): Promise<void> {
+  await exec("DELETE FROM media_files WHERE path LIKE 'dataset/%' OR path LIKE 'brand/brd\\_zentrapay\\_%' OR path = 'brand/demo-logo.png'");
 }
 
 /** Reddit is no longer a supported platform: drop its source row, cached results and anything recorded for it. */
@@ -150,60 +163,37 @@ async function removeSampleData(): Promise<void> {
 /**
  * A new workspace starts with its own copy of the demo brand (PhonePe), so every visitor sees a
  * working demo and nothing another visitor added. Returns the active brand's ID.
- * Fixture mode (automated tests) uses the fictional ZentraPay the labelled data is built around.
+ * Fixture mode (automated tests) uses the fictional test brand of tests/fixtures/test_brand.json.
  */
 export async function seedWorkspace(ws: string): Promise<string> {
   if (settings.dataMode === "live") {
     await addRealDemoBrands(ws);
     return phonepeId(ws);
   }
-  const id = await addZentraPay(ws, true);
+  const id = await addTestBrand(ws);
   await seedPhonepeDemo(ws);
   return id;
 }
 
-/** The fictional test brand ZentraPay (fixture mode only), with its official accounts and apps. Skipped if the workspace has it. */
-async function addZentraPay(ws: string, active: boolean): Promise<string> {
-  const id = demoBrandId(ws);
+/** The automated tests' fictional brand (fixture mode only), read from tests/fixtures/test_brand.json. */
+async function addTestBrand(ws: string): Promise<string> {
+  const id = testBrandId(ws);
   if (await one("SELECT id FROM brands WHERE id = ?", [id])) return id;
+  const b = JSON.parse(fs.readFileSync(path.join(settings.fixturesDir, "test_brand.json"), "utf8"));
   const now = utcnow();
   await exec(
     `INSERT INTO brands (id, name, aliases, keywords, domains, description, logo_path, legal_name, is_active, updated_at, workspace_id)
-     VALUES (?, 'ZentraPay', ?, ?, ?, ?, ?, NULL, ${active ? 1 : 0}, ?, ?)`,
-    [
-      id,
-      JSON.stringify(["Zentra", "Zentra Pay"]),
-      JSON.stringify(["zentra", "zpay"]),
-      JSON.stringify(["zentrapay.com", "zentrapay.in"]),
-      "ZentraPay lets you pay bills, send money over UPI and manage cards in one secure app. " +
-        "Trusted by over 2 crore Indians. ZentraPay will never ask for your OTP, PIN or password.",
-      await ensureBrandLogo(id),
-      now,
-      ws,
-    ],
+     VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 1, ?, ?)`,
+    [id, b.name, JSON.stringify(b.aliases), JSON.stringify(b.keywords), JSON.stringify(b.domains), b.description, await ensureBrandLogo(id), now, ws],
   );
-  await exec("INSERT INTO publishers (brand_id, name, publisher_id, aliases) VALUES (?, 'ZentraPay Technologies Pvt Ltd', '8174492036215501734', '[]')", [id]);
-  const social: [string, string, string, string, string, boolean][] = [
-    ["instagram", "zentrapay", "ig:48213377102", "ZentraPay", "official", true],
-    ["x", "ZentraPay", "x:1452208813", "ZentraPay", "official", true],
-    ["facebook", "zentrapay", "fb:102938475610", "ZentraPay", "official", true],
-    ["telegram", "zentrapay_official", "tg:-1001788234", "ZentraPay Updates", "official", false],
-    ["instagram", "zentrapay_partner_mumbai", "ig:59011283377", "ZentraPay Partner, Mumbai", "partner", false],
-    ["youtube", "zentrapay", "yt:UCzentrapay", "ZentraPay", "official", true],
-    ["linkedin", "zentrapay", "li:zentrapay", "ZentraPay", "official", true],
-    ["whatsapp", "0029VaZentraPay01", "wa:0029VaZentraPay01", "ZentraPay", "official", true],
-  ];
-  for (const [platform, handle, canonicalId, displayName, status, verified] of social) {
+  await exec("INSERT INTO publishers (brand_id, name, publisher_id, aliases) VALUES (?, ?, ?, '[]')", [id, b.publisher.name, b.publisher.id]);
+  for (const [platform, handle, canonicalId, displayName, status, verified] of b.socials as [string, string, string, string, string, boolean][]) {
     await insertAsset(id, { kind: "social", platform, handle, canonicalId, displayName, status, verified }, now);
   }
-  const apps: [string, string, string, string][] = [
-    ["google_play", "com.zentrapay.app", "ZentraPay: UPI, Bills & Cards", "8174492036215501734"],
-    ["app_store", "id1234567890", "ZentraPay", "1588120034"],
-  ];
-  for (const [platform, pkg, name, pid] of apps) {
+  for (const [platform, pkg, name, pid] of b.apps as [string, string, string, string][]) {
     await insertAsset(id, {
       kind: "app", platform, handle: pkg, canonicalId: `${platform}:${pkg}`, displayName: name, status: "official",
-      verified: true, publisher: "ZentraPay Technologies Pvt Ltd", publisherId: pid,
+      verified: true, publisher: b.publisher.name, publisherId: pid,
     }, now);
   }
   return id;
@@ -256,16 +246,42 @@ const REAL_BRANDS: RealBrand[] = [
 
 const realBrandId = (key: string, ws: string) => `brd_${key}_${suffix(ws)}`;
 
+const g = globalThis as unknown as { __bsDemoLogo?: Map<string, Promise<string | null>> };
+
+/**
+ * A real demo brand's logo: its official Play app's icon, fetched once and stored as one shared
+ * image, so a new workspace shows the logo at once instead of after its first scan.
+ * Null (the first scan's store check then sets it) when the store cannot be reached.
+ */
+function demoLogo(key: string, playApp: string): Promise<string | null> {
+  const memo = (g.__bsDemoLogo ??= new Map());
+  let p = memo.get(key);
+  if (!p) {
+    const rel = `brand/demo-${key}.png`;
+    p = (async (): Promise<string | null> => {
+      if (await mediaExists(rel)) return `/media/${rel}`;
+      if (!settings.validateAssets) return null; // offline tests
+      const png = await withTimeout(playIconPng(playApp), 10_000, "logo").catch(() => null);
+      return png ? saveMedia(rel, png) : null;
+    })();
+    p.then((v: string | null) => v ?? memo.delete(key)); // a failed fetch is tried again next time
+    memo.set(key, p);
+  }
+  return p;
+}
+
 /** Give a workspace its demo brand, PhonePe (real, active), with its official apps and accounts. */
 export async function addRealDemoBrands(ws: string): Promise<void> {
   const now = utcnow();
   for (const b of REAL_BRANDS) {
     const id = realBrandId(b.key, ws);
+    const playApp = b.apps.find(([platform]) => platform === "google_play")?.[1];
+    const logo = playApp ? await demoLogo(b.key, playApp) : null;
     if (!(await one("SELECT id FROM brands WHERE id = ?", [id]))) {
       await exec(
         `INSERT INTO brands (id, name, aliases, keywords, domains, description, logo_path, legal_name, is_active, updated_at, workspace_id)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, ?, 0, ?, ?)`,
-        [id, b.name, JSON.stringify(b.aliases), JSON.stringify(b.keywords), JSON.stringify(b.domains), b.description, b.legalName, now, ws],
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+        [id, b.name, JSON.stringify(b.aliases), JSON.stringify(b.keywords), JSON.stringify(b.domains), b.description, logo, b.legalName, now, ws],
       );
       await exec("INSERT INTO publishers (brand_id, name, publisher_id, aliases) VALUES (?, ?, '', ?)", [id, b.publisher, JSON.stringify(b.publisherAliases)]);
       for (const [platform, appId, title] of b.apps) {
@@ -274,6 +290,8 @@ export async function addRealDemoBrands(ws: string): Promise<void> {
           verified: true, publisher: b.publisher,
         }, now);
       }
+    } else if (logo) {
+      await exec("UPDATE brands SET logo_path = ? WHERE id = ? AND logo_path IS NULL", [logo, id]);
     }
     // Official accounts (also added to a PhonePe demo profile created before live data).
     for (const [platform, handle] of b.socials) {
@@ -290,8 +308,8 @@ export async function addRealDemoBrands(ws: string): Promise<void> {
 }
 
 /**
- * One-time update of existing workspaces to the current demo brand, PhonePe: the Paytm and ZentraPay
- * demo copies go (only the copies this app added, matched by their exact IDs), and PhonePe becomes
+ * One-time update of existing workspaces to the current demo brand, PhonePe: the old Paytm and
+ * fictional-brand demo copies go (only the copies this app added, matched by their exact IDs), and PhonePe becomes
  * active where one of them was. Brands a visitor registered are never touched.
  */
 async function updateDemoBrands(): Promise<void> {
