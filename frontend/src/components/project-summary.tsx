@@ -29,7 +29,7 @@ export function ProjectSummary() {
       <h2 className="text-[16px] font-semibold text-ink">Start here</h2>
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          <A href={`${SITE}/how-to-use`}>How to use</A>: 6-minute demo video, 25 guide slides with screenshots, and the architecture diagram.
+          <A href={`${SITE}/how-to-use`}>How to use</A>: 5-minute demo video, 25 guide slides with screenshots, and the architecture diagram.
         </li>
         <li>
           Demo video file: <A href={`${SITE}/help/impostr-demo.mp4`}>{`${SITE}/help/impostr-demo.mp4`}</A>

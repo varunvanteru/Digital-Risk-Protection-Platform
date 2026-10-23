@@ -128,7 +128,12 @@ function TagInput({
 
 export default function SetupPage() {
   const router = useRouter();
-  const { brand: current, setBrand, runScan, sources, refresh } = useStore();
+  const { brand: current, setBrand, runScan, sources, refresh, scanning } = useStore();
+  // Saved and scan started: stay here until the scan finishes, then open Overview with the results.
+  const [waitingForScan, setWaitingForScan] = useState(false);
+  useEffect(() => {
+    if (waitingForScan && !scanning) router.push("/");
+  }, [waitingForScan, scanning, router]);
   // /setup?new=1 registers another brand; /setup edits the active one.
   const [isNew, setIsNew] = useState(false);
   const [step, setStep] = useState(0);
@@ -256,7 +261,7 @@ export default function SetupPage() {
       setBrand(saved);
       await refresh();
       await runScan();
-      router.push("/");
+      setWaitingForScan(true);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Could not save the profile");
       setSaving(false);
@@ -499,6 +504,12 @@ export default function SetupPage() {
                 The scan searches {sources.length} sources for <span className="font-medium text-ink">{name}</span> and its aliases, skips the{" "}
                 {accounts.length + apps.length} assets above, and scores everything else. It usually takes under a minute.
               </p>
+              {waitingForScan && (
+                <p className="flex items-center gap-2 rounded-md border border-line bg-surface-2 px-3 py-2.5 text-ink-2" role="status">
+                  <LoaderCircle className="size-4 animate-spin text-accent" />
+                  Saved. Scanning every source live; Overview opens with the results when the scan finishes.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -520,7 +531,7 @@ export default function SetupPage() {
           ) : (
             <Button variant="primary" onClick={finish} disabled={saving}>
               {saving && <LoaderCircle className="animate-spin" />}
-              {saving ? "Saving" : "Save and run scan"}
+              {waitingForScan ? `Scanning ${sources.length} sources…` : saving ? "Saving" : "Save and run scan"}
             </Button>
           )}
         </footer>
