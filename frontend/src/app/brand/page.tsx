@@ -139,7 +139,7 @@ export default function BrandPage() {
             <CardHeader icon={<Fingerprint />} title="Identity" description={`Last updated ${formatDateTime(brand.updatedAt)}`} />
             <div className="flex flex-col gap-6 px-4 py-4 sm:flex-row">
               <div className="flex shrink-0 flex-col items-center gap-2">
-                <BrandMark size={72} src={mediaUrl(brand.logoUrl)} />
+                <BrandMark size={72} src={mediaUrl(brand.logoUrl)} initials={brand.name} />
                 <span className="text-[11.5px] text-ink-3">Official logo</span>
               </div>
               <div className="min-w-0 flex-1">

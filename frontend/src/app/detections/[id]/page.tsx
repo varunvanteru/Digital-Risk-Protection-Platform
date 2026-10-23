@@ -102,7 +102,7 @@ function Compare({ d }: { d: Detection }) {
     {
       k: isApp ? "Icon" : "Picture",
       suspect: <BrandMark variant={d.mark} size={44} initials={initialsOf(d.displayName)} src={mediaUrl(d.iconUrl)} />,
-      official: <BrandMark size={44} src={mediaUrl(brand.logoUrl)} />,
+      official: <BrandMark size={44} src={mediaUrl(brand.logoUrl)} initials={brand.name} />,
     },
     { k: "Name", suspect: d.displayName, official: official.name },
     {

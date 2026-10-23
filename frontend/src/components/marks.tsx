@@ -7,22 +7,20 @@ import { PlatformLogo } from "./platform-logo";
 import type { MarkVariant, Platform } from "@/lib/types";
 
 /**
- * The demo brand's logo and the variants impersonators make of it.
- * Real deployments render the fetched avatar / icon image instead.
+ * An account's or app's picture: the real avatar / icon when there is one, otherwise its initials.
+ * Never a drawn logo, which would show one brand's mark for another brand's account.
  */
-const BRAND_FILL = "#0f5c56";
-
 export function BrandMark({
   variant = "official",
   size = 32,
-  initials = "ZP",
+  initials = "?",
   src,
   className,
 }: {
   variant?: MarkVariant;
   size?: number;
   initials?: string;
-  /** Real avatar / icon URL. When present it is shown instead of the drawn mark. */
+  /** Real avatar / icon URL. */
   src?: string;
   className?: string;
 }) {
@@ -44,48 +42,18 @@ export function BrandMark({
       />
     );
   }
-  if (src) variant = "unrelated";
-  if (variant === "monogram" || variant === "unrelated" || variant === "similar") {
-    return (
-      <span
-        aria-hidden
-        style={{ width: size, height: size, fontSize: size * 0.36 }}
-        className={clsx(
-          "inline-flex shrink-0 items-center justify-center border border-line bg-surface-2 font-semibold text-ink-2",
-          variant === "monogram" ? "rounded-full" : "rounded-md",
-          className,
-        )}
-      >
-        {initials.slice(0, 2).toUpperCase()}
-      </span>
-    );
-  }
-
-  const fill = variant === "recolor" ? "#3d8a80" : BRAND_FILL;
-  const mirror = variant === "mirror";
-
   return (
-    <svg
+    <span
       aria-hidden
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      className={clsx("shrink-0", className)}
-    >
-      <rect width="40" height="40" rx="9" fill={fill} />
-      <g transform={mirror ? "translate(40 0) scale(-1 1)" : undefined}>
-        <path d="M11 11.5h17.5L13.5 27H29" fill="none" stroke="#fff" strokeWidth="3.6" strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx="29.5" cy="11.5" r="2.3" fill="#9fe3d6" />
-      </g>
-      {variant === "badge" && (
-        <g>
-          <rect x="0" y="30" width="40" height="10" fill="#7c2d12" />
-          <text x="20" y="37.6" textAnchor="middle" fontSize="6.4" fontWeight="700" fill="#fff" letterSpacing="0.4">
-            SUPPORT
-          </text>
-        </g>
+      style={{ width: size, height: size, fontSize: size * 0.36 }}
+      className={clsx(
+        "inline-flex shrink-0 items-center justify-center border border-line bg-surface-2 font-semibold text-ink-2",
+        variant === "monogram" ? "rounded-full" : "rounded-md",
+        className,
       )}
-    </svg>
+    >
+      {initials.slice(0, 2).toUpperCase()}
+    </span>
   );
 }
 

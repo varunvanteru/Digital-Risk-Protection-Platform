@@ -35,13 +35,20 @@ hPanel → **Websites** → impostr.live → **Environment variables** → add:
 | `MYSQL_USER` | the database user |
 | `MYSQL_PASSWORD` | the database password |
 | `MYSQL_DB` | the database name |
-| `ADMIN_PASSWORD` | a password for changes (recommended on the public site) |
+| `YOUTUBE_API_KEY` | YouTube Data API v3 key (Google Cloud console) |
+| `BRAVE_SEARCH_API_KEY` | Brave Search API key: web search for the social platforms |
+| `SERPER_API_KEY` | Serper.dev key: used when Brave is out of credit or fails |
+| `ADMIN_PASSWORD` | a password for changes (optional, see below) |
 
-Then **Deployments** → **Redeploy**, so the app starts with them.
+Then **Deployments** → **Redeploy**, so the app starts with them. A source whose key is
+missing is shown as **Not connected** and returns nothing; the rest of the app still works.
+At least one of the two web-search keys is needed for Instagram, Facebook, X, LinkedIn,
+Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj, Josh and Discord.
 
 With `ADMIN_PASSWORD` set, anyone can browse, run Quick check, run scans and switch
-the active brand, but editing brands, changing a detection's status or simulating an
-outage asks for the password once per browser. Without it, everything is open.
+the active brand, but editing brands, changing a detection's status or pausing a
+source asks for the password once per browser (signed-in users need it only for
+sources). Without it, everything is open.
 
 ## 3. App (already connected)
 
@@ -53,10 +60,20 @@ hPanel → **Websites** → **Add website** → **Node.js web app** → **Import
 
 - `https://impostr.live/api/health` shows `"status": "ok"`, the database name and the
   MariaDB version.
-- `https://impostr.live` shows the Overview for ZentraPay after the first scan (a minute).
-- **Sources**: Google Play and App Store are *live*; the rest are labelled *simulated*.
-- **Quick check** → `PhonePe` → official apps marked Official; nothing official flagged.
-- **Accuracy** → precision 1.00, 0 official assets flagged.
+- `https://impostr.live` → **Continue as demo** shows the Overview for PhonePe after the
+  first scan (about a minute).
+- **Sources**: all 17 sources are *Live* (or *Cached* if a source failed this scan). A
+  *Not connected* source means its API key is missing in step 2.
+- **Quick check** → `PhonePe` → official apps and accounts marked Verified official; nothing
+  official flagged.
+- **Accuracy** → 82 of 82 correct, precision and recall 1.00, 0 of 19 official assets flagged.
+
+The first start after updating from the sample-data version removes the old sample data
+once and gives every existing workspace the current demo brands (PhonePe and ZentraPay).
+
+Search results are shared by all workspaces for 12 hours, so many visitors searching the
+same brand use the API quotas once. Brave's free credits reset monthly; Serper's free
+credits are a one-time allowance; YouTube allows 10,000 units a day (a search costs 100).
 
 If `/api/health` returns 503, the database settings are wrong or Remote MySQL is not
 allowed: check step 1 and 2, then Redeploy. `MYSQL_HOST=localhost` is an alternative

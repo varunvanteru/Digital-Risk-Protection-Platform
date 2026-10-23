@@ -240,9 +240,11 @@ const LEVEL_LABEL: Record<number, string> = {
 };
 
 function OfficialAssets({ data }: { data: SearchResponse }) {
-  const { refresh } = useStore();
+  const { refresh, brand } = useStore();
   const [added, setAdded] = useState<Record<string, "busy" | "done" | string>>({});
   if (data.official.length === 0) return null;
+  // An official account found without a picture belongs to the searched brand, so it shows that brand's logo.
+  const brandLogo = data.reference.type === "brand" && data.reference.id === brand.id ? mediaUrl(brand.logoUrl) : undefined;
 
   async function addToProfile(o: SearchResponse["official"][number]) {
     const key = `${o.platform}:${o.handle}`;
@@ -280,7 +282,7 @@ function OfficialAssets({ data }: { data: SearchResponse }) {
           return (
             <li key={key} className="grid gap-3 border-b border-line px-4 py-3 last:border-0 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_auto] sm:items-start">
               <div className="flex min-w-0 items-center gap-3">
-                <BrandMark variant="official" size={30} initials={initialsOf(o.displayName)} src={mediaUrl(o.iconUrl)} />
+                <BrandMark variant="official" size={30} initials={initialsOf(o.displayName)} src={mediaUrl(o.iconUrl) ?? brandLogo} />
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-medium text-ink">{o.displayName}</div>
                   <div className="flex items-center gap-1.5 truncate text-[11.5px] text-ink-3">

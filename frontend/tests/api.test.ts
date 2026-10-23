@@ -205,12 +205,11 @@ describe("API", () => {
     };
     try {
       const src = { id: "src_play", name: "Google Play", platform: "google_play", channel: "app", mode: "live", health: "operational", simulate_outage: 0 } as SourceRow;
-      let [, , , cachedAt] = await fetchWithRetries(src, ["cachetest"]);
-      expect(cachedAt).toBeNull();
-      expect(sourceState(src, true, cachedAt)).toBe("live");
+      const [, , , freshAt] = await fetchWithRetries(src, ["cachetest"]);
+      expect(freshAt).toBeNull();
+      expect(sourceState(src, true, freshAt)).toBe("live");
       fail = true;
-      let items, latency;
-      [items, latency, , cachedAt] = await fetchWithRetries(src, ["cachetest"]);
+      const [items, latency, , cachedAt] = await fetchWithRetries(src, ["cachetest"]);
       expect(cachedAt).not.toBeNull();
       expect(latency).toBeNull();
       expect(items.map((c) => c.identifier)).toEqual(["com.cached.example"]);
