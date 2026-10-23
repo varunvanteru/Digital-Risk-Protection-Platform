@@ -85,8 +85,9 @@ function Diagram() {
             <b className="text-ink">Social, official APIs:</b> Telegram (public t.me pages), YouTube Data API
           </Li>
           <Li>
-            <b className="text-ink">Social, web search:</b> Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh public pages, through the Brave Search API; Discord invites checked with Discord&apos;s invite lookup
+            <b className="text-ink">Social, web search:</b> Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh public pages, through the Brave Search API, with Serper (Google results) taking over automatically when Brave fails or runs out of credit; Discord invites checked with Discord&apos;s invite lookup
           </Li>
+          <Li>Web search and YouTube results are shared by every workspace for 12 hours, so repeated searches do not use up API credit</Li>
           <Li>
             <b className="text-ink">Not connected:</b> a source whose API key is not set is shown as not connected, never filled with made-up results. No sample data anywhere.
           </Li>
@@ -108,7 +109,7 @@ function Diagram() {
       <div className="grid items-stretch gap-0 lg:grid-cols-[minmax(0,0.9fr)_auto_minmax(0,1.05fr)_auto_minmax(0,1.35fr)_auto_minmax(0,0.85fr)]">
         <Box tone="ui" icon={ScanSearch} kicker="Step 1" title="Collect">
           <Li>
-            <b className="text-ink">Scan:</b> every source, results saved
+            <b className="text-ink">Scan:</b> every source, results saved; runs when the user presses Run scan (or Save and run scan)
           </Li>
           <Li>
             <b className="text-ink">Quick check:</b> chosen platforms, results shown and not saved
@@ -162,13 +163,14 @@ function Diagram() {
       <div className="grid gap-3 lg:grid-cols-2">
         <Box tone="ui" icon={MonitorSmartphone} kicker="Interface" title="What the analyst sees">
           <Li>Overview, Detections, Quick check, Brand profile, Sources and Accuracy, all read from storage</Li>
-          <Li>Actions (confirm, takedown, false positive, it&apos;s official) are written back to the database</Li>
-          <Li>Private workspace per browser: brands and results are visible only to the browser that created them</Li>
+          <Li>Actions (confirm, takedown, false positive, it&apos;s official) are written back to the database; a takedown opens a ready-made letter and the platform&apos;s report form, and nothing is sent automatically</Li>
+          <Li>Private workspace per visitor: Continue as demo, or a company account (work email only); brands and results are visible only there</Li>
         </Box>
-        <Box tone="store" icon={Database} kicker="Storage · MySQL / MariaDB" title="Nine tables">
+        <Box tone="store" icon={Database} kicker="Storage · MySQL / MariaDB" title="Twelve tables">
           <Li>brands, official_assets, publishers: the profile and allowlist</Li>
           <Li>detections, detection_events: scored threats and every status change</Li>
           <Li>scans, sources, source_cache: scan history, source health, last good live results</Li>
+          <Li>users, sessions: company accounts; app_meta: one-time updates</Li>
           <Li>media_files: logos and icons</Li>
         </Box>
       </div>
@@ -246,10 +248,13 @@ export function Architecture() {
               ["official_assets", "The allowlist: official accounts and apps, with store validation (developer ID, store title, icon, when it was checked)."],
               ["publishers", "Official developer names and IDs used to recognise official apps."],
               ["sources", "The 17 sources with their mode, state, health, latency and items in the last scan."],
-              ["source_cache", "The last good results of each live source, used when it is down."],
+              ["source_cache", "The last good results of each live source, used when it is down, and web-search and YouTube results shared for 12 hours."],
               ["scans", "Each scan: candidates seen, official assets skipped, official assets flagged, new detections, per-source status."],
               ["detections", "Scored look-alikes: signals, reasons, evidence checks, score, severity and status."],
-              ["detection_events", "Every status change: confirmed, takedown requested, false positive, official, reopened."],
+              ["detection_events", "Every status change (confirmed, takedown requested, false positive, official, reopened) and every takedown letter copied."],
+              ["users", "Company accounts: work email, name and a salted password hash. Each account owns one private workspace."],
+              ["sessions", "Sign-in sessions, stored only as a hash of the session token, for 30 days."],
+              ["app_meta", "Markers for one-time data updates, so each runs only once."],
               ["media_files", "Brand logos and official app icons saved during store validation."],
             ]}
           />

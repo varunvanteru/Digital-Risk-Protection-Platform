@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  FileText,
   Gauge,
   LayoutGrid,
   ListChecks,
@@ -247,7 +248,8 @@ const SLIDES: Slide[] = [
     body: (
       <>
         <P>
-          Check the counts, then click <b>Save and run scan</b>. Everything you added goes on the allowlist, the scan starts, and you land on Overview.
+          Check the counts, then click <b>Save and run scan</b>. Everything you added goes on the allowlist and the scan starts; the button reads
+          Scanning until it finishes, then Overview opens with the results.
         </P>
         <P>The table on the right of every step explains the score bands.</P>
       </>
@@ -263,18 +265,18 @@ const SLIDES: Slide[] = [
       <>
         <Points
           items={[
-            ["Open detections", "Medium, High and Critical items still open, and how many candidates the last scan looked at."],
-            ["Critical · High", "Items scoring 80 or more (takedown recommended) and 60 to 79 (review today). The arrow on a card opens the detection list."],
-            ["Official assets flagged", "Should always be 0. It counts official assets that were wrongly scored; the allowlist size is shown below it."],
-            ["New detections", "Medium and above by the day they were first seen, over 14 days. Red is Critical, orange High, amber Medium. Hover a bar for its counts."],
+            ["Found · Critical · High · Medium · Low", "Everything the scans found, and the count at each severity: 80 or more (takedown recommended), 60 to 79 (review today), 40 to 59 (look-alike) and 39 or less (mentions, not flagged). The arrow on a card opens the detection list."],
+            ["Last scan", "Sources searched live, accounts and apps checked, official assets recognised, and official assets flagged, which should always be 0. Below it, how many results each source returned."],
+            ["New detections", "Every severity by the day it was first seen, over 14 days. Hover a bar for its counts."],
             ["By source", "The 8 sources with the most Critical and flagged items, with a health tick. A failing source always appears here."],
-            ["Needs attention", "Open Critical and High detections, highest score first. Click one to review it."],
             ["Official app notice", "If a scan finds an app verified as yours that is not in the profile yet, a notice offers Review and add."],
+            ["Needs attention", "Open Critical and High detections, highest score first. Click one to review it."],
+            ["All findings", "Every finding, with a filter for each severity. Open (blue, underlined) opens the real account or app on its platform in a new tab."],
           ]}
         />
         <P>
-          Click <b>Run scan</b> in the top bar at any time to search all sources again. While it runs the button reads Scanning and the page updates by
-          itself when it finishes.
+          A new workspace has no scan yet. Click <b>Run scan</b> in the top bar to search all sources; scans run only when you start one. While it runs
+          the button reads Scanning and the page updates by itself when it finishes.
         </P>
       </>
     ),
@@ -293,8 +295,9 @@ const SLIDES: Slide[] = [
             ["All · Social · Apps", "Accounts and pages, apps, or both. The counts follow the severity filter."],
             ["Platform", "One platform at a time, for example Instagram or Google Play."],
             ["Status", "Active hides items marked false positive or official. You can show one status, such as Confirmed."],
-            ["Severity chips", "Critical, High and Medium are on by default. Low-risk mentions (39 and below) are hidden; click Low to show them."],
-            ["Sort", "Click the Risk or First seen column heading to sort. Click a row to open it."],
+            ["Severity chips", "Critical, High, Medium and Low are all on by default. Click one to hide it, for example to see Critical only. Reset restores every filter."],
+            ["Sort", "Click the Score or First seen column heading to sort."],
+            ["Open a detection", "Click a row, for example its Status, to open the detection page. Open (blue, underlined) at the end of the row opens the real account or app instead."],
           ]}
         />
         <P>
@@ -308,14 +311,15 @@ const SLIDES: Slide[] = [
     section: "A detection, step by step",
     icon: ListChecks,
     title: "Why an item was flagged",
-    shots: [{ src: "detection-detail", alt: "Detection page for a scam account", caption: "A scam account: score, reasons and details" }],
+    shots: [{ src: "detection-detail", alt: "Detection page for a fake PhonePe channel", caption: "A fake brand page scored 82, Critical: score, reasons and details" }],
     body: (
       <Points
         items={[
           ["Header", "Name, handle, platform, the kind of threat (Scam account, Look-alike app, Fake brand page, Impersonation)."],
           ["Score", "0 to 100 with its severity and what to do: takedown recommended, review today, or look-alike."],
           ["Why this was flagged", "Every finding in plain words, such as a copied logo, a request for an OTP or a link to a look-alike domain."],
-          ["Compared with the official asset", "When there is an official counterpart, both are shown side by side."],
+          ["Evidence checks", "The identity checks that ran first, then the similarity of name, picture and description."],
+          ["Compared with the official asset", "When there is an official counterpart, both are shown side by side: picture, name, handle, bio."],
           ["Details, links, activity", "Followers or installs, first and last seen, the links in the profile, and every status change."],
         ]}
       />
@@ -347,7 +351,7 @@ const SLIDES: Slide[] = [
         head={["Button", "What it does"]}
         rows={[
           ["Confirm threat", "Marks it Confirmed. Request takedown then appears."],
-          ["Request takedown", "Marks it Takedown requested and opens a ready-made takedown letter with the evidence, a Copy letter button and a link to the platform's report form. Nothing is sent for you."],
+          ["Request takedown", "Marks it Takedown requested and opens the takedown letter (next slide). Nothing is sent for you."],
           ["Takedown letter", "Opens the letter again later. Each copy is recorded in the Activity log."],
           ["False positive", "Marks it as not a threat and lowers its score by 15 points. It leaves the Active view."],
           ["It's official", "Adds it to the brand's allowlist. It is never flagged again; Undo removes it."],
@@ -355,6 +359,28 @@ const SLIDES: Slide[] = [
           ["Evidence", "Downloads the full record (signals, reasons, checks, score) as a JSON file."],
         ]}
       />
+    ),
+  },
+  {
+    section: "A detection, step by step",
+    icon: FileText,
+    title: "The takedown letter",
+    shots: [{ src: "takedown-letter", alt: "Takedown letter for a fake YouTube channel", caption: "A takedown letter, filled in from the detection" }],
+    body: (
+      <>
+        <P>
+          Confirm threat, then Request takedown, and the letter opens. It is addressed to the platform and filled in from the detection: the fake&apos;s
+          name, handle and link, the brand&apos;s official account on that platform, the top reasons and the score.
+        </P>
+        <Points
+          items={[
+            ["Edit letter", "Edit any line in place: your name, title and contact details go in the bracketed fields. Reset template restores the original."],
+            ["Copy letter", "Copies the letter; each copy is recorded in the detection's Activity."],
+            ["Open report form", "The platform's own impersonation or trademark form (a help page where the platform has no form), in a new tab."],
+          ]}
+        />
+        <P>IMPOSTR never sends anything on its own: you paste the letter into the form and submit it, and attach the Evidence file if the form allows.</P>
+      </>
     ),
   },
   {
@@ -368,7 +394,7 @@ const SLIDES: Slide[] = [
         items={[
           <>Pick platforms, or leave All platforms selected (17 platforms).</>,
           <>
-            Type a brand name (<Code>PhonePe</Code>), a handle (<Code>z3ntra.pay_official</Code>) or paste an official link (
+            Type a brand name (<Code>PhonePe</Code>), a handle (<Code>ph0nepe_support</Code>) or paste an official link (
             <Code>t.me/phonepe_rewards</Code>, a Play Store or App Store URL), then press Enter. The Try chips fill in examples.
           </>,
           <>Results compare against the registered brand the query matches. Nothing is saved to Detections.</>,
