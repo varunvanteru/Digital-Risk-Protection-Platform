@@ -13,12 +13,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { settings } from "./config";
 import { candidate, type Candidate } from "./connectors/base";
-import { SocialDataset, StoreDataset } from "./connectors/datasets";
+import { loadDataset, SocialDataset, StoreDataset } from "./connectors/datasets";
 import { DEMO_LOGO } from "./demoAssets";
 import { allowKey, emptyContext, type BrandContext } from "./detection/context";
 import { normalizePublisher, packageNamespace } from "./detection/official";
 import { evaluate, excluded } from "./detection/signals";
-import { CONNECTORS } from "./services/scan";
 import { pyRound, unique } from "./util";
 
 const FLAG_SEVERITIES = new Set(["critical", "high", "medium"]);
@@ -76,13 +75,21 @@ function inlineCandidate(c: any): Candidate {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-/** All curated rows a search for the brand returns, keyed "platform:identifier". */
+/**
+ * All curated rows a search for the brand returns, keyed "platform:identifier".
+ * Always read from the labelled data files, never the live sources, so the test set is the same
+ * whichever mode the app runs in.
+ */
 async function datasetCandidates(keywords: string[]): Promise<Map<string, Candidate>> {
+  const platforms = unique(loadDataset("social_profiles.json").map((p) => String(p.platform)));
+  const sets = [
+    ...platforms.map((p) => new SocialDataset("eval", p)),
+    new StoreDataset("eval", "store_snapshot.json"),
+    new StoreDataset("eval", "apk_sites.json"),
+  ];
   const out = new Map<string, Candidate>();
-  for (const conn of Object.values(CONNECTORS)) {
-    if (conn instanceof SocialDataset || conn instanceof StoreDataset) {
-      for (const c of await conn.fetch(keywords)) out.set(`${c.platform}:${c.identifier}`, c);
-    }
+  for (const conn of sets) {
+    for (const c of await conn.fetch(keywords)) out.set(`${c.platform}:${c.identifier}`, c);
   }
   return out;
 }
