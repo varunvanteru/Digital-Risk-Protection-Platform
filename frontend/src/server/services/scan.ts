@@ -329,7 +329,7 @@ async function run(scanId: string, brand: Brand): Promise<void> {
         continue;
       }
       await exec("UPDATE sources SET health = 'unavailable', state = 'down', note = ?, latency_ms = NULL WHERE id = ?", [
-        firstChars(`${msg}. Showing the last good results.`, 255),
+        firstChars(`${msg}. Anything it found in earlier scans stays listed.`, 255),
         source.id,
       ]);
       status[source.id] = { ok: false, state: "down", error: msg };
@@ -441,7 +441,8 @@ async function upsert(brandId: string, scanId: string, c: Candidate, ev: Evaluat
     source_id: c.sourceId, channel: c.channel, cls: ev.cls, display_name: firstChars(c.displayName, 200), handle: c.handle,
     // icon_url holds up to 500 characters; a longer address (e.g. an inline image) is dropped, not truncated.
     url: firstChars(c.url, 500), mark: ev.mark, icon_url: c.image && c.image.length <= 500 ? c.image : null, bio: c.bio,
-    audience: Math.min(Math.max(0, Math.trunc(c.audience)), 2_000_000_000), // 32-bit column created_on: c.createdOn,
+    audience: Math.min(Math.max(0, Math.trunc(c.audience)), 2_000_000_000), // 32-bit column
+    created_on: c.createdOn,
     publisher: c.publisher, publisher_id: c.publisherId, links: JSON.stringify(c.links), last_seen: now, scan_id: scanId,
     signals: JSON.stringify(ev.signals), reasons: JSON.stringify(ev.reasons), checks: JSON.stringify(ev.checks),
     lookalike_domain: ev.lookalikeDomain ? 1 : 0, context_label: ev.contextLabel, score: bd.score, severity: bd.severity,
