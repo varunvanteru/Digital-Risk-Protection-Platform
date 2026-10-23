@@ -26,6 +26,4 @@ export const settings = {
   braveApiKey: process.env.BRAVE_SEARCH_API_KEY || "",
   // Second web-search provider (Google results): used when Brave is out of credit or fails, or alone.
   serperApiKey: process.env.SERPER_API_KEY || "",
-  redditClientId: process.env.REDDIT_CLIENT_ID || "",
-  redditClientSecret: process.env.REDDIT_CLIENT_SECRET || "",
 };

@@ -16,7 +16,6 @@ export const REPORT_PAGES: Partial<Record<Platform, { url: string; kind: "form" 
   linkedin: { url: "https://www.linkedin.com/help/linkedin/answer/a1338436", kind: "form", label: "LinkedIn: Report fake profiles" },
   pinterest: { url: "https://policy.pinterest.com/en/trademark", kind: "form", label: "Pinterest: Trademark policy and report" },
   whatsapp: { url: "https://www.whatsapp.com/legal/ip-policy", kind: "form", label: "WhatsApp: Trademark reporting" },
-  reddit: { url: "https://support.reddithelp.com/hc/en-us/requests/new?ticket_form_id=360000294431", kind: "form", label: "Reddit Help: Submit a request" },
   telegram: { url: "https://telegram.org/support", kind: "help", label: "Telegram support" },
   snapchat: { url: "https://help.snapchat.com/hc/en-us/requests/new", kind: "help", label: "Snapchat Support: Submit a request" },
   quora: { url: "https://help.quora.com/hc/en-us/requests/new", kind: "help", label: "Quora Help: Submit a request" },

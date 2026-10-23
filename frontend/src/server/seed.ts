@@ -24,7 +24,6 @@ const LIVE_SOURCE_ROWS: [string, string, string, string][] = [
   ["src_moj", "Moj", "moj", "social"],
   ["src_josh", "Josh", "josh", "social"],
   ["src_pin", "Pinterest", "pinterest", "social"],
-  ["src_reddit", "Reddit", "reddit", "social"],
   ["src_quora", "Quora", "quora", "social"],
   ["src_discord", "Discord", "discord", "social"],
 ];
@@ -49,7 +48,6 @@ const SOURCES: [string, string, string, string, string][] = [
   ["src_moj", "Moj", "moj", "social", "dataset"],
   ["src_josh", "Josh", "josh", "social", "dataset"],
   ["src_pin", "Pinterest", "pinterest", "social", "dataset"],
-  ["src_reddit", "Reddit", "reddit", "social", "dataset"],
   ["src_quora", "Quora", "quora", "social", "dataset"],
   ["src_discord", "Discord", "discord", "social", "dataset"],
 ];
@@ -75,6 +73,7 @@ async function insertAsset(brandId: string, a: AssetSeed, now: string) {
 
 /** The source registry, shared by every workspace. */
 export async function seed(): Promise<void> {
+  await removeReddit();
   if (settings.dataMode === "live") return seedLive();
   for (const [sid, name, platform, channel, mode] of SOURCES) {
     await exec(
@@ -105,6 +104,14 @@ async function seedLive(): Promise<void> {
   await removeSampleData();
   await updateDemoBrands();
   await syncOfficialAccounts();
+}
+
+/** Reddit is no longer a supported platform: drop its source row, cached results and anything recorded for it. */
+async function removeReddit(): Promise<void> {
+  await exec("DELETE FROM sources WHERE id = 'src_reddit'");
+  await exec("DELETE FROM source_cache WHERE source_id = 'src_reddit'");
+  await exec("DELETE FROM detections WHERE platform = 'reddit'");
+  await exec("DELETE FROM official_assets WHERE platform = 'reddit'");
 }
 
 /** Official accounts added to the list later reach every workspace's copy of the real demo brands. */

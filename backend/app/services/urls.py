@@ -26,7 +26,6 @@ HOSTS = {
     "share.myjosh.in": "josh",
     "pinterest.com": "pinterest",
     "in.pinterest.com": "pinterest",
-    "reddit.com": "reddit",
     "quora.com": "quora",
     "discord.gg": "discord",
     "discord.com": "discord",
@@ -34,7 +33,7 @@ HOSTS = {
     "apps.apple.com": "app_store",
 }
 
-# Path words that come before the handle, e.g. linkedin.com/company/<h>, reddit.com/user/<h>
+# Path words that come before the handle, e.g. linkedin.com/company/<h>, youtube.com/c/<h>
 PATH_PREFIXES = {"company", "in", "add", "profile", "user", "u", "r", "c", "channel", "invite", "user-profile"}
 
 

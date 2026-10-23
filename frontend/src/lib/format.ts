@@ -14,7 +14,6 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
   moj: "Moj",
   josh: "Josh",
   pinterest: "Pinterest",
-  reddit: "Reddit",
   quora: "Quora",
   discord: "Discord",
   google_play: "Google Play",
@@ -26,7 +25,7 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
 export const PLATFORM_GROUPS: { label: string; platforms: Platform[] }[] = [
   { label: "Social and messaging", platforms: ["instagram", "facebook", "whatsapp", "x", "threads", "linkedin", "telegram", "snapchat"] },
   { label: "Video and Indian short video", platforms: ["youtube", "sharechat", "moj", "josh"] },
-  { label: "Communities", platforms: ["pinterest", "reddit", "quora", "discord"] },
+  { label: "Communities", platforms: ["pinterest", "quora", "discord"] },
   { label: "App stores", platforms: ["google_play", "app_store"] },
 ];
 
@@ -91,6 +90,5 @@ export function ageInDays(iso: string, today = "2026-10-10") {
 export function handleDisplay(platform: Platform, handle: string) {
   if (AT_HANDLES.has(platform)) return `@${handle}`;
   if (platform === "facebook" || platform === "linkedin") return `/${handle}`;
-  if (platform === "reddit") return `u/${handle}`;
   return handle;
 }

@@ -14,7 +14,7 @@
 import { settings } from "../config";
 import { candidate, firstChars, SourceUnavailable, type Candidate, type Connector } from "../connectors/base";
 import { SocialDataset, StoreDataset } from "../connectors/datasets";
-import { DiscordLive, NotConnected, SourceNotConnected, RedditLive, TelegramLive, WebSearchLive, YouTubeLive } from "../connectors/live";
+import { DiscordLive, NotConnected, SourceNotConnected, TelegramLive, WebSearchLive, YouTubeLive } from "../connectors/live";
 import { AppStoreLive, GooglePlayLive } from "../connectors/stores";
 import { exec, js, one, q } from "../db";
 import { allowKey, emptyContext, type BrandContext } from "../detection/context";
@@ -45,7 +45,6 @@ const LIVE_CONNECTORS: Record<string, Connector> = {
   src_moj: new WebSearchLive("src_moj", "moj"),
   src_josh: new WebSearchLive("src_josh", "josh"),
   src_pin: new WebSearchLive("src_pin", "pinterest"),
-  src_reddit: new RedditLive(),
   src_quora: new WebSearchLive("src_quora", "quora"),
   src_discord: new DiscordLive(),
 };
@@ -69,7 +68,6 @@ const FIXTURE_CONNECTORS: Record<string, Connector> = {
   src_moj: new SocialDataset("src_moj", "moj"),
   src_josh: new SocialDataset("src_josh", "josh"),
   src_pin: new SocialDataset("src_pin", "pinterest"),
-  src_reddit: new SocialDataset("src_reddit", "reddit"),
   src_quora: new SocialDataset("src_quora", "quora"),
   src_discord: new SocialDataset("src_discord", "discord"),
 };

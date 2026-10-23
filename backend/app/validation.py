@@ -16,7 +16,6 @@ HANDLE_RULES = {
     "moj": (re.compile(r"^[a-z0-9._]{3,30}$", re.I), "3 to 30 letters, numbers, periods or underscores"),
     "josh": (re.compile(r"^[a-z0-9._]{3,30}$", re.I), "3 to 30 letters, numbers, periods or underscores"),
     "pinterest": (re.compile(r"^[a-z0-9_]{3,30}$", re.I), "3 to 30 letters, numbers or underscores"),
-    "reddit": (re.compile(r"^[a-z0-9_-]{3,20}$", re.I), "3 to 20 letters, numbers, hyphens or underscores"),
     "quora": (re.compile(r"^[a-z0-9-]{3,60}$", re.I), "Profile name from the URL: letters, numbers or hyphens"),
     "discord": (re.compile(r"^[a-z0-9-]{2,32}$", re.I), "Invite code or vanity name, 2 to 32 characters"),
 }
@@ -24,7 +23,7 @@ HANDLE_RULES = {
 PLATFORM_LABEL = {
     "instagram": "Instagram", "x": "X", "facebook": "Facebook", "telegram": "Telegram", "whatsapp": "WhatsApp",
     "threads": "Threads", "linkedin": "LinkedIn", "snapchat": "Snapchat", "youtube": "YouTube", "sharechat": "ShareChat",
-    "moj": "Moj", "josh": "Josh", "pinterest": "Pinterest", "reddit": "Reddit", "quora": "Quora", "discord": "Discord",
+    "moj": "Moj", "josh": "Josh", "pinterest": "Pinterest", "quora": "Quora", "discord": "Discord",
 }
 SOCIAL_PLATFORMS = list(HANDLE_RULES)
 

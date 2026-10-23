@@ -1,5 +1,5 @@
 /**
- * The live connectors' parsers, offline: Telegram pages, YouTube and Reddit API records, and
+ * The live connectors' parsers, offline: Telegram pages, YouTube API records, and
  * web-search results. The page and API shapes below are copied from real responses.
  */
 
@@ -10,8 +10,6 @@ import {
   NotConnected,
   parseAudience,
   parseTelegramPage,
-  redditCommunity,
-  redditUser,
   SourceNotConnected,
   telegramHandles,
   webCandidates,
@@ -92,19 +90,6 @@ describe("YouTube", () => {
     const yt = new YouTubeLive();
     expect(yt.notConnected()).toMatch(/YOUTUBE_API_KEY/);
     await expect(yt.fetch(["phonepe"])).rejects.toBeInstanceOf(SourceNotConnected);
-  });
-});
-
-describe("Reddit", () => {
-  it("maps users and communities", () => {
-    expect(redditUser({ name: "PhonePe_Support", created_utc: 1700000000, subreddit: { title: "PhonePe Support", public_description: "DM for refunds", subscribers: 12 }, icon_img: "https://styles.redditmedia.com/a.png?width=256&amp;s=1" })).toMatchObject({
-      platform: "reddit", identifier: "phonepe_support", url: "https://www.reddit.com/user/PhonePe_Support", displayName: "PhonePe Support",
-      bio: "DM for refunds", createdOn: "2023-11-14", image: "https://styles.redditmedia.com/a.png",
-    });
-    expect(redditUser({ name: "gone", is_suspended: true })).toBeNull();
-    expect(redditCommunity({ display_name: "paytmhelp", title: "Paytm Help", subscribers: 900, public_description: "" })).toMatchObject({
-      identifier: "paytmhelp", handle: "r/paytmhelp", url: "https://www.reddit.com/r/paytmhelp", audience: 900,
-    });
   });
 });
 

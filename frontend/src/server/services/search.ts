@@ -33,7 +33,7 @@ import { validateBrandAssets } from "./validation";
 const SOCIAL_SOURCES: Record<string, string> = {
   instagram: "src_ig", facebook: "src_fb", whatsapp: "src_wa", x: "src_x", threads: "src_threads",
   linkedin: "src_li", telegram: "src_tg", snapchat: "src_snap", youtube: "src_yt", sharechat: "src_sc",
-  moj: "src_moj", josh: "src_josh", pinterest: "src_pin", reddit: "src_reddit", quora: "src_quora", discord: "src_discord",
+  moj: "src_moj", josh: "src_josh", pinterest: "src_pin", quora: "src_quora", discord: "src_discord",
 };
 
 // Which sources answer for which platform. Live: one live source each. Fixtures (tests): the store

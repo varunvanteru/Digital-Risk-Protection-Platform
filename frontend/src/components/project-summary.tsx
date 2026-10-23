@@ -52,8 +52,8 @@ export function ProjectSummary() {
           official items get risk 0 and are never stored as threats; the allowlist is checked again just before a detection is saved.
         </li>
         <li>
-          <b>Social Media Monitoring:</b> impersonation accounts, fake brand pages and scam profiles found live (Telegram directly, YouTube and Reddit
-          through their official APIs, Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for public
+          <b>Social Media Monitoring:</b> impersonation accounts, fake brand pages and scam profiles found live (Telegram directly, YouTube
+          through its official API, Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat and ShareChat through a web search for public
           pages), found by
           look-alike name, copied logo (perceptual hash, including mirrored and recoloured copies), copied bio, &quot;official/helpline&quot; claims and scam
           behaviour (requests for OTP or fees, lures, moving to WhatsApp, brand-new accounts).

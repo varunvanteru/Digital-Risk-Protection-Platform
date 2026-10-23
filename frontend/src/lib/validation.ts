@@ -14,7 +14,6 @@ export const SOCIAL_PLATFORMS: { value: Platform; label: string; pattern: RegExp
   { value: "moj", label: "Moj", pattern: /^[a-z0-9._]{3,30}$/i, rule: "3 to 30 letters, numbers, periods or underscores" },
   { value: "josh", label: "Josh", pattern: /^[a-z0-9._]{3,30}$/i, rule: "3 to 30 letters, numbers, periods or underscores" },
   { value: "pinterest", label: "Pinterest", pattern: /^[a-z0-9_]{3,30}$/i, rule: "3 to 30 letters, numbers or underscores" },
-  { value: "reddit", label: "Reddit", pattern: /^[a-z0-9_-]{3,20}$/i, rule: "3 to 20 letters, numbers, hyphens or underscores" },
   { value: "quora", label: "Quora", pattern: /^[a-z0-9-]{3,60}$/i, rule: "Profile name from the URL: letters, numbers or hyphens" },
   { value: "discord", label: "Discord", pattern: /^[a-z0-9-]{2,32}$/i, rule: "Invite code or vanity name, 2 to 32 characters" },
 ];

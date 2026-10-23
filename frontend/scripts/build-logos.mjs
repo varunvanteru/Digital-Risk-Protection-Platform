@@ -17,7 +17,6 @@ const fromIconify = {
   telegram: "telegram",
   youtube: "youtube-icon",
   pinterest: "pinterest",
-  reddit: "reddit-icon",
   discord: "discord-icon",
   google_play: "google-play-icon",
   app_store: "apple-app-store",

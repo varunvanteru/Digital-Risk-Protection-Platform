@@ -36,7 +36,6 @@ SOCIAL_SOURCES = {
     "moj": "src_moj",
     "josh": "src_josh",
     "pinterest": "src_pin",
-    "reddit": "src_reddit",
     "quora": "src_quora",
     "discord": "src_discord",
 }

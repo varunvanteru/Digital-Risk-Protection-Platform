@@ -14,7 +14,6 @@ export type SocialPlatform =
   | "moj"
   | "josh"
   | "pinterest"
-  | "reddit"
   | "quora"
   | "discord";
 

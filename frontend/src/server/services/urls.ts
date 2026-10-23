@@ -20,7 +20,6 @@ export const HOSTS: Record<string, string> = {
   "share.myjosh.in": "josh",
   "pinterest.com": "pinterest",
   "in.pinterest.com": "pinterest",
-  "reddit.com": "reddit",
   "quora.com": "quora",
   "discord.gg": "discord",
   "discord.com": "discord",
@@ -28,7 +27,7 @@ export const HOSTS: Record<string, string> = {
   "apps.apple.com": "app_store",
 };
 
-// Path words that come before the handle, e.g. linkedin.com/company/<h>, reddit.com/user/<h>
+// Path words that come before the handle, e.g. linkedin.com/company/<h>, youtube.com/c/<h>
 const PATH_PREFIXES = new Set(["company", "in", "add", "profile", "user", "u", "r", "c", "channel", "invite", "user-profile"]);
 
 export interface ParsedQuery {

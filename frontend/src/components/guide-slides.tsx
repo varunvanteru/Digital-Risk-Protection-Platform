@@ -177,7 +177,7 @@ const SLIDES: Slide[] = [
         <div className="grid gap-2.5 sm:grid-cols-5">
           {[
             ["Register", "Name, logo, official accounts, apps, publisher and domains"],
-            ["Search", "Every source live: stores, Telegram, YouTube, Reddit, and web search for public social pages"],
+            ["Search", "Every source live: stores, Telegram, YouTube, and web search for public social pages"],
             ["Verify official", "Your own assets are recognised first and never scored"],
             ["Score", "Six signals, weighted, plus fixed boosts and caps: 0 to 100"],
             ["Act", "Confirm, request takedown, mark false positive or official"],
@@ -366,7 +366,7 @@ const SLIDES: Slide[] = [
     body: (
       <Steps
         items={[
-          <>Pick platforms, or leave All platforms selected (19 platforms).</>,
+          <>Pick platforms, or leave All platforms selected (17 platforms).</>,
           <>
             Type a brand name (<Code>PhonePe</Code>), a handle (<Code>z3ntra.pay_official</Code>) or paste an official link (
             <Code>t.me/phonepe_rewards</Code>, a Play Store or App Store URL), then press Enter. The Try chips fill in examples.
@@ -449,7 +449,7 @@ const SLIDES: Slide[] = [
     body: (
       <>
         <P>
-          18 sources in two groups, app stores and social platforms, each live or not connected. Each runs on its own with a 10-second timeout and 2 retries, so one failing source
+          17 sources in two groups, app stores and social platforms, each live or not connected. Each runs on its own with a 10-second timeout and 2 retries, so one failing source
           never stops a scan.
         </P>
         <Points
@@ -609,7 +609,7 @@ const SLIDES: Slide[] = [
           rows={[
             ["Live", "Searched just now on the real platform"],
             ["Cached", "The live source was down, so its last good results are used"],
-            ["Not connected", "Not searched: its API key is not set, or the platform has not approved API access yet (Reddit)"],
+            ["Not connected", "Not searched: its API key is not set"],
             ["Down", "Unavailable for this scan"],
           ]}
         />
@@ -650,7 +650,7 @@ const SLIDES: Slide[] = [
     body: (
       <Points
         items={[
-          ["Where do social results come from?", "All live. Telegram is read from its public pages, YouTube and Reddit through their official APIs, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh through a web search for their public pages. Discord invites found that way are checked with Discord's own invite lookup. Only what search engines have indexed can be found, so new or private accounts may not appear."],
+          ["Where do social results come from?", "All live. Telegram is read from its public pages, YouTube through its official API, and Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh through a web search for their public pages. Discord invites found that way are checked with Discord's own invite lookup. Only what search engines have indexed can be found, so new or private accounts may not appear."],
           ["Why does a result score exactly 39?", "It hit a cap: either only one signal was strong, or it is openly a fan, news, review or third-party item."],
           ["Can a real official account be flagged?", "Official verification runs first and the accuracy test checks it: 0 of 19 official assets are flagged. If something genuine ever slips through, It's official adds it to the allowlist."],
           ["Does anyone else see my searches?", "No. Each browser has its own private workspace."],

@@ -14,7 +14,6 @@ const HANDLE_RULES: Record<string, [RegExp, string]> = {
   moj: [/^[a-z0-9._]{3,30}$/i, "3 to 30 letters, numbers, periods or underscores"],
   josh: [/^[a-z0-9._]{3,30}$/i, "3 to 30 letters, numbers, periods or underscores"],
   pinterest: [/^[a-z0-9_]{3,30}$/i, "3 to 30 letters, numbers or underscores"],
-  reddit: [/^[a-z0-9_-]{3,20}$/i, "3 to 20 letters, numbers, hyphens or underscores"],
   quora: [/^[a-z0-9-]{3,60}$/i, "Profile name from the URL: letters, numbers or hyphens"],
   discord: [/^[a-z0-9-]{2,32}$/i, "Invite code or vanity name, 2 to 32 characters"],
 };
@@ -22,7 +21,7 @@ const HANDLE_RULES: Record<string, [RegExp, string]> = {
 const PLATFORM_LABEL: Record<string, string> = {
   instagram: "Instagram", x: "X", facebook: "Facebook", telegram: "Telegram", whatsapp: "WhatsApp",
   threads: "Threads", linkedin: "LinkedIn", snapchat: "Snapchat", youtube: "YouTube", sharechat: "ShareChat",
-  moj: "Moj", josh: "Josh", pinterest: "Pinterest", reddit: "Reddit", quora: "Quora", discord: "Discord",
+  moj: "Moj", josh: "Josh", pinterest: "Pinterest", quora: "Quora", discord: "Discord",
 };
 
 export const SOCIAL_PLATFORMS = Object.keys(HANDLE_RULES);

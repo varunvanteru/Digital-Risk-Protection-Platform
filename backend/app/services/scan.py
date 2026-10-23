@@ -57,7 +57,6 @@ CONNECTORS = {
     "src_moj": SocialDataset("src_moj", "moj"),
     "src_josh": SocialDataset("src_josh", "josh"),
     "src_pin": SocialDataset("src_pin", "pinterest"),
-    "src_reddit": SocialDataset("src_reddit", "reddit"),
     "src_quora": SocialDataset("src_quora", "quora"),
     "src_discord": SocialDataset("src_discord", "discord"),
 }

@@ -235,7 +235,7 @@ describe("search API", () => {
     const r = await call("POST", "search", { query: "zentrapay", platforms: ["all"] });
     expect(r.status).toBe(200);
     const body = r.body;
-    expect(body.platforms).toHaveLength(19);
+    expect(body.platforms).toHaveLength(18);
     expect(body.reference).toMatchObject({ type: "brand", name: "ZentraPay" });
     const handles = new Set(body.results.map((x: any) => x.handle));
     expect(handles.has("zentrapay_care_india") && handles.has("com.zentrapay.wallet.upi")).toBe(true);

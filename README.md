@@ -35,7 +35,7 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 | Criterion | What IMPOSTR does |
 | --- | --- |
 | **Brand Profile** (15%) | Three-step **Setup Brand Profile**: name, aliases, official logo, description, keywords, official social accounts, official apps, publisher and domains. Each official app is **validated on its store** (developer ID, store title, icon), and the profile drives every check: names for look-alike matching, the logo for image matching, the description for copied text, and the allowlist before any scoring. |
-| **Social Media Monitoring** (30%) | Impersonation accounts, fake brand pages and scam profiles across 16 social and messaging platforms. Each is detected by look-alike name, copied logo (including mirrored and recoloured copies), copied bio, "official / helpline" claims and scam behaviour (OTP or fee requests, lures, moving to WhatsApp, new accounts). **Official accounts are never flagged.** |
+| **Social Media Monitoring** (30%) | Impersonation accounts, fake brand pages and scam profiles across 15 social and messaging platforms. Each is detected by look-alike name, copied logo (including mirrored and recoloured copies), copied bio, "official / helpline" claims and scam behaviour (OTP or fee requests, lures, moving to WhatsApp, new accounts). **Official accounts are never flagged.** |
 | **App Store Monitoring** (30%) | Google Play and the App Store are **searched live**. It catches similar names, copied icons, a **different developer or publisher** (including fakes that copy the company name under another developer account) and resembling descriptions. The brand's official apps and their sibling apps are recognised by app ID, verified developer account and publisher, so **official apps are never flagged**. |
 | **User Experience** (15%) | Setup in three steps, or register a brand straight from a search. Detections give plain-language reasons, a score breakdown and evidence checks, with actions to confirm, request a takedown, mark a false positive or mark official. **Unavailable sources are handled gracefully:** each source has its own timeout and retries, falls back to cached results, and otherwise shows as Down while the scan completes (try **Pause source** on Sources); web search switches from Brave to Serper by itself when one provider runs out of credit. Works on any phone and installs as an app. |
 | **Look-alike names** (bonus) | Character swaps, missing or doubled letters, look-alike characters (`0`→`o`, `3`→`e`, Cyrillic letters), added words (`zentrapay_support_india`) and spacing changes (`zentra.pay`). It avoids over-flagging: ordinary words, other companies' names and openly labelled fan, news or third-party pages stay Low. |
@@ -49,7 +49,7 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 The pipeline is allowlist-first, in `frontend/src/server/services/scan.ts` and `services/search.ts`:
 
 1. **Validate the profile.** Each official app is looked up on its store. Its developer account ID, store title and icon become a verified identity, cached for 24 hours.
-2. **Collect candidates** from 20 sources in parallel, each with a 10-second timeout and 2 retries. A failed live store falls back to its last good results (shown as Cached). Any other failed source is shown as Down, and the scan carries on.
+2. **Collect candidates** from 17 sources in parallel, each with a 10-second timeout and 2 retries. A failed live store falls back to its last good results (shown as Cached). Any other failed source is shown as Down, and the scan carries on.
 3. **Gate 1: exclude official assets before any scoring** (`detection/official.ts`):
    - **L1:** the exact official ID or handle.
    - **L2:** an official URL.
@@ -83,7 +83,6 @@ No brand is hard-coded: brands are data, and the same rules apply to every brand
 | Apple App Store | Live (iTunes Search API) |
 | Telegram | Live: public t.me pages for usernames built from the brand name (no key needed) |
 | YouTube | Live: YouTube Data API v3 (`YOUTUBE_API_KEY`) |
-| Reddit | Live: Reddit API, app-only OAuth (`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`) |
 | Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp (public channels and group invites), Moj, Josh | Live: web search, `site:` queries per platform for public profiles and pages. Brave Search (`BRAVE_SEARCH_API_KEY`) first, Serper / Google results (`SERPER_API_KEY`) when Brave is out of credit or fails; each query's results are shared by all workspaces for 12 hours |
 | Discord | Live: invites found by web search, each checked with Discord's public invite lookup (server name, description, member count; expired invites dropped) |
 

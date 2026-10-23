@@ -24,7 +24,6 @@ SOCIAL_URL = {
     "moj": "https://mojapp.in/@{h}",
     "josh": "https://share.myjosh.in/profile/{h}",
     "pinterest": "https://www.pinterest.com/{h}",
-    "reddit": "https://www.reddit.com/user/{h}",
     "quora": "https://www.quora.com/profile/{h}",
     "discord": "https://discord.gg/{h}",
 }

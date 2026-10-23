@@ -107,7 +107,7 @@ describe("pasted URLs (port of test_search.py)", () => {
       "https://mojapp.in/@zentrapay.cashback": ["moj", "zentrapay.cashback"],
       "https://share.myjosh.in/profile/zentra_pay_rewards": ["josh", "zentra_pay_rewards"],
       "https://in.pinterest.com/zentrapayindia/": ["pinterest", "zentrapayindia"],
-      "https://www.reddit.com/user/ZentraPay_Support_Team": ["reddit", "zentrapay_support_team"],
+      "https://www.threads.net/@ZentraPay_Support_Team": ["threads", "zentrapay_support_team"],
       "https://www.quora.com/profile/ZentraPay-Customer-Care-Number": ["quora", "zentrapay-customer-care-number"],
       "https://discord.gg/zentrapay-rewards": ["discord", "zentrapay-rewards"],
       "https://www.snapchat.com/add/zentrapay_snap": ["snapchat", "zentrapay_snap"],

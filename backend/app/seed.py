@@ -28,7 +28,6 @@ SOURCES = [
     ("src_moj", "Moj", "moj", "social", "dataset"),
     ("src_josh", "Josh", "josh", "social", "dataset"),
     ("src_pin", "Pinterest", "pinterest", "social", "dataset"),
-    ("src_reddit", "Reddit", "reddit", "social", "dataset"),
     ("src_quora", "Quora", "quora", "social", "dataset"),
     ("src_discord", "Discord", "discord", "social", "dataset"),
 ]
@@ -37,6 +36,10 @@ DEMO_BRAND_ID = "brd_zentrapay"
 
 
 def seed(db: Session) -> None:
+    # Reddit is no longer a supported platform.
+    old = db.get(Source, "src_reddit")
+    if old is not None:
+        db.delete(old)
     for sid, name, platform, channel, mode in SOURCES:
         src = db.get(Source, sid)
         if src is None:

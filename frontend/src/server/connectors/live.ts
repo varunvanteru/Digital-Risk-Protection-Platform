@@ -5,7 +5,6 @@
  *
  *   Telegram    public t.me pages for usernames built from the brand name (no key needed)
  *   YouTube     YouTube Data API v3: channel search, then channel details (YOUTUBE_API_KEY)
- *   Reddit      Reddit API, app-only OAuth: user and community search (REDDIT_CLIENT_ID / _SECRET)
  *   Web search  Brave Search API, site: queries per platform, for platforms whose own search is
  *               closed or missing (Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora,
  *               Snapchat, ShareChat, WhatsApp Channels and group invites, Moj, Josh). Finds
@@ -190,110 +189,6 @@ export function youtubeChannel(ch: Record<string, any>, sourceId = "src_yt"): Ca
     createdOn: sn.publishedAt ? String(sn.publishedAt).slice(0, 10) : null,
     image: sn.thumbnails?.high?.url ?? sn.thumbnails?.medium?.url ?? sn.thumbnails?.default?.url ?? null,
     links: linksIn(description),
-  });
-}
-
-// ---------- Reddit ----------
-
-const REDDIT_UA = "web:impostr-brand-monitor:1.0 (digital risk protection)";
-const g = globalThis as unknown as { __bsReddit?: { token: string; until: number } };
-
-export class RedditLive implements Connector {
-  sourceId = "src_reddit";
-  timeoutMs = 20_000;
-
-  notConnected() {
-    return settings.redditClientId && settings.redditClientSecret ? null : "Not connected: add a Reddit app ID and secret (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET)";
-  }
-
-  private async token(): Promise<string> {
-    if (g.__bsReddit && g.__bsReddit.until > Date.now() + 60_000) return g.__bsReddit.token;
-    const basic = Buffer.from(`${settings.redditClientId}:${settings.redditClientSecret}`).toString("base64");
-    const r = await fetch("https://www.reddit.com/api/v1/access_token", {
-      method: "POST",
-      headers: { Authorization: `Basic ${basic}`, "User-Agent": REDDIT_UA, "Content-Type": "application/x-www-form-urlencoded" },
-      body: "grant_type=client_credentials",
-      signal: AbortSignal.timeout(10_000),
-    });
-    const body = await r.json().catch(() => ({}));
-    // Refused credentials are a setup problem, not an outage: say so instead of reporting Reddit as down.
-    if (r.status === 401 || r.status === 403) {
-      throw new SourceNotConnected("Not connected: Reddit refused the app ID and secret (the app may not be approved for API access yet)");
-    }
-    if (!r.ok || !body.access_token) throw new SourceUnavailable(`Reddit sign-in failed (${r.status})`);
-    g.__bsReddit = { token: body.access_token, until: Date.now() + Number(body.expires_in ?? 3600) * 1000 };
-    return body.access_token;
-  }
-
-  private async list(path: string, q: string) {
-    const r = await fetch(`https://oauth.reddit.com/${path}?${new URLSearchParams({ q, limit: "25", raw_json: "1" })}`, {
-      headers: { Authorization: `Bearer ${await this.token()}`, "User-Agent": REDDIT_UA },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!r.ok) throw new SourceUnavailable(`Reddit API error ${r.status}`);
-    return ((await r.json())?.data?.children ?? []).map((c: { data: unknown }) => c.data);
-  }
-
-  async fetch(keywords: string[]): Promise<Candidate[]> {
-    const reason = this.notConnected();
-    if (reason) throw new SourceNotConnected(reason);
-    const out = new Map<string, Candidate>();
-    for (const kw of keywords.slice(0, 2)) {
-      for (const u of await this.list("users/search", kw)) {
-        const c = redditUser(u, this.sourceId);
-        if (c && !out.has(`u|${c.identifier}`)) out.set(`u|${c.identifier}`, c);
-      }
-      for (const s of await this.list("subreddits/search", kw)) {
-        const c = redditCommunity(s, this.sourceId);
-        if (c && !out.has(`r|${c.identifier}`)) out.set(`r|${c.identifier}`, c);
-      }
-    }
-    return [...out.values()];
-  }
-}
-
-const redditIcon = (s: unknown) => (typeof s === "string" && s ? decodeHtml(s).split("?")[0] : null);
-const utcDay = (secs: unknown) => (typeof secs === "number" ? new Date(secs * 1000).toISOString().slice(0, 10) : null);
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function redditUser(u: Record<string, any>, sourceId = "src_reddit"): Candidate | null {
-  if (!u?.name || u.is_suspended) return null;
-  const profile = u.subreddit ?? {};
-  const bio = profile.public_description ?? "";
-  return candidate({
-    sourceId,
-    channel: "social",
-    platform: "reddit",
-    identifier: String(u.name).toLowerCase(),
-    handle: u.name,
-    displayName: profile.title || u.name,
-    url: `https://www.reddit.com/user/${u.name}`,
-    bio,
-    audience: Math.trunc(Number(profile.subscribers ?? 0)),
-    createdOn: utcDay(u.created_utc),
-    verified: !!u.verified,
-    image: redditIcon(u.icon_img),
-    links: linksIn(bio),
-  });
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function redditCommunity(s: Record<string, any>, sourceId = "src_reddit"): Candidate | null {
-  if (!s?.display_name) return null;
-  const bio = s.public_description ?? "";
-  return candidate({
-    sourceId,
-    channel: "social",
-    platform: "reddit",
-    identifier: String(s.display_name).toLowerCase(),
-    handle: `r/${s.display_name}`,
-    displayName: s.title || `r/${s.display_name}`,
-    url: `https://www.reddit.com/r/${s.display_name}`,
-    bio,
-    audience: Math.trunc(Number(s.subscribers ?? 0)),
-    createdOn: utcDay(s.created_utc),
-    image: redditIcon(s.community_icon) ?? redditIcon(s.icon_img),
-    links: linksIn(bio),
   });
 }
 

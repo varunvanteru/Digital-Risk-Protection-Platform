@@ -77,18 +77,18 @@ function Diagram() {
     <div className="rounded-lg border border-line bg-surface-2/40 p-3 sm:p-4" role="img" aria-label="IMPOSTR architecture: data sources and the brand profile feed collection; official assets are excluded first; the rest are scored; a second allowlist check runs before results are stored and shown.">
       {/* Inputs */}
       <div className="grid gap-3 lg:grid-cols-2">
-        <Box tone="source" icon={Globe} kicker="Data sources · 18, all live" title="Where candidates come from">
+        <Box tone="source" icon={Globe} kicker="Data sources · 17, all live" title="Where candidates come from">
           <Li>
             <b className="text-ink">Stores:</b> Google Play (google-play-scraper) and the Apple App Store (iTunes Search API)
           </Li>
           <Li>
-            <b className="text-ink">Social, official APIs:</b> Telegram (public t.me pages), YouTube Data API, Reddit API
+            <b className="text-ink">Social, official APIs:</b> Telegram (public t.me pages), YouTube Data API
           </Li>
           <Li>
             <b className="text-ink">Social, web search:</b> Instagram, Facebook, X, LinkedIn, Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj and Josh public pages, through the Brave Search API; Discord invites checked with Discord&apos;s invite lookup
           </Li>
           <Li>
-            <b className="text-ink">Not connected:</b> a source without its API key, or awaiting the platform&apos;s approval (Reddit). No sample data anywhere.
+            <b className="text-ink">Not connected:</b> a source whose API key is not set is shown as not connected, never filled with made-up results. No sample data anywhere.
           </Li>
           <Li>Each source runs on its own: 10-second timeout, 2 retries. A failed live source falls back to its last good results (Cached); otherwise it is marked Down and the scan continues.</Li>
         </Box>
@@ -245,7 +245,7 @@ export function Architecture() {
               ["brands", "Each brand's profile: name, aliases, keywords, domains, description, logo. A workspace ID keeps every browser's brands private."],
               ["official_assets", "The allowlist: official accounts and apps, with store validation (developer ID, store title, icon, when it was checked)."],
               ["publishers", "Official developer names and IDs used to recognise official apps."],
-              ["sources", "The 20 sources with their mode, state, health, latency and items in the last scan."],
+              ["sources", "The 17 sources with their mode, state, health, latency and items in the last scan."],
               ["source_cache", "The last good results of each live source, used when it is down."],
               ["scans", "Each scan: candidates seen, official assets skipped, official assets flagged, new detections, per-source status."],
               ["detections", "Scored look-alikes: signals, reasons, evidence checks, score, severity and status."],
