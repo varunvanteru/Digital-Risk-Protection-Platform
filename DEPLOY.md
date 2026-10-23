@@ -70,7 +70,8 @@ hPanel → **Websites** → **Add website** → **Node.js web app** → **Import
 - **Accuracy** → 82 of 82 correct, precision and recall 1.00, 0 of 19 official assets flagged.
 
 The first start after updating from the sample-data version removes the old sample data
-once and gives every existing workspace the current demo brands (PhonePe and ZentraPay).
+once and leaves every existing workspace with the current demo brand, PhonePe (the old
+Paytm and ZentraPay demo copies are removed; brands a visitor added are kept).
 
 Search results are shared by all workspaces for 12 hours, so many visitors searching the
 same brand use the API quotas once. Brave's free credits reset monthly; Serper's free

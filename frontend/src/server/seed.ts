@@ -148,8 +148,9 @@ async function removeSampleData(): Promise<void> {
 }
 
 /**
- * A new workspace starts with its own copy of the demo brands, so every visitor sees a
+ * A new workspace starts with its own copy of the demo brand (PhonePe), so every visitor sees a
  * working demo and nothing another visitor added. Returns the active brand's ID.
+ * Fixture mode (automated tests) uses the fictional ZentraPay the labelled data is built around.
  */
 export async function seedWorkspace(ws: string): Promise<string> {
   if (settings.dataMode === "live") {
@@ -161,7 +162,7 @@ export async function seedWorkspace(ws: string): Promise<string> {
   return id;
 }
 
-/** The fictional demo brand ZentraPay, with its official accounts and apps. Skipped if the workspace has it. */
+/** The fictional test brand ZentraPay (fixture mode only), with its official accounts and apps. Skipped if the workspace has it. */
 async function addZentraPay(ws: string, active: boolean): Promise<string> {
   const id = demoBrandId(ws);
   if (await one("SELECT id FROM brands WHERE id = ?", [id])) return id;
@@ -255,7 +256,7 @@ const REAL_BRANDS: RealBrand[] = [
 
 const realBrandId = (key: string, ws: string) => `brd_${key}_${suffix(ws)}`;
 
-/** Give a workspace its two demo brands: PhonePe (real, active) and ZentraPay (fictional), with their official apps and accounts. */
+/** Give a workspace its demo brand, PhonePe (real, active), with its official apps and accounts. */
 export async function addRealDemoBrands(ws: string): Promise<void> {
   const now = utcnow();
   for (const b of REAL_BRANDS) {
@@ -283,25 +284,26 @@ export async function addRealDemoBrands(ws: string): Promise<void> {
       );
     }
   }
-  await addZentraPay(ws, false);
   if (!(await one("SELECT id FROM brands WHERE workspace_id = ? AND is_active = 1", [ws]))) {
     await exec("UPDATE brands SET is_active = 1 WHERE id = ?", [realBrandId("phonepe", ws)]);
   }
 }
 
 /**
- * One-time update of existing workspaces to the current demo brands: the Paytm demo copy goes
- * (only the copy this app added, matched by its exact ID) and ZentraPay is added. Brands a visitor
- * registered are never touched.
+ * One-time update of existing workspaces to the current demo brand, PhonePe: the Paytm and ZentraPay
+ * demo copies go (only the copies this app added, matched by their exact IDs), and PhonePe becomes
+ * active where one of them was. Brands a visitor registered are never touched.
  */
 async function updateDemoBrands(): Promise<void> {
-  if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'demo_brands'"))?.v === "phonepe+zentrapay") return;
-  await exec(
-    "DELETE FROM brands WHERE id LIKE 'brd\\_paytm\\_%' AND workspace_id IS NOT NULL AND id = CONCAT('brd_paytm_', LEFT(REPLACE(workspace_id, '-', ''), 16))",
-  );
+  if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'demo_brands'"))?.v === "phonepe") return;
+  for (const key of ["paytm", "zentrapay"]) {
+    await exec(
+      `DELETE FROM brands WHERE id LIKE 'brd\\_${key}\\_%' AND workspace_id IS NOT NULL AND id = CONCAT('brd_${key}_', LEFT(REPLACE(workspace_id, '-', ''), 16))`,
+    );
+  }
   const workspaces = await q<{ ws: string }>("SELECT DISTINCT workspace_id AS ws FROM brands WHERE id LIKE 'brd\\_phonepe\\_%' AND workspace_id IS NOT NULL");
   for (const { ws } of workspaces) await addRealDemoBrands(ws);
-  await exec("INSERT INTO app_meta (k, v) VALUES ('demo_brands', 'phonepe+zentrapay') ON DUPLICATE KEY UPDATE v = VALUES(v)");
+  await exec("INSERT INTO app_meta (k, v) VALUES ('demo_brands', 'phonepe') ON DUPLICATE KEY UPDATE v = VALUES(v)");
 }
 
 /**

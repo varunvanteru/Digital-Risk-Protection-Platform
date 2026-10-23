@@ -23,7 +23,7 @@ export function ProjectSummary() {
         IMPOSTR finds fake social-media profiles, fake brand pages, scam accounts and look-alike mobile apps that impersonate a brand. It scores each
         one from 0 to 100, explains every flag in plain words, and never flags the brand&apos;s own accounts and apps. The app runs in the browser at{" "}
         <A href={SITE}>{SITE}</A>; no account is needed: choose &quot;Continue as demo&quot; on the sign-in page, or create a free company account (work email
-        required) to keep your work. Each workspace starts with two demo brands, PhonePe (real) and ZentraPay (fictional), monitored on live data only.
+        required) to keep your work. Each workspace starts with the demo brand PhonePe, monitored on live data only.
       </p>
 
       <h2 className="text-[16px] font-semibold text-ink">Start here</h2>

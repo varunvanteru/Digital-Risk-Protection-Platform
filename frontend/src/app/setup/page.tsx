@@ -311,7 +311,7 @@ export default function SetupPage() {
                   </div>
                   <div>
                     <Label htmlFor="aliases">Other names people use</Label>
-                    <TagInput id="aliases" values={aliases} onChange={setAliases} placeholder="Zentra, Zentra Pay" />
+                    <TagInput id="aliases" values={aliases} onChange={setAliases} placeholder="Phone Pe, PhonePe UPI" />
                   </div>
                   <div>
                     <Label htmlFor="legal-name">Legal company name (optional)</Label>
@@ -343,7 +343,7 @@ export default function SetupPage() {
               </div>
               <div>
                 <Label htmlFor="keywords">Search keywords</Label>
-                <TagInput id="keywords" values={keywords} onChange={setKeywords} placeholder="zentra, zpay" />
+                <TagInput id="keywords" values={keywords} onChange={setKeywords} placeholder="phonepe, phone pe" />
               </div>
               <div>
                 <Label htmlFor="description">Official description</Label>

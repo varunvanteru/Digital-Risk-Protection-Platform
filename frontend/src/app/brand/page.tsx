@@ -66,7 +66,7 @@ function AddAccount() {
               setServerError(null);
             }}
             onBlur={() => value && setTouched(true)}
-            placeholder={platform === "facebook" ? "zentrapay" : "@zentrapay"}
+            placeholder={platform === "facebook" ? "yourbrand" : "@yourbrand"}
             invalid={touched && !!error}
             className="font-mono"
             aria-describedby="add-handle-hint"
