@@ -38,17 +38,18 @@ hPanel → **Websites** → impostr.live → **Environment variables** → add:
 | `YOUTUBE_API_KEY` | YouTube Data API v3 key (Google Cloud console) |
 | `BRAVE_SEARCH_API_KEY` | Brave Search API key: web search for the social platforms |
 | `SERPER_API_KEY` | Serper.dev key: used when Brave is out of credit or fails |
-| `ADMIN_PASSWORD` | a password for changes (optional, see below) |
+| `ADMIN_PASSWORD` | leave unset for the judging demo (see below) |
 
 Then **Deployments** → **Redeploy**, so the app starts with them. A source whose key is
 missing is shown as **Not connected** and returns nothing; the rest of the app still works.
 At least one of the two web-search keys is needed for Instagram, Facebook, X, LinkedIn,
 Threads, Pinterest, Quora, Snapchat, ShareChat, WhatsApp, Moj, Josh and Discord.
 
-With `ADMIN_PASSWORD` set, anyone can browse, run Quick check, run scans and switch
-the active brand, but editing brands, changing a detection's status or pausing a
-source asks for the password once per browser (signed-in users need it only for
-sources). Without it, everything is open.
+Every visitor works in their own private workspace (Continue as demo, or an account),
+so nothing anyone does there needs a password: editing brands, confirming threats,
+takedown letters, scans. `ADMIN_PASSWORD` only guards **Pause source / Resume source**,
+because sources are shared by every workspace. Leave it unset so judges can try
+everything; a paused source then stays paused for everyone until someone resumes it.
 
 ## 3. App (already connected)
 

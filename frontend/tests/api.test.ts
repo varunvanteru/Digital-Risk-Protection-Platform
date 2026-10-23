@@ -350,7 +350,7 @@ describe("brands", () => {
     expect(after.filter((b: any) => b.isActive)).toHaveLength(1);
   });
 
-  it("admin password protects changes but not browsing, search or scans", async () => {
+  it("admin password protects shared sources but not browsing, search, scans or a visitor's own workspace", async () => {
     const { settings } = await import("@/server/config");
     settings.adminPassword = "test-secret";
     try {
@@ -361,6 +361,13 @@ describe("brands", () => {
       expect((await get("auth")).required).toBe(true);
       expect((await call("GET", "brand")).status).toBe(200);
       expect((await call("POST", "check", { value: "zentrapay" })).status).toBe(200);
+      // A demo visitor acts on their own private workspace without the password: confirm, takedown, letter.
+      const det = (await get("detections")).find((d: any) => d.status === "open");
+      expect((await call("PATCH", `detections/${det.id}`, { status: "confirmed" })).status).toBe(200);
+      expect((await call("PATCH", `detections/${det.id}`, { status: "takedown_requested" })).status).toBe(200);
+      expect((await call("POST", `detections/${det.id}/letter`)).status).toBe(200);
+      expect((await call("PATCH", `detections/${det.id}`, { status: "open" })).status).toBe(200);
+      // Sources are shared by every workspace, so changing them still needs it.
       const locked = await call("PATCH", "sources/src_x", { simulateOutage: false });
       expect(locked.status).toBe(401);
       expect(locked.body.detail.field).toBe("auth");

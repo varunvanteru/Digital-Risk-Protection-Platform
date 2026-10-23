@@ -31,7 +31,7 @@ async function serve(req: Request, ctx: { params: Promise<{ path: string[] }> })
     return Response.json(res.body, { status: res.status, headers });
   }
 
-  const res = await handle(req.method, route, req, ws, !!user);
+  const res = await handle(req.method, route, req, ws);
   if (fromCookie.isNew || (user && fromCookie.ws !== ws)) headers.append("Set-Cookie", workspaceCookie(ws, isSecure(req)));
   return Response.json(res.body, { status: res.status, headers });
 }

@@ -613,7 +613,7 @@ const SHARED = new Set(["health", "auth", "accuracy"]);
  * Dispatch one /api request in the caller's workspace. `path` is the part after /api/.
  * Without `ws` (scripts) only data that belongs to no workspace is visible.
  */
-export async function handle(method: string, path: string, req: Request, ws?: string, signedIn = false): Promise<{ status: number; body: unknown }> {
+export async function handle(method: string, path: string, req: Request, ws?: string): Promise<{ status: number; body: unknown }> {
   if (!ws || SHARED.has(path)) return dispatch(method, path, req);
   return inWorkspace(ws, async () => {
     try {
@@ -622,12 +622,15 @@ export async function handle(method: string, path: string, req: Request, ws?: st
       console.error("workspace setup failed", e);
       return { status: 503, body: { detail: "Could not prepare your workspace. Try again." } };
     }
-    return dispatch(method, path, req, signedIn);
+    return dispatch(method, path, req, true);
   });
 }
 
-/** `signedIn`: the caller is signed in to the account that owns this workspace, so its own data needs no admin password. */
-async function dispatch(method: string, path: string, req: Request, signedIn = false): Promise<{ status: number; body: unknown }> {
+/**
+ * `ownWorkspace`: the request acts on the caller's own private workspace (a demo visitor's or a
+ * signed-in account's), which no one else sees, so it needs no admin password.
+ */
+async function dispatch(method: string, path: string, req: Request, ownWorkspace = false): Promise<{ status: number; body: unknown }> {
   if (path === "auth") {
     if (method === "GET") return { status: 200, body: { required: !!settings.adminPassword } };
     if (method === "POST") {
@@ -636,7 +639,7 @@ async function dispatch(method: string, path: string, req: Request, signedIn = f
     }
   }
   // Sources are shared by every workspace, so changing them always needs the admin password.
-  const ownData = signedIn && !path.startsWith("sources");
+  const ownData = ownWorkspace && !path.startsWith("sources");
   if (!ownData && !authorised(method, path, req)) return { status: 401, body: LOCKED };
   for (const [m, pattern, fn, ok] of ROUTES) {
     if (m !== method) continue;
