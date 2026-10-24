@@ -95,8 +95,9 @@ export async function domainReceivesMail(email: string): Promise<boolean> {
 
 const isSecure = (req: Request) => new URL(req.url).protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
 
-function cookie(name: string, value: string, maxAgeSeconds: number, secure: boolean): string {
-  return `${name}=${value}; Path=/; Max-Age=${maxAgeSeconds}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+/** maxAgeSeconds null: a browser-session cookie, gone when the browser closes. */
+function cookie(name: string, value: string, maxAgeSeconds: number | null, secure: boolean): string {
+  return `${name}=${value}; Path=/;${maxAgeSeconds === null ? "" : ` Max-Age=${maxAgeSeconds};`} HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
 }
 
 export function readCookie(req: Request, name: string): string | null {
@@ -209,7 +210,8 @@ export async function handleAuth(method: string, path: string, req: Request, cur
   }
 
   if (method === "POST" && path === "auth/demo") {
-    return { status: 200, body: { ok: true }, cookies: [cookie(DEMO_COOKIE, "1", 30 * 86400, secure)] };
+    // A demo visit lasts while the browser is open; reopening the app shows the sign-in page again.
+    return { status: 200, body: { ok: true }, cookies: [cookie(DEMO_COOKIE, "1", null, secure)] };
   }
 
   return { status: 404, body: { detail: "Not Found" }, cookies: [] };

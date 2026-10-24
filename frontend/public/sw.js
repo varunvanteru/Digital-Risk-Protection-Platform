@@ -3,17 +3,20 @@
  *
  * - Build assets (/_next/static, /icons, /logos) never change once published:
  *   served from cache first.
- * - Pages: network first, falling back to the last cached copy when offline.
+ * - Pages: network first, falling back to the last cached copy when offline. The network copy
+ *   comes from navigation preload, the browser's own request: it keeps the Sec-Fetch headers that
+ *   tell the server whether the app was opened from outside (a request re-sent from here would
+ *   always look same-origin, and a demo visitor reopening the app would skip the sign-in page).
  * - The API (/api) and images (/media) are private, per-browser data: never cached.
  */
-const CACHE = "impostr-v2";
+const CACHE = "impostr-v3";
 
 self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
+    Promise.resolve(self.registration.navigationPreload?.enable())
+      .then(() => caches.keys())
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
@@ -46,7 +49,8 @@ self.addEventListener("fetch", (event) => {
 
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
+      Promise.resolve(event.preloadResponse)
+        .then((preloaded) => preloaded || fetch(req))
         .then((res) => {
           if (res.ok) {
             const copy = res.clone(); // clone now, before the page reads the body

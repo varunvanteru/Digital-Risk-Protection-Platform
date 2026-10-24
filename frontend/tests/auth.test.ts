@@ -3,8 +3,10 @@
  * Runs through the real /api route handler against MySQL (the test schema).
  */
 
+import { NextRequest } from "next/server";
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET, POST } from "@/app/api/[...path]/route";
+import { middleware } from "@/middleware";
 import { isPersonalEmail, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
 import { checkSignUp, hashPassword, verifyPassword } from "@/server/auth";
 import { one } from "@/server/db";
@@ -146,9 +148,49 @@ describe("accounts", () => {
     expect((await api("GET", "auth/me", undefined, `bs_session=${session}`)).body.user).toBeNull();
   });
 
-  it("continue as demo sets only the demo flag", async () => {
-    const r = await api("POST", "auth/demo", {});
-    expect(r.status).toBe(200);
-    expect(r.cookies).toEqual({ bs_demo: "1" });
+  it("continue as demo sets only the demo flag, for this browser session", async () => {
+    const req = new Request("http://test/api/auth/demo", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const res = await POST(req, { params: Promise.resolve({ path: ["auth", "demo"] }) });
+    expect(res.status).toBe(200);
+    const set = res.headers.getSetCookie();
+    expect(set).toHaveLength(1);
+    expect(set[0]).toMatch(/^bs_demo=1;/);
+    expect(set[0]).not.toMatch(/Max-Age|Expires/i); // gone when the browser closes
+  });
+});
+
+describe("who sees the sign-in page", () => {
+  // A page load: opened from outside the app ("none": typed, bookmark, app icon) or inside it ("same-origin").
+  const page = (path: string, cookie: string, site: "none" | "same-origin" | "cross-site" | null) =>
+    middleware(
+      new NextRequest(`http://test${path}`, {
+        headers: { cookie, ...(site ? { "sec-fetch-site": site, "sec-fetch-mode": "navigate", "sec-fetch-dest": "document" } : {}) },
+      }),
+    );
+  const where = (r: Response) => r.headers.get("location");
+
+  it("a new visitor gets the sign-in page", () => {
+    expect(where(page("/", "", "none"))).toBe("http://test/login");
+    expect(where(page("/detections", "", "none"))).toBe("http://test/login?next=%2Fdetections");
+  });
+
+  it("a demo visitor gets the sign-in page whenever the app is opened from outside", () => {
+    expect(where(page("/", "bs_demo=1", "none"))).toBe("http://test/login");
+    expect(where(page("/check", "bs_demo=1", "cross-site"))).toBe("http://test/login?next=%2Fcheck");
+  });
+
+  it("a demo visitor moves around inside the app freely", () => {
+    expect(where(page("/", "bs_demo=1", "same-origin"))).toBeNull();
+    expect(where(page("/detections", "bs_demo=1", null))).toBeNull(); // in-app navigation data request
+  });
+
+  it("a signed-in account always goes straight into the app, and skips the sign-in page", () => {
+    expect(where(page("/", "bs_session=abc", "none"))).toBeNull();
+    expect(where(page("/login", "bs_session=abc", "none"))).toBe("http://test/");
+  });
+
+  it("the sign-in page stays open for demo and new visitors", () => {
+    expect(where(page("/login", "bs_demo=1", "none"))).toBeNull();
+    expect(where(page("/login", "", "none"))).toBeNull();
   });
 });
