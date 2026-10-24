@@ -88,7 +88,7 @@ No brand is hard-coded: brands are data, and the same rules apply to every brand
 
 There is no sample data. A source whose API key is not set is shown as **Not connected** and returns nothing. Set the keys as environment variables (hPanel → Environment variables, or `.env.local`); never commit them. The automated tests run with `DATA_MODE=fixtures`, where curated fixtures stand in for the social sources so the tests are repeatable and offline.
 
-**Workspaces and accounts.** Each browser gets its own private workspace through an HTTP-only cookie (Continue as demo), or signs in to an account that keeps its workspace. A workspace starts with one demo brand, **PhonePe** (real; its official apps and the official accounts listed on phonepe.com). Anything a visitor registers, scans or marks is visible only in their own workspace.
+**Workspaces and accounts.** Each browser gets its own private workspace through an HTTP-only cookie (Continue as demo), or signs in to an account that keeps its workspace. A workspace starts with three real demo brands, **PhonePe** (active), **SBI** and **Airtel**: their official apps (checked on Google Play and the App Store) and the official accounts listed on their own websites. Anything a visitor registers, scans or marks is visible only in their own workspace.
 
 ## Tech stack
 
@@ -109,7 +109,7 @@ npm install
 npm run dev                       # http://localhost:3000
 ```
 
-On first start the app creates the database tables; each new workspace gets the demo brand, and a scan runs when the user presses Run scan. Deployment steps are in [`DEPLOY.md`](DEPLOY.md).
+On first start the app creates the database tables; each new workspace gets the demo brands, and a scan runs when the user presses Run scan. Deployment steps are in [`DEPLOY.md`](DEPLOY.md).
 
 ## Tests
 

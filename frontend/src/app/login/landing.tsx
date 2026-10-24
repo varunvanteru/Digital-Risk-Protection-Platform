@@ -263,7 +263,7 @@ function Welcome({ name }: { name: string }) {
           <span aria-hidden>✓</span> Private workspace saved to your account
         </li>
         <li>
-          <span aria-hidden>✓</span> A demo brand to explore: PhonePe
+          <span aria-hidden>✓</span> Three demo brands to explore: PhonePe, SBI and Airtel
         </li>
         <li className="lp-step-next">
           <span aria-hidden>→</span> Next: add your own brand in Setup Brand Profile

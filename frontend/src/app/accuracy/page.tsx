@@ -51,7 +51,7 @@ export default function AccuracyPage() {
     <>
       <PageHeader
         eyebrow="Labelled test set"
-        title="Detection accuracy"
+        title="Performance"
         description="Every labelled case runs through the same engine as scans and Quick check: official verification first, then risk scoring. Nothing on this page is typed in by hand. Scope: a fixed labelled test set of 31 PhonePe cases (official apps and accounts, fakes, honest mentions and unrelated names), 11 of them written before the rules they test; this shows how the rules behave on these cases, not real-world accuracy. Monitoring itself uses live data only."
         actions={
           <Button onClick={load} disabled={loading}>

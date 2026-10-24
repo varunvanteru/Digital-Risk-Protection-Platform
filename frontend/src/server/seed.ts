@@ -114,14 +114,14 @@ async function seedLive(): Promise<void> {
 
 /**
  * One-time clean start for judging: every tab starts empty. All detections, their history, scans,
- * cached search results and source statistics are cleared, and every brand except the PhonePe demo
- * brand is removed. PhonePe's profile (official accounts and apps) and user accounts are kept, and
- * PhonePe becomes the active brand wherever another brand was. Runs once (app_meta records it).
+ * cached search results and source statistics are cleared, and every brand except the demo brands
+ * (PhonePe, SBI, Airtel) is removed. Their profiles and user accounts are kept, and PhonePe becomes the
+ * active brand wherever another brand was. Runs once (app_meta records it).
  */
 const CLEAN_START = "2026-10-24";
 async function cleanStart(): Promise<void> {
   if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'clean_start'"))?.v === CLEAN_START) return;
-  await exec("DELETE FROM brands WHERE id NOT LIKE 'brd\\_phonepe\\_%'");
+  await exec("DELETE FROM brands WHERE id NOT LIKE 'brd\\_phonepe\\_%' AND id NOT LIKE 'brd\\_sbi\\_%' AND id NOT LIKE 'brd\\_airtel\\_%'");
   await exec("DELETE FROM detections");
   await exec("DELETE FROM scans");
   await exec("DELETE FROM source_cache");
@@ -234,7 +234,7 @@ interface RealBrand {
   publisher: string;
   publisherAliases: string[];
   apps: [platform: string, appId: string, title: string][];
-  // Official accounts as listed in the footer of the brand's own website (phonepe.com, paytm.com).
+  // Official accounts as listed in the footer of the brand's own website (phonepe.com, onlinesbi.sbi, airtel.in).
   socials: [platform: string, handle: string][];
 }
 
@@ -262,6 +262,62 @@ const REAL_BRANDS: RealBrand[] = [
       ["linkedin", "phonepe-internet"],
       ["youtube", "PhonePe_"],
       ["youtube", "UCe0domeQWPT2ZeIQDJg9XkA"],
+    ],
+  },
+  {
+    // Apps checked on Google Play and the App Store (publisher State Bank of India); accounts from the
+    // footer of onlinesbi.sbi; YouTube resolved with the YouTube Data API.
+    key: "sbi",
+    name: "SBI",
+    aliases: ["State Bank of India", "State Bank", "YONO SBI"],
+    keywords: ["sbi", "yono sbi"],
+    domains: ["sbi.co.in", "onlinesbi.sbi"],
+    legalName: "State Bank of India",
+    description:
+      "State Bank of India (SBI) is India's largest bank. YONO SBI offers mobile banking, UPI payments, " +
+      "loans, deposits and investments. SBI never asks for your OTP, PIN, CVV or password.",
+    publisher: "State Bank of India",
+    publisherAliases: ["SBI"],
+    apps: [
+      ["google_play", "com.sbi.lotusintouch", "YONO SBI"],
+      ["app_store", "id1231393474", "YONO SBI"],
+    ],
+    socials: [
+      ["instagram", "theofficialsbi"],
+      ["x", "TheOfficialSBI"],
+      ["facebook", "StateBankofIndia"],
+      ["linkedin", "state-bank-of-india"],
+      ["youtube", "theofficialsbi"],
+      ["youtube", "UCGYygfy61VHLjdxahKlGPkw"],
+    ],
+  },
+  {
+    // Apps checked on Google Play (developer Airtel) and the App Store (seller Bharti Airtel Limited);
+    // accounts from the footer of airtel.in; YouTube resolved with the YouTube Data API.
+    key: "airtel",
+    name: "Airtel",
+    aliases: ["Bharti Airtel", "Airtel Thanks"],
+    keywords: ["airtel"],
+    domains: ["airtel.in", "airtel.com"],
+    legalName: "Bharti Airtel Limited",
+    description:
+      "Airtel is an Indian telecom provider: mobile recharges, postpaid, broadband, DTH, Airtel Payments Bank " +
+      "and the Airtel Thanks app. Airtel never asks for your OTP, PIN or password.",
+    publisher: "Bharti Airtel Limited",
+    publisherAliases: ["Airtel", "Bharti Airtel"],
+    apps: [
+      ["google_play", "com.myairtelapp", "Airtel Thanks"],
+      ["app_store", "id543184334", "Airtel Thanks"],
+    ],
+    socials: [
+      ["instagram", "airtelindia"],
+      ["x", "airtelindia"],
+      ["facebook", "AirtelIndia"],
+      ["linkedin", "airtel"],
+      ["youtube", "airtel"],
+      ["youtube", "UCY-gUWSJX6xcrEqH4LExALQ"],
+      ["youtube", "airtelcares"],
+      ["youtube", "UCKuPTRtaBKYgPANBVANz2Iw"],
     ],
   },
 ];
@@ -292,7 +348,7 @@ function demoLogo(key: string, playApp: string): Promise<string | null> {
   return p;
 }
 
-/** Give a workspace its demo brand, PhonePe (real, active), with its official apps and accounts. */
+/** Give a workspace its demo brands, PhonePe (active), SBI and Airtel, with their official apps and accounts. */
 export async function addRealDemoBrands(ws: string): Promise<void> {
   const now = utcnow();
   for (const b of REAL_BRANDS) {
@@ -330,12 +386,14 @@ export async function addRealDemoBrands(ws: string): Promise<void> {
 }
 
 /**
- * One-time update of existing workspaces to the current demo brand, PhonePe: the old Paytm and
- * fictional-brand demo copies go (only the copies this app added, matched by their exact IDs), and PhonePe becomes
- * active where one of them was. Brands a visitor registered are never touched.
+ * One-time update of existing workspaces to the current demo brands, PhonePe, SBI and Airtel: the old
+ * Paytm and fictional-brand demo copies go (only the copies this app added, matched by their exact IDs),
+ * SBI and Airtel are added, and PhonePe becomes active where no brand is. Brands a visitor registered
+ * are never touched.
  */
+const DEMO_BRANDS = "phonepe+sbi+airtel";
 async function updateDemoBrands(): Promise<void> {
-  if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'demo_brands'"))?.v === "phonepe") return;
+  if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'demo_brands'"))?.v === DEMO_BRANDS) return;
   for (const key of ["paytm", "zentrapay"]) {
     await exec(
       `DELETE FROM brands WHERE id LIKE 'brd\\_${key}\\_%' AND workspace_id IS NOT NULL AND id = CONCAT('brd_${key}_', LEFT(REPLACE(workspace_id, '-', ''), 16))`,
@@ -343,7 +401,7 @@ async function updateDemoBrands(): Promise<void> {
   }
   const workspaces = await q<{ ws: string }>("SELECT DISTINCT workspace_id AS ws FROM brands WHERE id LIKE 'brd\\_phonepe\\_%' AND workspace_id IS NOT NULL");
   for (const { ws } of workspaces) await addRealDemoBrands(ws);
-  await exec("INSERT INTO app_meta (k, v) VALUES ('demo_brands', 'phonepe') ON DUPLICATE KEY UPDATE v = VALUES(v)");
+  await exec("INSERT INTO app_meta (k, v) VALUES ('demo_brands', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)", [DEMO_BRANDS]);
 }
 
 /**

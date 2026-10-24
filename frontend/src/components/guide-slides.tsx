@@ -142,7 +142,7 @@ const SLIDES: Slide[] = [
         <P>
           Fraudsters copy a brand&apos;s name and logo to make fake apps, fake customer-care pages and scam accounts. IMPOSTR finds them. You tell it
           what genuinely belongs to the brand, it searches the app stores and social platforms live, sets aside everything verified as official, and gives every other look-alike a
-          risk score from 0 to 100 with the evidence behind it. A demo brand is ready to explore: <b>PhonePe</b>, a real payments app.
+          risk score from 0 to 100 with the evidence behind it. Three real demo brands are ready to explore: <b>PhonePe</b> (payments), <b>SBI</b> (banking) and <b>Airtel</b> (telecom). Switch between them with the brand switcher at the top of the menu.
         </P>
         <Sub>Five-minute tour</Sub>
         <Steps
@@ -162,7 +162,7 @@ const SLIDES: Slide[] = [
               click.
             </>,
             <>
-              Open <Go href="/accuracy">Accuracy</Go> to see the engine tested on 31 labelled PhonePe cases.
+              Open <Go href="/accuracy">Performance</Go> to see the engine tested on 31 labelled PhonePe cases.
             </>,
           ]}
         />
@@ -490,11 +490,11 @@ const SLIDES: Slide[] = [
     ),
   },
   {
-    section: "Accuracy",
+    section: "Performance",
     icon: Target,
     title: "Proof that the engine is right, on labelled cases",
     href: "/accuracy",
-    shots: [{ src: "accuracy", alt: "Accuracy page", caption: "31 of 31 correct: no fakes missed, no official asset flagged" }],
+    shots: [{ src: "accuracy", alt: "Performance page", caption: "31 of 31 correct: no fakes missed, no official asset flagged" }],
     body: (
       <>
         <P>
@@ -526,7 +526,7 @@ const SLIDES: Slide[] = [
       <Points
         items={[
           ["Brand switcher", "The box at the top of the menu. Pick a brand to make it active: Overview, Detections and scans follow it. Add a brand opens Setup Brand Profile."],
-          ["Private workspace", "Each browser gets its own workspace, starting with the demo brand PhonePe. Brands, scans and results added there are not visible to anyone else."],
+          ["Private workspace", "Each browser gets its own workspace, starting with the demo brands PhonePe, SBI and Airtel. Brands, scans and results added there are not visible to anyone else."],
           ["Top bar", "Last scan time and Run scan, Install app, a shortcut to Quick check, and the light / dark switch."],
           ["Appearance", "At the bottom of the menu: two colour palettes (Crimson and Slate) and System, Light or Dark mode."],
           ["Install app", "Installs IMPOSTR like a phone or desktop app. On iPhone it shows how: Share, then Add to Home Screen."],

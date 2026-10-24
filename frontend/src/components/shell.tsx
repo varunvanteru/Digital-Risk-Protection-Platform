@@ -23,7 +23,7 @@ const NAV = [
   { href: "/check", label: "Quick check", Icon: ScanSearch },
   { href: "/brand", label: "Brand profile", Icon: Building2 },
   { href: "/sources", label: "Sources", Icon: PlugZap },
-  { href: "/accuracy", label: "Accuracy", Icon: Target },
+  { href: "/accuracy", label: "Performance", Icon: Target },
   { href: "/how-to-use", label: "How to use", Icon: BookOpen },
 ];
 
