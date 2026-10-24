@@ -8,18 +8,18 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 
 | Deliverable | Where |
 | --- | --- |
-| Working prototype | **https://impostr.live**, live and open to everyone (no login) |
-| Demo video (6 min) | In the app: **https://impostr.live/how-to-use** (plays first). File: [`frontend/public/help/impostr-demo.mp4`](frontend/public/help/impostr-demo.mp4) |
+| Working prototype | **https://impostr.live**, open to everyone: choose **Continue as demo** (no account needed) |
+| Demo video (5 min) | In the app: **How to use** (plays first, with playback speeds). File: [`frontend/public/help/impostr-demo.mp4`](frontend/public/help/impostr-demo.mp4) |
 | Architecture diagram | In the app under How to use → **Architecture**, and below: [`docs/architecture.png`](docs/architecture.png) |
-| Step-by-step guide | How to use tab: 25 slides with screenshots of every feature |
+| Step-by-step guide | How to use tab: 26 slides with screenshots of every feature |
 
-**Try it in two minutes:** open https://impostr.live, choose **Continue as demo**, press **Run scan** and wait about a minute, then open **Detections** and click the top row. In **Quick check**, search `PhonePe` (a real brand, searched live on Google Play and the App Store), then `Paytm` (an unregistered brand, which IMPOSTR offers to register from its real store apps).
+**Try it in two minutes:** open https://impostr.live, choose **Continue as demo** (three real demo brands: PhonePe, SBI and Airtel), press **Run scan** and wait about a minute, then open **Detections** and click the top row: **Confirm threat**, then **Request takedown** opens a ready-made takedown letter. In **Quick check**, search `PhonePe` (official apps recognised, look-alikes scored), then `Paytm` (an unregistered brand, which IMPOSTR offers to register from its real store apps). For affiliate-marketing misuse, switch to Airtel and search `Airtel recharge offer`.
 
 **Verify without a browser.** These live links return JSON:
 - [`/api/accuracy`](https://impostr.live/api/accuracy) runs the labelled PhonePe test set: 31/31 correct, 0 of 8 official assets flagged.
 - [`/api/search?query=PhonePe&platforms=google_play,app_store`](https://impostr.live/api/search?query=PhonePe&platforms=google_play,app_store) is a live app-store search. Official apps appear under `official` with risk 0, and look-alikes appear under `results` with reasons, signals and evidence checks.
 - [`/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube`](https://impostr.live/api/search?query=paytm&platforms=telegram,instagram,facebook,x,youtube) runs a live social search for impersonation and scam accounts, with official accounts excluded.
-- [`/api/search?query=z3ntra.pay_official`](https://impostr.live/api/search?query=z3ntra.pay_official) shows the look-alike name analysis, step by step, in `nameAnalysis`.
+- [`/api/search?query=ph0nepe_support`](https://impostr.live/api/search?query=ph0nepe_support) shows the look-alike name analysis, step by step, in `nameAnalysis`.
 - [`/api/sources`](https://impostr.live/api/sources) lists every source, its mode (live, or not connected) and its health.
 
 ## Screenshots
@@ -28,7 +28,7 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 | --- | --- |
 | ![Overview](frontend/public/help/overview.webp) **Overview:** risk at a glance, with 0 official assets flagged | ![Detection](frontend/public/help/detection-detail.webp) **A detection:** score, plain-language reasons, details |
 | ![Quick check, official apps](frontend/public/help/check-official.webp) **Quick check (live stores):** PhonePe's own apps recognised and excluded | ![Score breakdown](frontend/public/help/detection-breakdown.webp) **Score breakdown:** signals × weights + boosts |
-| ![Setup Brand Profile](frontend/public/help/setup-identity.webp) **Setup Brand Profile:** the legitimate assets | ![Accuracy](frontend/public/help/accuracy.webp) **Accuracy:** 31/31 correct, 0 of 8 official assets flagged |
+| ![Setup Brand Profile](frontend/public/help/setup-identity.webp) **Setup Brand Profile:** the legitimate assets | ![Performance](frontend/public/help/accuracy.webp) **Performance:** 31/31 correct, 0 of 8 official assets flagged |
 
 ## How it meets the challenge
 
@@ -37,10 +37,11 @@ Built for the ByteXL HackXlerate hackathon, Kampus.VC challenge: **Digital Risk 
 | **Brand Profile** (15%) | Three-step **Setup Brand Profile**: name, aliases, official logo, description, keywords, official social accounts, official apps, publisher and domains. Each official app is **validated on its store** (developer ID, store title, icon), and the profile drives every check: names for look-alike matching, the logo for image matching, the description for copied text, and the allowlist before any scoring. |
 | **Social Media Monitoring** (30%) | Impersonation accounts, fake brand pages and scam profiles across 15 social and messaging platforms. Each is detected by look-alike name, copied logo (including mirrored and recoloured copies), copied bio, "official / helpline" claims and scam behaviour (OTP or fee requests, lures, moving to WhatsApp, new accounts). **Official accounts are never flagged.** |
 | **App Store Monitoring** (30%) | Google Play and the App Store are **searched live**. It catches similar names, copied icons, a **different developer or publisher** (including fakes that copy the company name under another developer account) and resembling descriptions. The brand's official apps and their sibling apps are recognised by app ID, verified developer account and publisher, so **official apps are never flagged**. |
-| **User Experience** (15%) | Setup in three steps, or register a brand straight from a search. Detections give plain-language reasons, a score breakdown and evidence checks, with actions to confirm, request a takedown, mark a false positive or mark official. **Unavailable sources are handled gracefully:** each source has its own timeout and retries, falls back to cached results, and otherwise shows as Down while the scan completes (try **Pause source** on Sources); web search switches from Brave to Serper by itself when one provider runs out of credit. Works on any phone and installs as an app. |
-| **Look-alike names** (bonus) | Character swaps, missing or doubled letters, look-alike characters (`0`→`o`, `3`→`e`, Cyrillic letters), added words (`zentrapay_support_india`) and spacing changes (`zentra.pay`). It avoids over-flagging: ordinary words, other companies' names and openly labelled fan, news or third-party pages stay Low. |
+| **User Experience** (15%) | Setup in three steps, or register a brand straight from a search. Detections give plain-language reasons, a score breakdown and evidence checks, with actions to confirm, request a takedown, mark a false positive or mark official. **Request takedown** opens a ready-made, editable letter filled in from the evidence, with a link to the platform's own impersonation or trademark report form; nothing is sent automatically. **Unavailable sources are handled gracefully:** each source has its own timeout and retries, falls back to cached results, and otherwise shows as Down while the scan completes (try **Pause source** on Sources); web search switches from Brave to Serper by itself when one provider runs out of credit. Works on any phone and installs as an app. |
+| **Look-alike names** (bonus) | Character swaps, missing or doubled letters, look-alike characters (`0`→`o`, `3`→`e`, Cyrillic letters), added words (`phonepe_support_india`) and spacing changes (`phone.pe`). It avoids over-flagging: ordinary words, other companies' names and openly labelled fan, news or third-party pages stay Low. |
+| **Affiliate marketing** (judge's suggestion) | Accounts and pages that use the brand to push referral or promo codes, route through affiliate networks (EarnKaro, Cuelinks, vCommission and others) or carry affiliate tracking links (`?ref=`, `?aff=`) are shown with that reason. Sharing a referral code is not fraud by itself, so it stays Low unless it comes with impersonation; approved partners can be marked official. |
 
-**Measured accuracy** (Accuracy tab, recomputed live): 31 hand-labelled PhonePe cases, including 11 held out from rule-writing. All **31 of 31 are correct**: precision 100%, recall 100%, and **0 of 8 official assets flagged**. The automated tests also run a larger fixture set of 82 cases (curated look-alike accounts and apps of a fictional test brand), with the same result.
+**Measured accuracy** (Performance tab, recomputed live): 31 hand-labelled PhonePe cases, including 11 held out from rule-writing. All **31 of 31 are correct**: precision 100%, recall 100%, and **0 of 8 official assets flagged**. The automated tests also run a larger fixture set of 82 cases (curated look-alike accounts and apps of a fictional test brand), with the same result.
 
 ## Architecture
 
