@@ -122,6 +122,23 @@ export const OFF_PLATFORM = re("(wa\\.me|whatsapp|t\\.me/|\\+?91[\\s-]?\\d{10}|\
 const SHORTENERS = new Set(["bit.ly", "tinyurl.com", "cutt.ly", "t.ly", "rb.gy", "is.gd", "shorturl.at"]);
 const FREE_HOSTS = ["sites.google.com", "blogspot.", "wixsite.com", "weebly.com", "000webhost", "github.io"];
 
+// Affiliate marketing: referral and promo codes, affiliate networks and tracking parameters used with the
+// brand name. Only parameters that clearly mark an affiliate or referral link; common ones (tag, pid, aid)
+// appear in ordinary links too and are left out.
+export const AFFILIATE_QUERY_PARAMS = new Set([
+  "ref", "ref_code", "referral", "referral_code", "aff", "affiliate", "affiliate_id", "aff_id", "subid", "sub_id", "clickid", "click_id",
+]);
+
+export const AFFILIATE_NETWORKS = new Set([
+  "cuelinks.com", "earnkaro.com", "inrdeals.com", "vcommission.com",
+  "admitad.com", "amzn.to", "fkrt.it", "impact.com", "shareasale.com", "cj.com", "rakuten.com"
+]);
+
+export const AFFILIATE_PROMO = re(
+  "\\b(referral (?:code|link)|use (?:my )?code|promo code|coupon code|discount code|voucher code|cashback code|flat \\d+% off|extra \\d+% off|free recharge|exclusive deal|discount voucher)\\b",
+  "i"
+);
+
 /** Host name of a link, lowercased, without "www.", parsed leniently like Python's urlparse. */
 export function domainOf(link: string): string {
   let s = link.trim();
@@ -193,6 +210,11 @@ export function behaviourSignal(
     score += 0.2;
     reasons.push(`Uses lure or urgency wording (“${m[0]}”)`);
   }
+  const affPromo = text.match(AFFILIATE_PROMO);
+  if (affPromo) {
+    score += 0.25;
+    reasons.push(`Promotes a referral or promo code (“${affPromo[0]}”)`);
+  }
   if (OFF_PLATFORM.test(text)) {
     score += 0.15;
     reasons.push("Moves the conversation to WhatsApp, Telegram or a phone number");
@@ -204,10 +226,20 @@ export function behaviourSignal(
     if (SHORTENERS.has(d)) {
       score += 0.15;
       reasons.push(`Links to a URL shortener (${d})`);
+    } else if (AFFILIATE_NETWORKS.has(d) || [...AFFILIATE_NETWORKS].some((net) => d.endsWith(`.${net}`))) {
+      score += 0.25;
+      reasons.push(`Routes through an affiliate marketing network (${d})`);
     } else if (isLookalikeDomain(d, officialDomains, brandCores)) {
       lookalike = true;
       reasons.push(`Links to ${d}, a look-alike of an official domain`);
     }
+  }
+
+  // An affiliate or referral tracking parameter in any link or in the bio text, counted once per profile.
+  const tracking = text.match(/[?&]([a-z_]+)=[^\s&#]+/gi)?.map((p) => p.slice(1, p.indexOf("=")).toLowerCase()).find((k) => AFFILIATE_QUERY_PARAMS.has(k));
+  if (tracking) {
+    score += 0.25;
+    reasons.push(`Uses an affiliate or referral tracking link (?${tracking}=…)`);
   }
 
   if (createdOn) {

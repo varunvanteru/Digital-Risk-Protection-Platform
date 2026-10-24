@@ -146,7 +146,11 @@ describe("API", () => {
     expect(text).toContain(req.displayName);
     expect(text).toContain(req.reasons[0]);
     expect(text).toContain(`${req.breakdown.score}/100`);
-    expect(text).not.toMatch(/illegal/i);
+    expect(text).not.toMatch(/illegal|brand-bidding|unauthori[sz]ed/i);
+    // The affiliate sentence appears only when the detection's own reasons show affiliate evidence.
+    const affiliateLine = "It also uses our brand name to promote referral or promo codes and affiliate links.";
+    expect(letterText({ ...req, reasons: ["Name is exactly the brand"] }, await get("brand"))).not.toContain(affiliateLine);
+    expect(letterText({ ...req, reasons: ["Routes through an affiliate marketing network (earnkaro.com)"] }, await get("brand"))).toContain(affiliateLine);
     const logged = await call("POST", `detections/${det.id}/letter`);
     expect(logged.status).toBe(200);
     expect(logged.body.status).toBe("takedown_requested");

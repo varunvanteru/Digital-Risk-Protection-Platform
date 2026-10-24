@@ -57,7 +57,7 @@ async function getText(url: string, init: RequestInit = {}, timeoutMs = 8000): P
 
 // ---------- Telegram ----------
 
-const TG_SUFFIXES = ["", "official", "support", "care", "help", "helpdesk", "customercare", "india", "refund", "kyc", "offers", "rewards", "cashback", "updates", "team"];
+const TG_SUFFIXES = ["", "official", "support", "care", "help", "helpdesk", "customercare", "india", "refund", "kyc", "offers", "rewards", "cashback", "deals", "promos", "coupons", "updates", "team"];
 
 /** Public usernames an impersonator would pick: the brand name with official / support / care / ... words. */
 export function telegramHandles(keywords: string[], max = 30): string[] {

@@ -126,6 +126,21 @@ describe("text signals", () => {
     expect(reasons.some((r) => r.includes("days old"))).toBe(true);
   });
 
+  it("affiliate marketing: referral and promo codes, affiliate networks, tracking links", () => {
+    const sig = (bio: string, links: string[] = []) => behaviourSignal(bio, links, null, 5000, "2026-10-10", ["phonepe.com"], ["phonepe"]);
+    let [score, reasons] = sig("Use my code PHN500 for extra 20% off on every PhonePe recharge!");
+    expect(score).toBeGreaterThanOrEqual(0.25);
+    expect(reasons).toContain("Promotes a referral or promo code (“use my code”)");
+    [score, reasons] = sig("PhonePe deals daily", ["https://earnkaro.com/r/abc123"]);
+    expect(reasons).toContain("Routes through an affiliate marketing network (earnkaro.com)");
+    [score, reasons] = sig("PhonePe offers", ["https://phonepe-offers.shop/?ref=deal42", "https://deals.example.in/p?aff=99"]);
+    expect(reasons.filter((r) => r.startsWith("Uses an affiliate or referral tracking link"))).toEqual(["Uses an affiliate or referral tracking link (?ref=…)"]); // once per profile
+    expect(score).toBeLessThanOrEqual(1);
+    // Ordinary link parameters (tag, pid, aid) and plain wording are not affiliate evidence.
+    [score, reasons] = sig("Tips and news about UPI payments", ["https://www.youtube.com/watch?v=abc&pid=12&tag=upi"]);
+    expect(reasons.some((r) => /affiliate|referral|promo/i.test(r))).toBe(false);
+  });
+
   it("look-alike domains", () => {
     const official = ["zentrapay.com", "zentrapay.in"];
     expect(isLookalikeDomain("zentrapaay.in", official, ["zentrapay"])).toBe(true);

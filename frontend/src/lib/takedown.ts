@@ -59,7 +59,12 @@ export function letterText(d: Detection, brand: BrandProfile) {
     ...d.reasons.slice(0, 3).map((r) => `- ${r}`),
     `- Our brand monitoring rated it ${d.breakdown.score}/100 (${d.breakdown.severity}); first seen ${formatDate(d.firstSeen)}.`,
     "",
-    `It uses the ${brand.name} name${(d.signals.logo ?? 0) >= 0.5 ? " and logo" : ""} without our permission, which infringes our trademark and may mislead our customers. We request that you review it and remove it under your impersonation and trademark policies.`,
+    `It uses the ${brand.name} name${(d.signals.logo ?? 0) >= 0.5 ? " and logo" : ""} without our permission, which infringes our trademark and may mislead our customers.${
+      // Only what the evidence shows: affiliate or referral reasons found on this account.
+      d.reasons.some((r) => /affiliate|referral|promo code/i.test(r))
+        ? " It also uses our brand name to promote referral or promo codes and affiliate links."
+        : ""
+    } We request that you review it and remove it under your impersonation and trademark policies.`,
     "",
     "We can provide proof of trademark ownership and further evidence on request.",
     "",
