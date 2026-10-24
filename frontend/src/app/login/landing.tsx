@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { account, ApiError } from "@/lib/api";
 import { isPersonalEmail, passwordError, WORK_EMAIL_MESSAGE } from "@/lib/workEmail";
@@ -33,7 +33,7 @@ type Modal = { kind: "signin" } | { kind: "signup"; email: string } | { kind: "w
 
 function Chevron() {
   return (
-    <svg className="lp-chevron" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden>
+    <svg className="lp-chevron" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden>
       <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
     </svg>
   );
@@ -108,7 +108,7 @@ function EmailCta({ id, onSubmit, onDemo }: { id: string; onSubmit: (email: stri
             Work email
           </label>
         </div>
-        <button type="submit" className="lp-btn-red lp-btn-big">
+        <button type="submit" className="lp-btn-white lp-btn-big">
           Get Started
           <Chevron />
         </button>
@@ -151,7 +151,7 @@ function SignInForm({ onSwitch, onDemo }: { onSwitch: () => void; onDemo: () => 
         <Field id="si-email" label="Work email" type="email" value={email} onChange={setEmail} autoComplete="email" autoFocus />
         <Field id="si-pass" label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />
         {error && <FormError message={error} onDemo={onDemo} />}
-        <button type="submit" className="lp-btn-red lp-btn-block" disabled={busy}>
+        <button type="submit" className="lp-btn-blue lp-btn-block" disabled={busy}>
           {busy ? "Signing in…" : "Sign In"}
         </button>
         <p className="lp-modal-hint">You stay signed in on this browser for 30 days.</p>
@@ -263,7 +263,7 @@ function Welcome({ name }: { name: string }) {
           <span aria-hidden>✓</span> Private workspace saved to your account
         </li>
         <li>
-          <span aria-hidden>✓</span> Two demo brands to explore: PhonePe and ZentraPay
+          <span aria-hidden>✓</span> A demo brand to explore: PhonePe
         </li>
         <li className="lp-step-next">
           <span aria-hidden>→</span> Next: add your own brand in Setup Brand Profile
@@ -305,7 +305,7 @@ export function Landing({ className }: { className?: string }) {
 
   return (
     <div className={`lp ${className ?? ""}`}>
-      <header className="lp-hero">
+      <div className="lp-hero">
         <div className="lp-hero-bg" aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -324,7 +324,7 @@ export function Landing({ className }: { className?: string }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/landing/logo-badge.webp" alt="IMPOSTR" className="lp-brand-img" width={57} height={62} />
           </a>
-          <button type="button" className="lp-btn-red lp-btn-small" onClick={() => setModal({ kind: "signin" })}>
+          <button type="button" className="lp-btn-blue lp-btn-small" onClick={() => setModal({ kind: "signin" })}>
             Sign In
           </button>
         </nav>
@@ -337,36 +337,22 @@ export function Landing({ className }: { className?: string }) {
             <br />
             to be your brand
           </h1>
-          <p className="lp-subheading">Fake profiles, fake brand pages, scam accounts and look-alike apps, each scored 0 to 100 with the evidence.</p>
-          <p className="lp-subtext">Enter your work email to create a free company account, or look around first in a demo workspace.</p>
           <EmailCta id="hero-email" onSubmit={signUp} onDemo={continueAsDemo} />
           <button type="button" className="lp-demo" onClick={continueAsDemo} disabled={demoBusy}>
             {demoBusy ? "Opening the demo…" : "Continue as demo, no account needed"} &rarr;
           </button>
         </div>
 
-        <div className="lp-curve" aria-hidden>
-          <svg viewBox="0 0 1920 45" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="lpLine" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="rgba(192, 24, 59, 0)" />
-                <stop offset="10%" stopColor="rgba(215, 20, 50, 0.85)" />
-                <stop offset="35%" stopColor="#e50914" />
-                <stop offset="50%" stopColor="#ff1e42" />
-                <stop offset="65%" stopColor="#e50914" />
-                <stop offset="90%" stopColor="rgba(215, 20, 50, 0.85)" />
-                <stop offset="100%" stopColor="rgba(192, 24, 59, 0)" />
-              </linearGradient>
-              <linearGradient id="lpGround" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#070a14" />
-                <stop offset="100%" stopColor="#000000" />
-              </linearGradient>
-            </defs>
-            <path d="M 0,38 Q 960,8 1920,38 L 1920,45 L 0,45 Z" fill="url(#lpGround)" />
-            <path d="M 0,38 Q 960,8 1920,38" fill="none" stroke="url(#lpLine)" strokeWidth="2.5" />
-          </svg>
-        </div>
-      </header>
+        <footer className="lp-footer-strip">
+          <p>
+            <span>Fake profiles, fake brand pages, scam accounts and look-alike apps, each scored 0 to 100 with the evidence.</span>
+            <span className="lp-footer-lock-wrap" aria-hidden>
+              <Lock className="lp-footer-lock" size={11} strokeWidth={2.4} />
+            </span>
+            <span>Enter your work email to create a free company account, or look around first in a demo workspace.</span>
+          </p>
+        </footer>
+      </div>
 
       {modal && (
         <div className="lp-backdrop" onMouseDown={(e) => e.target === e.currentTarget && modal.kind !== "welcome" && setModal(null)}>
