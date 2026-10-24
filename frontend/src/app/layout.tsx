@@ -21,6 +21,11 @@ const plexMono = IBM_Plex_Mono({
 const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
+// Every page is rendered per request and marked no-store. A page Next.js prerenders is sent as
+// cacheable for a year, and Hostinger's CDN then serves its stored copy without asking the app, so the
+// sign-in rule (middleware) never runs and a returning demo visitor skips the sign-in page.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { default: "IMPOSTR", template: "%s · IMPOSTR" },
   description:
