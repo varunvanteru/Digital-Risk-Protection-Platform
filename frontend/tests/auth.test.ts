@@ -180,7 +180,15 @@ describe("who sees the sign-in page", () => {
   });
 
   it("a demo visitor moves around inside the app freely", () => {
-    expect(where(page("/", "bs_demo=1", "same-origin"))).toBeNull();
+    const inside = (path: string, site: string | null) =>
+      where(middleware(new NextRequest(`http://test${path}`, { headers: { cookie: "bs_demo=1", referer: "http://test/login", ...(site ? { "sec-fetch-site": site, "sec-fetch-mode": "navigate", "sec-fetch-dest": "document" } : {}) } })));
+    expect(inside("/", "same-origin")).toBeNull();
+    expect(inside("/detections", null)).toBeNull();
+  });
+
+  it("an altered Sec-Fetch header never lets an outside page load in: the Referer decides", () => {
+    // Hostinger's CDN changes Sec-Fetch headers; "same-origin" without a page of ours as the Referer is outside.
+    expect(where(page("/", "bs_demo=1", "same-origin"))).toBe("http://test/login");
   });
 
   // Behind a proxy that drops Sec-Fetch headers (Hostinger): the Referer decides; the app's data requests always pass.

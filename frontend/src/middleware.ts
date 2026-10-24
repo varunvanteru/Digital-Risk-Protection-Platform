@@ -25,16 +25,14 @@ export function middleware(req: NextRequest) {
 /**
  * A full page load that did not come from one of this site's pages (typed address, bookmark, app icon,
  * a link on another site). The app's own data requests (RSC) are always from inside.
- * Sec-Fetch-Site says it directly; behind a proxy that drops Sec-Fetch headers (Hostinger's CDN),
- * the Referer decides: a page load from inside the app names one of its pages, one from outside does not.
+ * The Referer decides, because it reaches the app intact behind Hostinger's CDN, which alters the
+ * Sec-Fetch headers: a page load from inside the app (a click, a reload, Continue as demo) names one of
+ * its pages; one from outside names none. Sec-Fetch-Site, where present, can only add an "outside".
  */
 function openedFromOutside(req: NextRequest): boolean {
   if (req.headers.has("rsc") || req.headers.has("next-router-prefetch")) return false;
   const site = req.headers.get("sec-fetch-site");
-  if (site) {
-    const isPageLoad = req.headers.get("sec-fetch-mode") === "navigate" && req.headers.get("sec-fetch-dest") === "document";
-    return isPageLoad && (site === "none" || site === "cross-site");
-  }
+  if (site === "none" || site === "cross-site") return true;
   const hosts = new Set([req.headers.get("x-forwarded-host"), req.headers.get("host"), req.nextUrl.host].filter(Boolean));
   try {
     return !hosts.has(new URL(req.headers.get("referer") ?? "").host);
