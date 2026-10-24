@@ -181,7 +181,16 @@ describe("who sees the sign-in page", () => {
 
   it("a demo visitor moves around inside the app freely", () => {
     expect(where(page("/", "bs_demo=1", "same-origin"))).toBeNull();
-    expect(where(page("/detections", "bs_demo=1", null))).toBeNull(); // in-app navigation data request
+  });
+
+  // Behind a proxy that drops Sec-Fetch headers (Hostinger): the Referer decides; the app's data requests always pass.
+  const proxied = (path: string, headers: Record<string, string>) =>
+    where(middleware(new NextRequest(`http://test${path}`, { headers: { cookie: "bs_demo=1", "x-forwarded-host": "impostr.live", ...headers } })));
+  it("behind a proxy: opened from outside shows the sign-in page, inside the app does not", () => {
+    expect(proxied("/", {})).toBe("http://test/login"); // typed, bookmark, app icon
+    expect(proxied("/", { referer: "https://www.google.com/" })).toBe("http://test/login");
+    expect(proxied("/detections", { referer: "https://impostr.live/login" })).toBeNull(); // after Continue as demo, or a reload
+    expect(proxied("/detections", { rsc: "1" })).toBeNull(); // in-app navigation data request
   });
 
   it("a signed-in account always goes straight into the app, and skips the sign-in page", () => {

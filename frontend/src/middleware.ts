@@ -22,11 +22,25 @@ export function middleware(req: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-/** A full page load that did not come from this site: Sec-Fetch-Site is "none" (typed, bookmark, app icon) or "cross-site". */
+/**
+ * A full page load that did not come from one of this site's pages (typed address, bookmark, app icon,
+ * a link on another site). The app's own data requests (RSC) are always from inside.
+ * Sec-Fetch-Site says it directly; behind a proxy that drops Sec-Fetch headers (Hostinger's CDN),
+ * the Referer decides: a page load from inside the app names one of its pages, one from outside does not.
+ */
 function openedFromOutside(req: NextRequest): boolean {
+  if (req.headers.has("rsc") || req.headers.has("next-router-prefetch")) return false;
   const site = req.headers.get("sec-fetch-site");
-  const isPageLoad = req.headers.get("sec-fetch-mode") === "navigate" && req.headers.get("sec-fetch-dest") === "document";
-  return isPageLoad && (site === "none" || site === "cross-site");
+  if (site) {
+    const isPageLoad = req.headers.get("sec-fetch-mode") === "navigate" && req.headers.get("sec-fetch-dest") === "document";
+    return isPageLoad && (site === "none" || site === "cross-site");
+  }
+  const hosts = new Set([req.headers.get("x-forwarded-host"), req.headers.get("host"), req.nextUrl.host].filter(Boolean));
+  try {
+    return !hosts.has(new URL(req.headers.get("referer") ?? "").host);
+  } catch {
+    return true; // no Referer: typed, bookmark or app icon
+  }
 }
 
 export const config = {
