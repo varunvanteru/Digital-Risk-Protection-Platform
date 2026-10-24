@@ -108,7 +108,29 @@ async function seedLive(): Promise<void> {
   await removeSampleData();
   await updateDemoBrands();
   await removeTestImages();
+  await cleanStart();
   await syncOfficialAccounts();
+}
+
+/**
+ * One-time clean start for judging: every tab starts empty. All detections, their history, scans,
+ * cached search results and source statistics are cleared, and every brand except the PhonePe demo
+ * brand is removed. PhonePe's profile (official accounts and apps) and user accounts are kept, and
+ * PhonePe becomes the active brand wherever another brand was. Runs once (app_meta records it).
+ */
+const CLEAN_START = "2026-10-24";
+async function cleanStart(): Promise<void> {
+  if ((await one<{ v: string }>("SELECT v FROM app_meta WHERE k = 'clean_start'"))?.v === CLEAN_START) return;
+  await exec("DELETE FROM brands WHERE id NOT LIKE 'brd\\_phonepe\\_%'");
+  await exec("DELETE FROM detections");
+  await exec("DELETE FROM scans");
+  await exec("DELETE FROM source_cache");
+  await exec("UPDATE sources SET last_success = NULL, latency_ms = NULL, items_last_scan = 0, simulate_outage = 0, note = NULL, state = NULL, health = 'operational' WHERE state IS NULL OR state <> 'not_connected'");
+  await exec(
+    `UPDATE brands b SET is_active = 1 WHERE b.id LIKE 'brd\\_phonepe\\_%'
+     AND NOT EXISTS (SELECT 1 FROM (SELECT workspace_id FROM brands WHERE is_active = 1) a WHERE a.workspace_id <=> b.workspace_id)`,
+  );
+  await exec("INSERT INTO app_meta (k, v) VALUES ('clean_start', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)", [CLEAN_START]);
 }
 
 /**
